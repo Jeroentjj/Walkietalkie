@@ -8,10 +8,10 @@ Installeerbare webapp (PWA) om met één andere persoon als walkietalkie te prat
 
 ## Hoe werkt het
 - Audio gaat peer-to-peer via WebRTC, end-to-end versleuteld (DTLS-SRTP). PeerJS regelt alleen het "elkaar vinden".
-- Meldingen lopen via een Cloudflare Pages Function (`functions/api`) met Web Push. Die bewaart per kanaal alleen een hash en de push-adressen, geen audio.
+- Meldingen lopen via een Cloudflare Worker (`src/api.js`) met Web Push. Die bewaart per kanaal alleen een hash en de push-adressen, geen audio.
 - Maximaal 2 personen per kanaal. Per telefoon is maar één venster tegelijk actief.
 
-## Hosting op Cloudflare Pages
-1. Workers & Pages → Create → Pages → Connect to Git → deze repo. Build command leeg, output directory `/`.
-2. Maak een KV-namespace `walkie` en koppel hem aan het project als binding `WALKIE` (Settings → Bindings), daarna opnieuw deployen.
+## Hosting op Cloudflare Workers
+1. Workers & Pages → Create → Import a repository → deze repo. Deploy command: `npx wrangler deploy`.
+2. De KV-opslag `WALKIE` wordt bij de eerste deploy automatisch aangemaakt (zie `wrangler.jsonc`).
 3. Custom domain: `walkie.domimo.app`.
