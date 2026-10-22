@@ -114,6 +114,7 @@
 <dialog id="dlg">
   <div class="row"><h3 style="flex:1">Kanalen</h3><button class="sec" id="closeBtn">Klaar</button></div>
   <small>Je luistert naar alle kanalen tegelijk. PTT praat op het geselecteerde kanaal.</small>
+  <label class="row" style="margin-top:12px"><input type="checkbox" id="fxBox" style="width:auto;margin:0"> Walkie-talkie ruis</label>
   <h4>Jouw naam</h4>
   <input id="myName" maxlength="24" placeholder="bijv. Jeroen">
   <ul class="chs" id="chList"></ul>
@@ -181,6 +182,46 @@ function genCode() {
   return `${words[r[0] % words.length]}-${words[r[1] % words.length]}-${(r[2] % 1e6).toString().padStart(6, '0')}`;
 }
 
+// --- Radio sound: voice through a narrow band-pass with a little crunch, soft hiss while someone
+// talks, and a burst of static ("kshh") when a transmission starts or ends. Toggle in the menu.
+let fxOn = localStorage.getItem('walkie-fx') !== '0', fx;
+
+function radioFx() {
+  if (fx) return fx;
+  const a = ctx();
+  const noise = a.createBuffer(1, a.sampleRate * 2, a.sampleRate), d = noise.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350;
+  const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
+  const crunch = a.createWaveShaper();
+  crunch.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(((i / 511.5) - 1) * 2.2) / Math.tanh(2.2));
+  hp.connect(lp).connect(crunch).connect(a.destination);
+  const src = a.createBufferSource(); src.buffer = noise; src.loop = true;
+  const band = a.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 2200; band.Q.value = 0.6;
+  const hissGain = a.createGain(); hissGain.gain.value = 0;
+  src.connect(band).connect(hissGain).connect(a.destination); src.start();
+  return (fx = { input: hp, hissGain, noise });
+}
+
+const radioIn = () => (fxOn ? radioFx().input : ctx().destination);
+
+function squelch(dur, at = 0) {
+  if (!fxOn || muted || !audioCtx || audioCtx.state !== 'running') return;
+  const a = audioCtx, f = radioFx(), t = Math.max(a.currentTime, at);
+  const s = a.createBufferSource(); s.buffer = f.noise;
+  const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.5;
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(bp).connect(g).connect(a.destination);
+  s.start(t, Math.random()); s.stop(t + dur);
+}
+
+function hiss() {
+  if (!fx) { if (!fxOn) return; if (!audioCtx || audioCtx.state !== 'running') return; }
+  const on = fxOn && !muted && !holding && [...chans.values()].some((c) => c.speaker);
+  radioFx().hissGain.gain.setTargetAtTime(on ? 0.025 : 0, audioCtx.currentTime, 0.05);
+}
+
 class Chan {
   constructor(cfg) {
     this.cfg = cfg; this.n = 0; this.you = 0; this.speaker = null; this.ws = null; this.next = 0; this.closed = false;
@@ -238,8 +279,8 @@ class Chan {
     const wasTx = this.you === 'tx', wasSpeaker = this.speaker;
     Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker });
     if (!wasTx && m.you === 'tx') { beep([900, 1300]); navigator.vibrate?.(80); }       // your turn
-    if (wasSpeaker && !m.speaker && holding !== this) beep([1200, 900]);                // roger beep
-    if (!wasSpeaker && m.speaker) { this.next = 0; }
+    if (wasSpeaker && !m.speaker && holding !== this) { squelch(0.3, this.next); beep([1200, 900]); } // squelch tail + roger beep
+    if (!wasSpeaker && m.speaker) { this.next = 0; squelch(0.12); }
     render();
   }
 
@@ -251,7 +292,7 @@ class Chan {
     const b = audioCtx.createBuffer(1, pcm.length, RATE), d = b.getChannelData(0);
     for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768;
     const src = audioCtx.createBufferSource();
-    src.buffer = b; src.connect(audioCtx.destination);
+    src.buffer = b; src.connect(radioIn());
     const now = audioCtx.currentTime;
     if (this.next < now) this.next = now + 0.15; // small jitter buffer
     src.start(this.next);
@@ -327,6 +368,7 @@ function render() {
   if (muted && c) st = '🔇 ' + st;
   status.textContent = st;
   led.className = 'led ' + l;
+  hiss();
 }
 
 async function pttDown() {
@@ -432,6 +474,8 @@ $('joinBtn').onclick = () => {
   $('joinLink').value = '';
   renderList();
 };
+$('fxBox').checked = fxOn;
+$('fxBox').onchange = () => { fxOn = $('fxBox').checked; localStorage.setItem('walkie-fx', fxOn ? '1' : '0'); hiss(); };
 $('myName').onchange = () => {
   myName = $('myName').value.trim();
   localStorage.setItem('walkie-name', myName);
