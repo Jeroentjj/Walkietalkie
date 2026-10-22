@@ -1,8 +1,8 @@
 {
-  "name": "walkie",
+  "name": "walkietalkie",
   "main": "src/api.js",
   "compatibility_date": "2025-09-01",
   "assets": { "directory": "./public", "binding": "ASSETS" },
-  // No id: wrangler creates the KV namespace automatically on first deploy.
-  "kv_namespaces": [{ "binding": "WALKIE" }]
+  // Auto-provisioned on first deploy.
+  "kv_namespaces": [{ "binding": "WALKIE", "id": "6b99de7982ee4ca3a67736b53f331399" }]
 }
