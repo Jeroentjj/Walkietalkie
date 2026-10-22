@@ -8,7 +8,7 @@ Installeerbare webapp (PWA): walkietalkie met meerdere kanalen en meerdere mense
 
 ## Hoe werkt het
 - Elk kanaal is een Cloudflare Durable Object (`src/api.js`, class `Channel`) dat bepaalt wie er aan de beurt is (max. 60 s per beurt) en het geluid doorstuurt.
-- Het geluid wordt in de app versleuteld (AES-GCM) met een sleutel uit de kanaalcode. De server ziet alleen een hash van de code en versleutelde audio.
+- Het geluid wordt in de app versleuteld (AES-GCM) met een sleutel uit de kanaalcode. Namen gaan ook versleuteld mee. De server ziet alleen een hash van de code en versleutelde data. Max. 10 personen per kanaal.
 - Oproep-meldingen via Web Push; abonnementen staan in KV (`WALKIE`).
 
 ## Hosting op Cloudflare Workers

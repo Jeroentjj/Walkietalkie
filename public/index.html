@@ -103,7 +103,7 @@
     <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="plak hier de link">
     <button class="prim" id="joinBtn">Doe mee</button>
   </div>
-  <small style="margin-top:10px">Iedereen met de link kan meepraten, dus deel hem alleen met wie mag. Het geluid is versleuteld; de server kan niet meeluisteren.</small>
+  <small style="margin-top:10px">Iedereen met de link kan meepraten, dus deel hem alleen met wie mag. Het geluid is versleuteld; de server kan niet meeluisteren en ziet ook geen namen. Max. 10 personen per kanaal.</small>
 </dialog>
 
 <script>
@@ -169,16 +169,31 @@ class Chan {
     this.connect();
   }
 
-  connect() {
+  // Names travel encrypted with the channel key, so the server can't read them either.
+  async seal(text) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, new TextEncoder().encode(text)));
+    return btoa(String.fromCharCode(...iv, ...ct)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  async open(s) {
+    try {
+      const b = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, this.key, b.slice(12)));
+    } catch { return 'Iemand'; }
+  }
+
+  async connect() {
     if (this.closed) return;
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ch/${this.room}?name=${encodeURIComponent(myName || 'Iemand')}`;
+    const name = await this.seal(myName || 'Iemand');
+    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ch/${this.room}?name=${name}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
     ws.onmessage = (e) => (typeof e.data === 'string' ? this.onState(JSON.parse(e.data)) : this.onAudio(e.data));
     ws.onclose = () => {
       clearInterval(this.ping);
       this.n = 0; this.you = 0; this.speaker = null; render();
-      if (!this.closed) setTimeout(() => this.connect(), 2000);
+      if (!this.closed) setTimeout(() => this.connect(), this.full ? 30000 : 2000);
     };
     ws.onopen = () => {
       this.ping = setInterval(() => ws.readyState === 1 && ws.send('ping'), 25000);
@@ -188,8 +203,13 @@ class Chan {
 
   send(m) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); }
 
-  onState(m) {
+  async onState(m) {
+    if (m.t === 'full') { this.full = true; render(); return; }
     if (m.t !== 'state') return;
+    this.full = false;
+    const seq = (this.seq = (this.seq || 0) + 1);
+    if (m.speaker) m.speaker = await this.open(m.speaker);
+    if (seq !== this.seq) return; // a newer state arrived while decrypting
     const wasTx = this.you === 'tx', wasSpeaker = this.speaker;
     Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker });
     if (!wasTx && m.you === 'tx') { beep([900, 1300]); navigator.vibrate?.(80); }       // your turn
@@ -276,6 +296,7 @@ function render() {
   else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
   else if (holding === c && c.you > 0) { st = `⏳ Wacht op je beurt (#${c.you})`; l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
+  else if (c.full) st = 'Kanaal vol (max 10)';
   else if (c.ws?.readyState !== 1) st = 'Verbinden…';
   else { st = c.n > 1 ? `${c.n} online` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
   if (muted && c) st = '🔇 ' + st;

@@ -86,6 +86,7 @@ async function api(request, env, route) {
 }
 
 const MAX_TURN_MS = 60000;
+const MAX_PEOPLE = 10;
 
 // One instance per channel. Holds who may talk (speaker) and who is waiting (queue), and relays
 // encrypted audio frames from the speaker to everyone else. It never has the key to decrypt them.
@@ -99,8 +100,16 @@ export class Channel extends DurableObject {
   }
 
   async fetch(request) {
-    const name = (new URL(request.url).searchParams.get('name') || 'Iemand').slice(0, 24);
+    // The name is encrypted by the clients; we only pass it along.
+    const raw = new URL(request.url).searchParams.get('name') || '';
+    const name = /^[A-Za-z0-9_-]{1,200}$/.test(raw) ? raw : 'x';
     const [client, server] = Object.values(new WebSocketPair());
+    if (this.sockets().length >= MAX_PEOPLE) {
+      server.accept();
+      server.send(JSON.stringify({ t: 'full' }));
+      server.close(4000, 'full');
+      return new Response(null, { status: 101, webSocket: client });
+    }
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name });
     this.broadcast();
