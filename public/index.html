@@ -19,6 +19,9 @@
   .led { position:absolute; left:34px; top:16px; width:30px; height:9px; border-radius:5px; background:#fff3e0; box-shadow:inset 0 1px 2px #0004; transition:.15s; }
   .led.on { background:#5f5; box-shadow:0 0 10px #5f5; }
   .led.tx { background:#f33; box-shadow:0 0 12px #f33; }
+  .led.rx { background:#ffd23f; box-shadow:0 0 12px #ffd23f; }
+  .led.wait { background:#f6a21a; animation:blink .6s infinite alternate; }
+  @keyframes blink { to { opacity:.3; } }
   .lcd { background:#111; border-radius:16px; padding:10px; box-shadow:inset 0 0 0 3px #2a2a2a; }
   .scr { background:#050505; border-radius:6px; padding:8px 12px; color:var(--seg); min-height:120px; position:relative; }
   .num { font:700 64px/1 "Courier New",monospace; letter-spacing:2px; display:flex; align-items:flex-end; gap:12px; }
@@ -27,7 +30,9 @@
   .bars { display:flex; gap:2px; height:10px; align-items:flex-end; }
   .bars i { width:4px; background:var(--seg); opacity:.15; } .bars i.a { opacity:1; }
   .st { font:12px ui-monospace,monospace; margin-top:14px; flex:none; color:#ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #chName { display:none; }
+  .num small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
+  .scr { cursor:pointer; }
+  .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
   .keys { display:flex; align-items:center; justify-content:space-between; margin:22px 12px 8px; }
   .k { border:0; background:none; color:var(--ink); font:900 44px/1 system-ui; width:64px; height:64px; padding:0; }
   .k:active { transform:scale(.9); }
@@ -40,73 +45,94 @@
       radial-gradient(circle,#c27612 2.2px,transparent 2.6px) 0 0/16px 16px;
     -webkit-mask:radial-gradient(ellipse 65% 60% at 50% 45%,#000 60%,#0008 75%,#0005); }
   .brand { text-align:center; font:900 italic 22px system-ui; letter-spacing:2px; color:var(--ink); margin-top:14px; flex:none; }
-  dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(92vw,360px); padding:20px; }
+  dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(94vw,400px); max-height:88dvh; padding:18px; }
   dialog::backdrop { background:#000b; }
-  dialog input { width:100%; padding:12px; border-radius:10px; border:1px solid #555; background:#111; color:#fff; font-size:16px; margin:8px 0; }
-  dialog button { padding:11px 14px; border-radius:10px; border:0; font-weight:700; margin-top:14px; flex:none; }
-  .prim { background:var(--or); color:#111; } .sec { background:#3d4145; color:#eee; }
+  dialog h3 { margin:0 0 10px; } dialog h4 { margin:16px 0 4px; font-size:14px; color:#bbb; }
+  dialog input { width:100%; padding:11px; border-radius:10px; border:1px solid #555; background:#111; color:#fff; font-size:16px; margin:4px 0; user-select:text; }
+  dialog button { padding:10px 12px; border-radius:10px; border:0; font-weight:700; }
+  .prim { background:var(--or); color:#111; } .sec { background:#3d4145; color:#eee; } .del { background:#5a2323; color:#fcc; }
   dialog small { color:#999; line-height:1.4; display:block; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .chs { list-style:none; padding:0; margin:0; }
+  .chs li { display:flex; gap:8px; align-items:center; padding:8px; border-radius:10px; background:#1b1d1f; margin:6px 0; }
+  .chs li.sel { outline:2px solid var(--or); }
+  .chs .nm { flex:1; min-width:0; } .chs .nm b { display:block; } .chs .nm span { font-size:12px; color:#999; }
+  .chs button { padding:8px 10px; font-size:12px; }
 </style>
 </head>
 <body>
 <div class="radio">
   <span class="led" id="led"></span>
-  <div class="lcd"><div class="scr">
+  <div class="lcd"><div class="scr" id="scr">
     <div class="ch"><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
     <div class="num"><span id="chNum">--</span><small id="chSub">OFF</small></div>
-    <div class="st" id="status">Druk op +</div>
-    <div id="chName"></div>
+    <div class="st" id="status">Tik hier voor kanalen</div>
+    <div class="hint">tik scherm = menu · −/+ = kanaal</div>
   </div></div>
   <div class="keys">
-    <button class="k" id="offBtn" aria-label="Uit">−</button>
+    <button class="k" id="prevBtn" aria-label="Vorig kanaal">−</button>
     <button id="ptt" disabled>PTT</button>
-    <button class="k" id="chBtn" aria-label="Kanaal">+</button>
+    <button class="k" id="nextBtn" aria-label="Volgend kanaal">+</button>
   </div>
   <div class="grille"></div>
   <div class="brand">WALKIE</div>
 </div>
 
 <dialog id="dlg">
-  <h3 style="margin-top:0">Privé kanaal</h3>
-  <small>Deel deze geheime code met één andere persoon (bijv. via WhatsApp). Wie de code heeft, kan meeluisteren — houd hem dus geheim.</small>
-  <input id="code" autocomplete="off" spellcheck="false" placeholder="geheime kanaalcode">
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <div class="row"><h3 style="flex:1">Kanalen</h3><button class="sec" id="closeBtn">Klaar</button></div>
+  <small>Je luistert naar alle kanalen tegelijk. PTT praat op het geselecteerde kanaal.</small>
+  <h4>Jouw naam</h4>
+  <input id="myName" maxlength="24" placeholder="bijv. Jeroen">
+  <ul class="chs" id="chList"></ul>
+  <h4>Kanaal toevoegen</h4>
+  <input id="newName" maxlength="24" placeholder="naam, bijv. Familie">
+  <input id="newCode" autocomplete="off" spellcheck="false" placeholder="geheime kanaalcode">
+  <div class="row" style="justify-content:space-between">
     <button class="sec" id="genBtn">Nieuwe code</button>
-    <button class="sec" id="shareBtn">Delen</button>
-    <button class="prim" id="joinBtn" style="margin-left:auto">Verbind</button>
+    <button class="prim" id="addBtn">Toevoegen</button>
   </div>
+  <small style="margin-top:10px">Deel de code alleen met wie mag meepraten. Het geluid wordt met de code versleuteld; de server kan niet meeluisteren.</small>
 </dialog>
 
-<audio id="remote" autoplay playsinline></audio>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script>
-// Walkie: P2P push-to-talk over WebRTC (DTLS-SRTP encrypted end-to-end).
-// The PeerJS server is only used for signaling; it sees a hash of the channel code, never audio.
+// Walkie: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
+// decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
+// channel code, so the server only ever sees a hash of the code and ciphertext.
 const $ = (id) => document.getElementById(id);
-const led = $('led'), status = $('status'), ptt = $('ptt'), remoteAudio = $('remote'), dlg = $('dlg');
+const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
+const RATE = 16000;
 
-let peer, call, conn, mic, channel, retryTimer, audioCtx, remoteTalking = false;
-// Default PeerJS STUN/TURN plus Google STUN, so it also works behind mobile-network NAT.
-const PEER_OPTS = { config: { iceServers: [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'turn:eu-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
-  { urls: 'turn:us-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
-] } };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
-const setStatus = (t) => (status.textContent = t);
+let cfgs = load('walkie-chs', []);
+const legacy = localStorage.getItem('walkie-ch');
+if (legacy && !cfgs.length) { cfgs = [{ name: 'Kanaal 1', code: legacy }]; localStorage.removeItem('walkie-ch'); save('walkie-chs', cfgs); }
+let sel = Math.min(load('walkie-sel', 0), Math.max(cfgs.length - 1, 0));
+let myName = localStorage.getItem('walkie-name') || '';
+const chans = new Map(); // code -> Chan
+
+let audioCtx, mic, micNode, micStopTimer, holding = null; // holding: Chan PTT is held on
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('walkie:' + text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+const hexBytes = (h) => Uint8Array.from(h.match(/../g), (x) => parseInt(x, 16));
+
+function ctx() {
+  audioCtx ||= new AudioContext();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
 
 function beep(freqs) {
-  audioCtx ||= new AudioContext();
-  let t = audioCtx.currentTime;
+  const a = ctx();
+  let t = a.currentTime;
   for (const f of freqs) {
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    const o = a.createOscillator(), g = a.createGain();
     o.frequency.value = f; g.gain.value = 0.08;
-    o.connect(g).connect(audioCtx.destination);
+    o.connect(g).connect(a.destination);
     o.start(t); o.stop(t + 0.07); t += 0.08;
   }
 }
@@ -117,193 +143,259 @@ function genCode() {
   return `${words[r[0] % words.length]}-${words[r[1] % words.length]}-${(r[2] % 1e6).toString().padStart(6, '0')}`;
 }
 
-let linked = false;
-function setLinked(on) {
-  linked = on;
-  led.className = on ? 'led on' : 'led';
-  ptt.disabled = !channel; // when not linked, PTT sends a ring notification instead
-  document.querySelectorAll('#bars i').forEach((b) => b.classList.toggle('a', on));
-  setStatus(on ? 'Verbonden ✓' : channel ? 'Wachten… PTT = oproepen' : 'Druk op +');
-}
-
-function hangup() {
-  clearTimeout(retryTimer);
-  call?.close(); conn?.close(); peer?.destroy();
-  call = conn = peer = null;
-  remoteTalking = false;
-}
-
-function wireConn(c) {
-  conn = c;
-  c.on('data', (d) => {
-    remoteTalking = !!d.talk;
-    if (d.talk) { led.className = 'led tx'; setStatus('◀ Ontvangen…'); }
-    else { setLinked(true); beep([1200, 900]); }
-  });
-  c.on('close', reconnect);
-}
-
-function wireCall(c) {
-  call = c;
-  setStatus('Verbinden…');
-  c.on('stream', (s) => { remoteAudio.srcObject = s; remoteAudio.play().catch(() => {}); });
-  // 'stream' fires before the audio path is up; only report linked once ICE actually connects.
-  const pc = c.peerConnection;
-  pc?.addEventListener('iceconnectionstatechange', () => {
-    const st = pc.iceConnectionState;
-    if (st === 'connected' || st === 'completed') { setLinked(true); beep([900, 1200]); }
-    else if (st === 'failed') { setStatus('Geen verbinding mogelijk'); reconnect(); }
-    else if (st === 'disconnected') setStatus('Verbinding hapert…');
-  });
-  c.on('close', reconnect);
-  c.on('error', reconnect);
-}
-
-function reconnect() {
-  if (!channel) return;
-  setLinked(false);
-  hangup();
-  retryTimer = setTimeout(() => join(channel), 3000);
-}
-
-// Only one window per device may hold the channel (installed app + browser tab share storage),
-// otherwise one phone takes both slots and the other side sees "full".
-const tabs = 'BroadcastChannel' in window ? new BroadcastChannel('walkie') : null;
-if (tabs) tabs.onmessage = (e) => {
-  if (e.data !== 'takeover' || !channel) return;
-  channel = null; hangup(); setLinked(false);
-  setStatus('Actief in ander venster');
-};
-
-async function join(code) {
-  hangup();
-  tabs?.postMessage('takeover');
-  channel = code;
-  localStorage.setItem('walkie-ch', code);
-  setStatus('Verbinden…');
-  if (!mic) {
-    try {
-      mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-    } catch { setStatus('Microfoon geweigerd'); return; }
+class Chan {
+  constructor(cfg) {
+    this.cfg = cfg; this.n = 0; this.you = 0; this.speaker = null; this.ws = null; this.next = 0; this.closed = false;
+    this.ready = this.init();
   }
-  mic.getAudioTracks().forEach((t) => (t.enabled = false));
 
-  const h = (await sha256(code)).slice(0, 40);
-  $('chNum').textContent = String(parseInt(h.slice(0, 4), 16) % 100).padStart(2, '0');
-  $('chSub').textContent = 'CH';
-  setupPush(code);
-  const idA = `wt-${h}-a`, idB = `wt-${h}-b`;
+  async init() {
+    this.room = (await sha256(this.cfg.code)).slice(0, 40);
+    this.key = await crypto.subtle.importKey('raw', hexBytes(await sha256('key:' + this.cfg.code)), 'AES-GCM', false, ['encrypt', 'decrypt']);
+    setupPush(this.cfg.code);
+    this.connect();
+  }
 
-  // First to arrive claims slot A and waits; the second takes slot B and calls A.
-  const p = new Peer(idA, PEER_OPTS);
-  peer = p;
-  p.on('open', () => setLinked(false));
-  p.on('call', (c) => {
-    if (c.peer !== idB) return c.close();
-    call?.close();
-    c.answer(mic);
-    wireCall(c);
-  });
-  p.on('connection', (c) => { if (c.peer === idB) wireConn(c); else c.close(); });
-  p.on('error', (e) => {
-    if (e.type === 'unavailable-id' && peer === p) {
-      p.destroy();
-      const q = new Peer(idB, PEER_OPTS);
-      peer = q;
-      q.on('open', () => { wireCall(q.call(idA, mic)); wireConn(q.connect(idA, { reliable: true })); });
-      q.on('error', (e2) => {
-        if (e2.type === 'unavailable-id') {
-          // Slots can stay reserved for a little while after someone leaves; keep trying.
-          setStatus('Kanaal bezet, opnieuw proberen…');
-          q.destroy();
-          retryTimer = setTimeout(() => join(channel), 5000);
-        } else reconnect();
-      });
-    } else if (e.type !== 'peer-unavailable') {
-      setStatus('Fout: ' + e.type);
-      reconnect();
+  connect() {
+    if (this.closed) return;
+    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ch/${this.room}?name=${encodeURIComponent(myName || 'Iemand')}`;
+    const ws = (this.ws = new WebSocket(url));
+    ws.binaryType = 'arraybuffer';
+    ws.onmessage = (e) => (typeof e.data === 'string' ? this.onState(JSON.parse(e.data)) : this.onAudio(e.data));
+    ws.onclose = () => {
+      clearInterval(this.ping);
+      this.n = 0; this.you = 0; this.speaker = null; render();
+      if (!this.closed) setTimeout(() => this.connect(), 2000);
+    };
+    ws.onopen = () => {
+      this.ping = setInterval(() => ws.readyState === 1 && ws.send('ping'), 25000);
+      if (holding === this) this.send({ t: 'req' });
+    };
+  }
+
+  send(m) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); }
+
+  onState(m) {
+    if (m.t !== 'state') return;
+    const wasTx = this.you === 'tx', wasSpeaker = this.speaker;
+    Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker });
+    if (!wasTx && m.you === 'tx') { beep([900, 1300]); navigator.vibrate?.(80); }       // your turn
+    if (wasSpeaker && !m.speaker && holding !== this) beep([1200, 900]);                // roger beep
+    if (!wasSpeaker && m.speaker) { this.next = 0; }
+    render();
+  }
+
+  async onAudio(buf) {
+    if (holding || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
+    let pcm;
+    try { pcm = new Int16Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, this.key, new Uint8Array(buf, 12))); }
+    catch { return; }
+    const b = audioCtx.createBuffer(1, pcm.length, RATE), d = b.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768;
+    const src = audioCtx.createBufferSource();
+    src.buffer = b; src.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if (this.next < now) this.next = now + 0.15; // small jitter buffer
+    src.start(this.next);
+    this.next += b.duration;
+  }
+
+  async sendAudio(f32, inRate) {
+    const ratio = inRate / RATE, out = new Int16Array(Math.floor(f32.length / ratio));
+    for (let i = 0; i < out.length; i++) {
+      let s = 0, a = Math.floor(i * ratio), z = Math.floor((i + 1) * ratio);
+      for (let j = a; j < z; j++) s += f32[j];
+      out[i] = Math.max(-1, Math.min(1, s / (z - a))) * 32767;
     }
-  });
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, out.buffer);
+    const msg = new Uint8Array(12 + ct.byteLength);
+    msg.set(iv); msg.set(new Uint8Array(ct), 12);
+    if (this.ws?.readyState === 1) this.ws.send(msg);
+  }
+
+  close() { this.closed = true; this.ws?.close(); }
 }
 
-// Mobile browsers block audio until a tap; retry playback on every interaction.
-function unlockAudio() {
-  remoteAudio.play().catch(() => {});
-  audioCtx ||= new AudioContext();
-  audioCtx.resume();
-}
-document.addEventListener('pointerdown', unlockAudio);
-
-// --- Push "ring": notify the partner when their app is closed (needs the Cloudflare /api functions).
-const clientId = localStorage.getItem('walkie-id') || crypto.randomUUID().replace(/-/g, '');
-localStorage.setItem('walkie-id', clientId);
-let pushCh = null, lastRing = 0;
-
-async function setupPush(code) {
-  pushCh = (await sha256(code + ':push')).slice(0, 40);
+async function ensureMic() {
+  clearTimeout(micStopTimer);
+  if (mic) return true;
   try {
-    if (Notification.permission !== 'granted') return;
-    const reg = await navigator.serviceWorker.ready;
-    const { key } = await (await fetch('api/vapid')).json();
-    const appKey = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
-    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey }));
-    await fetch('api/subscribe', { method: 'POST', body: JSON.stringify({ ch: pushCh, id: clientId, sub }) });
-  } catch { /* no push support or no backend (e.g. GitHub Pages) */ }
+    mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  } catch { status.textContent = 'Microfoon geweigerd'; return false; }
+  const a = ctx(), src = a.createMediaStreamSource(mic);
+  micNode = a.createScriptProcessor(2048, 1, 1);
+  micNode.onaudioprocess = (e) => {
+    if (holding && holding.you === 'tx') holding.sendAudio(e.inputBuffer.getChannelData(0).slice(), a.sampleRate);
+  };
+  const mute = a.createGain(); mute.gain.value = 0;
+  src.connect(micNode).connect(mute).connect(a.destination);
+  return true;
 }
 
-async function ring() {
-  if (!pushCh || Date.now() - lastRing < 15000) return;
-  lastRing = Date.now();
-  navigator.vibrate?.(60);
-  setStatus('📣 Oproepen…');
-  try {
-    const { sent } = await (await fetch('api/ring', { method: 'POST', body: JSON.stringify({ ch: pushCh, id: clientId }) })).json();
-    if (!linked) setStatus(sent ? '📣 Partner opgeroepen' : 'Partner heeft geen meldingen aan');
-  } catch { if (!linked) setStatus('Oproepen niet beschikbaar'); }
+function releaseMicSoon() {
+  clearTimeout(micStopTimer);
+  micStopTimer = setTimeout(() => {
+    mic?.getTracks().forEach((t) => t.stop()); micNode?.disconnect(); mic = micNode = null;
+  }, 20000);
 }
 
-function talk(on) {
-  if (ptt.disabled) return;
-  if (!linked) { if (on) ring(); return; }
-  if (!mic) return;
-  if (on && remoteTalking) { navigator.vibrate?.([40, 40, 40]); return; } // other side is talking
-  if (!on && !ptt.classList.contains('down')) return;
-  // Half-duplex like a real walkie: mute the speaker while sending, so it can't echo back.
-  remoteAudio.muted = on;
-  mic.getAudioTracks().forEach((t) => (t.enabled = on));
-  ptt.classList.toggle('down', on);
-  led.className = on ? 'led tx' : 'led on';
-  setStatus(on ? '▶ Zenden…' : 'Verbonden ✓');
-  if (conn?.open) conn.send({ talk: on });
-  if (on) navigator.vibrate?.(30); else beep([1500]);
+function syncChannels() {
+  for (const [code, c] of chans) if (!cfgs.some((x) => x.code === code)) { c.close(); chans.delete(code); }
+  for (const cfg of cfgs) { if (chans.has(cfg.code)) chans.get(cfg.code).cfg = cfg; else chans.set(cfg.code, new Chan(cfg)); }
+  if (sel >= cfgs.length) sel = Math.max(cfgs.length - 1, 0);
+  save('walkie-chs', cfgs); save('walkie-sel', sel);
+  render();
 }
 
-ptt.addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); ptt.setPointerCapture(e.pointerId); talk(true); });
-['pointerup', 'pointercancel'].forEach((ev) => ptt.addEventListener(ev, () => talk(false)));
+const current = () => cfgs[sel] && chans.get(cfgs[sel].code);
+
+function render() {
+  const c = current();
+  ptt.disabled = !c;
+  $('chNum').textContent = c ? String(sel + 1).padStart(2, '0') : '--';
+  $('chSub').textContent = c ? c.cfg.name : 'OFF';
+  document.querySelectorAll('#bars i').forEach((b, i) => b.classList.toggle('a', !!c && c.n > i));
+  // Someone talking on any channel?
+  const rx = [...chans.values()].find((x) => x.speaker);
+  let st, l = '';
+  if (!c) st = 'Tik hier om een kanaal toe te voegen';
+  else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
+  else if (holding === c && c.you > 0) { st = `⏳ Wacht op je beurt (#${c.you})`; l = 'wait'; }
+  else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
+  else if (c.ws?.readyState !== 1) st = 'Verbinden…';
+  else { st = c.n > 1 ? `${c.n} online` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
+  status.textContent = st;
+  led.className = 'led ' + l;
+}
+
+async function pttDown() {
+  const c = current();
+  if (!c || holding) return;
+  ctx();
+  if (c.n <= 1) return ring(c);
+  holding = c;
+  render();
+  if (!(await ensureMic()) || holding !== c) { if (holding === c) pttUp(); return; }
+  navigator.vibrate?.(30);
+  c.send({ t: 'req' });
+}
+
+function pttUp() {
+  const c = holding;
+  if (!c) return;
+  holding = null;
+  c.send({ t: 'rel' });
+  if (c.you === 'tx') beep([1500]);
+  c.you = 0;
+  ptt.classList.remove('down');
+  releaseMicSoon();
+  render();
+}
+
+ptt.addEventListener('pointerdown', (e) => { e.preventDefault(); ptt.setPointerCapture(e.pointerId); ptt.classList.add('down'); pttDown(); });
+['pointerup', 'pointercancel'].forEach((ev) => ptt.addEventListener(ev, () => { ptt.classList.remove('down'); pttUp(); }));
 ptt.addEventListener('contextmenu', (e) => e.preventDefault());
 
-$('chBtn').onclick = () => { $('code').value = channel || genCode(); dlg.showModal(); };
-$('genBtn').onclick = () => ($('code').value = genCode());
-$('shareBtn').onclick = () => {
-  const text = `Mijn walkie-kanaal: ${$('code').value}`;
-  if (navigator.share) navigator.share({ text }).catch(() => {});
-  else navigator.clipboard.writeText($('code').value).then(() => alert('Gekopieerd'));
-};
-$('joinBtn').onclick = () => {
-  const c = $('code').value.trim();
-  if (c.length < 6) return alert('Code moet minstens 6 tekens zijn');
-  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(c));
-  dlg.close();
-  join(c);
-};
-$('offBtn').onclick = () => {
-  channel = null; hangup(); localStorage.removeItem('walkie-ch');
-  mic?.getTracks().forEach((t) => t.stop()); mic = null;
-  $('chNum').textContent = '--'; $('chSub').textContent = 'OFF'; setLinked(false);
+// Mobile browsers block audio until a tap.
+document.addEventListener('pointerdown', () => ctx(), { capture: true });
+
+$('prevBtn').onclick = () => { if (cfgs.length && !holding) { sel = (sel - 1 + cfgs.length) % cfgs.length; save('walkie-sel', sel); beep([700]); render(); } };
+$('nextBtn').onclick = () => { if (cfgs.length && !holding) { sel = (sel + 1) % cfgs.length; save('walkie-sel', sel); beep([1000]); render(); } };
+
+// --- Menu
+function renderList() {
+  const ul = $('chList');
+  ul.innerHTML = '';
+  cfgs.forEach((cfg, i) => {
+    const li = document.createElement('li');
+    li.className = i === sel ? 'sel' : '';
+    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share">Delen</button><button class="del" data-a="del">✕</button>`;
+    li.querySelector('b').textContent = `${String(i + 1).padStart(2, '0')} · ${cfg.name}`;
+    li.querySelector('span').textContent = cfg.code;
+    li.onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'share') {
+        const text = `Kom op mijn walkie-kanaal "${cfg.name}": ${location.origin}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
+        if (navigator.share) navigator.share({ text }).catch(() => {}); else navigator.clipboard.writeText(text).then(() => alert('Gekopieerd'));
+      } else if (a === 'del') {
+        if (confirm(`Kanaal "${cfg.name}" verwijderen?`)) { cfgs.splice(i, 1); syncChannels(); renderList(); }
+      } else { sel = i; syncChannels(); renderList(); }
+    };
+    ul.appendChild(li);
+  });
+}
+
+function addChannel(name, code) {
+  if (code.length < 6) return alert('Code moet minstens 6 tekens zijn');
+  const i = cfgs.findIndex((c) => c.code === code);
+  if (i >= 0) sel = i; else { cfgs.push({ name: name || `Kanaal ${cfgs.length + 1}`, code }); sel = cfgs.length - 1; }
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(code));
+  syncChannels();
+}
+
+$('scr').onclick = () => { $('myName').value = myName; $('newCode').value = genCode(); $('newName').value = ''; renderList(); dlg.showModal(); };
+$('closeBtn').onclick = () => dlg.close();
+$('genBtn').onclick = () => ($('newCode').value = genCode());
+$('addBtn').onclick = () => { addChannel($('newName').value.trim(), $('newCode').value.trim()); renderList(); $('newCode').value = genCode(); $('newName').value = ''; };
+$('myName').onchange = () => {
+  myName = $('myName').value.trim();
+  localStorage.setItem('walkie-name', myName);
+  for (const c of chans.values()) c.ws?.close(); // reconnect with new name
 };
 
-const saved = localStorage.getItem('walkie-ch');
-if (saved) join(saved);
+// Shared invite link: /#join=<name>|<code>
+const join = location.hash.match(/^#join=([^|]*)\|(.+)$/);
+if (join) {
+  history.replaceState(null, '', location.pathname);
+  const [name, code] = [decodeURIComponent(join[1]), decodeURIComponent(join[2])];
+  if (confirm(`Kanaal "${name}" toevoegen?`)) addChannel(name, code);
+}
+
+// --- Push "ring": notify channel members whose app is closed.
+const clientId = localStorage.getItem('walkie-id') || crypto.randomUUID().replace(/-/g, '');
+localStorage.setItem('walkie-id', clientId);
+let lastRing = 0;
+
+async function setupPush(code) {
+  try {
+    if (Notification.permission !== 'granted') return;
+    const ch = (await sha256(code + ':push')).slice(0, 40);
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await (await fetch('/api/vapid')).json();
+    const appKey = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey }));
+    await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify({ ch, id: clientId, sub }) });
+  } catch { /* no push support */ }
+}
+
+async function ring(c) {
+  if (Date.now() - lastRing < 15000) return;
+  lastRing = Date.now();
+  navigator.vibrate?.(60);
+  status.textContent = '📣 Oproepen…';
+  try {
+    const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
+    const { sent } = await (await fetch('/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
+    status.textContent = sent ? `📣 ${sent} opgeroepen` : 'Niemand heeft meldingen aan';
+  } catch { status.textContent = 'Oproepen niet beschikbaar'; }
+  setTimeout(render, 3000);
+}
+
+// Only one window per device may be active (installed app + browser tab share storage).
+const tabs = 'BroadcastChannel' in window ? new BroadcastChannel('walkie') : null;
+if (tabs) {
+  tabs.postMessage('takeover');
+  tabs.onmessage = (e) => {
+    if (e.data !== 'takeover') return;
+    for (const c of chans.values()) c.close();
+    chans.clear(); cfgs = []; render();
+    status.textContent = 'Actief in ander venster';
+  };
+}
+
+syncChannels();
+if (!myName) setTimeout(() => $('scr').click(), 300);
 
 if (location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

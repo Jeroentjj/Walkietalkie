@@ -1,5 +1,5 @@
 // Minimal offline shell so Android offers "Install app".
-const CACHE = 'walkie-v2';
+const CACHE = 'walkie-v3';
 const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))));
@@ -14,7 +14,7 @@ self.addEventListener('fetch', (e) => {
 // Ring from the partner (payload-less push, see functions/api).
 self.addEventListener('push', (e) =>
   e.waitUntil(self.registration.showNotification('📻 Walkie', {
-    body: 'Je partner roept je op!',
+    body: 'Je wordt opgeroepen op je walkie!',
     icon: 'icon.svg',
     tag: 'walkie-ring',
     renotify: true,
