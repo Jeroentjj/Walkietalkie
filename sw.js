@@ -1,5 +1,5 @@
 // Minimal offline shell so Android offers "Install app".
-const CACHE = 'walkie-v1';
+const CACHE = 'walkie-v2';
 const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))));
@@ -9,4 +9,20 @@ self.addEventListener('activate', (e) =>
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+});
+
+// Ring from the partner (payload-less push, see functions/api).
+self.addEventListener('push', (e) =>
+  e.waitUntil(self.registration.showNotification('📻 Walkie', {
+    body: 'Je partner roept je op!',
+    icon: 'icon.svg',
+    tag: 'walkie-ring',
+    renotify: true,
+    vibrate: [200, 100, 200],
+  }))
+);
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ws) =>
+    ws.length ? ws[0].focus() : clients.openWindow('./')));
 });

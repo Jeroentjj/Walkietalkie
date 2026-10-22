@@ -117,11 +117,13 @@ function genCode() {
   return `${words[r[0] % words.length]}-${words[r[1] % words.length]}-${(r[2] % 1e6).toString().padStart(6, '0')}`;
 }
 
+let linked = false;
 function setLinked(on) {
+  linked = on;
   led.className = on ? 'led on' : 'led';
-  ptt.disabled = !on;
+  ptt.disabled = !channel; // when not linked, PTT sends a ring notification instead
   document.querySelectorAll('#bars i').forEach((b) => b.classList.toggle('a', on));
-  setStatus(on ? 'Verbonden ✓' : channel ? 'Wachten op partner…' : 'Druk op +');
+  setStatus(on ? 'Verbonden ✓' : channel ? 'Wachten… PTT = oproepen' : 'Druk op +');
 }
 
 function hangup() {
@@ -189,6 +191,7 @@ async function join(code) {
   const h = (await sha256(code)).slice(0, 40);
   $('chNum').textContent = String(parseInt(h.slice(0, 4), 16) % 100).padStart(2, '0');
   $('chSub').textContent = 'CH';
+  setupPush(code);
   const idA = `wt-${h}-a`, idB = `wt-${h}-b`;
 
   // First to arrive claims slot A and waits; the second takes slot B and calls A.
@@ -231,8 +234,38 @@ function unlockAudio() {
 }
 document.addEventListener('pointerdown', unlockAudio);
 
+// --- Push "ring": notify the partner when their app is closed (needs the Cloudflare /api functions).
+const clientId = localStorage.getItem('walkie-id') || crypto.randomUUID().replace(/-/g, '');
+localStorage.setItem('walkie-id', clientId);
+let pushCh = null, lastRing = 0;
+
+async function setupPush(code) {
+  pushCh = (await sha256(code + ':push')).slice(0, 40);
+  try {
+    if (Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await (await fetch('api/vapid')).json();
+    const appKey = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey }));
+    await fetch('api/subscribe', { method: 'POST', body: JSON.stringify({ ch: pushCh, id: clientId, sub }) });
+  } catch { /* no push support or no backend (e.g. GitHub Pages) */ }
+}
+
+async function ring() {
+  if (!pushCh || Date.now() - lastRing < 15000) return;
+  lastRing = Date.now();
+  navigator.vibrate?.(60);
+  setStatus('📣 Oproepen…');
+  try {
+    const { sent } = await (await fetch('api/ring', { method: 'POST', body: JSON.stringify({ ch: pushCh, id: clientId }) })).json();
+    if (!linked) setStatus(sent ? '📣 Partner opgeroepen' : 'Partner heeft geen meldingen aan');
+  } catch { if (!linked) setStatus('Oproepen niet beschikbaar'); }
+}
+
 function talk(on) {
-  if (ptt.disabled || !mic) return;
+  if (ptt.disabled) return;
+  if (!linked) { if (on) ring(); return; }
+  if (!mic) return;
   if (on && remoteTalking) { navigator.vibrate?.([40, 40, 40]); return; } // other side is talking
   if (!on && !ptt.classList.contains('down')) return;
   // Half-duplex like a real walkie: mute the speaker while sending, so it can't echo back.
@@ -259,6 +292,7 @@ $('shareBtn').onclick = () => {
 $('joinBtn').onclick = () => {
   const c = $('code').value.trim();
   if (c.length < 6) return alert('Code moet minstens 6 tekens zijn');
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(c));
   dlg.close();
   join(c);
 };
