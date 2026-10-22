@@ -9,7 +9,7 @@ Installeerbare webapp (PWA) om met één andere persoon als walkietalkie te prat
 ## Hoe werkt het
 - Audio gaat peer-to-peer via WebRTC, standaard end-to-end versleuteld (DTLS-SRTP).
 - De gratis PeerJS-server regelt alleen het "elkaar vinden". Die ziet alleen een SHA-256-hash van de kanaalcode, nooit de code of de audio.
-- Maximaal 2 personen per kanaal.
+- Maximaal 2 personen per kanaal. Per telefoon is maar één venster tegelijk actief.
 
 ## Installeren op Android
 Host de map via HTTPS (bijv. GitHub Pages), open hem in Chrome en kies **App installeren / Toevoegen aan startscherm**.

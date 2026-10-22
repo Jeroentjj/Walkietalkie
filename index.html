@@ -161,11 +161,21 @@ function reconnect() {
   if (!channel) return;
   setLinked(false);
   hangup();
-  retryTimer = setTimeout(() => join(channel), 1500);
+  retryTimer = setTimeout(() => join(channel), 3000);
 }
+
+// Only one window per device may hold the channel (installed app + browser tab share storage),
+// otherwise one phone takes both slots and the other side sees "full".
+const tabs = 'BroadcastChannel' in window ? new BroadcastChannel('walkie') : null;
+if (tabs) tabs.onmessage = (e) => {
+  if (e.data !== 'takeover' || !channel) return;
+  channel = null; hangup(); setLinked(false);
+  setStatus('Actief in ander venster');
+};
 
 async function join(code) {
   hangup();
+  tabs?.postMessage('takeover');
   channel = code;
   localStorage.setItem('walkie-ch', code);
   setStatus('Verbinden…');
@@ -199,8 +209,12 @@ async function join(code) {
       peer = q;
       q.on('open', () => { wireCall(q.call(idA, mic)); wireConn(q.connect(idA, { reliable: true })); });
       q.on('error', (e2) => {
-        if (e2.type === 'unavailable-id') setStatus('Kanaal is vol (max 2)');
-        else reconnect();
+        if (e2.type === 'unavailable-id') {
+          // Slots can stay reserved for a little while after someone leaves; keep trying.
+          setStatus('Kanaal bezet, opnieuw proberen…');
+          q.destroy();
+          retryTimer = setTimeout(() => join(channel), 5000);
+        } else reconnect();
       });
     } else if (e.type !== 'peer-unavailable') {
       setStatus('Fout: ' + e.type);
