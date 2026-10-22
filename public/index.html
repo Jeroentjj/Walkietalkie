@@ -124,6 +124,7 @@
     <button class="prim" id="createBtn" style="white-space:nowrap">Maak &amp; deel</button>
   </div>
   <small>Je krijgt een uitnodigingslink om te versturen. Wie erop tikt, zit direct in het kanaal.</small>
+  <button class="sec" id="testBtn" style="margin-top:8px">🎙 Testkanaal toevoegen (hoor jezelf terug)</button>
   <h4>Uitnodiging gekregen?</h4>
   <div class="row">
     <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="plak hier de link">
@@ -316,6 +317,29 @@ class Chan {
   close() { this.closed = true; this.ws?.close(); }
 }
 
+// Local echo channel: records while PTT is held, then plays it back through the radio effect.
+class TestChan {
+  constructor(cfg) { this.cfg = cfg; this.n = 2; this.you = 0; this.speaker = null; this.ws = { readyState: 1 }; this.rec = []; }
+  send(m) {
+    if (m.t === 'req') { this.rec = []; this.you = 'tx'; beep([900, 1300]); navigator.vibrate?.(80); render(); }
+    if (m.t === 'rel') setTimeout(() => this.play(), 400);
+  }
+  sendAudio(f32, rate) { this.rec.push({ f32, rate }); }
+  play() {
+    if (!this.rec.length || !audioCtx) return;
+    const a = audioCtx, start = a.currentTime + 0.15;
+    let t = start;
+    this.speaker = 'Echo'; render(); squelch(0.12);
+    for (const { f32, rate } of this.rec) {
+      const b = a.createBuffer(1, f32.length, rate); b.copyToChannel(f32, 0);
+      const s = a.createBufferSource(); s.buffer = b; s.connect(muted ? a.createGain() : radioIn()); s.start(t); t += b.duration;
+    }
+    this.rec = [];
+    setTimeout(() => { this.speaker = null; squelch(0.3); beep([1200, 900]); render(); }, (t - a.currentTime) * 1000);
+  }
+  close() {}
+}
+
 async function ensureMic() {
   clearTimeout(micStopTimer);
   if (mic) return true;
@@ -341,7 +365,7 @@ function releaseMicSoon() {
 
 function syncChannels() {
   for (const [code, c] of chans) if (!cfgs.some((x) => x.code === code)) { c.close(); chans.delete(code); }
-  for (const cfg of cfgs) { if (chans.has(cfg.code)) chans.get(cfg.code).cfg = cfg; else chans.set(cfg.code, new Chan(cfg)); }
+  for (const cfg of cfgs) { if (chans.has(cfg.code)) chans.get(cfg.code).cfg = cfg; else chans.set(cfg.code, cfg.test ? new TestChan(cfg) : new Chan(cfg)); }
   if (sel >= cfgs.length) sel = Math.max(cfgs.length - 1, 0);
   save('walkie-chs', cfgs); save('walkie-sel', sel);
   render();
@@ -364,6 +388,7 @@ function render() {
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
   else if (c.full) st = 'Kanaal vol (max 10)';
   else if (c.ws?.readyState !== 1) st = 'Verbinden…';
+  else if (c.cfg.test) { st = 'Test: PTT = hoor jezelf'; l = 'on'; }
   else { st = c.n > 1 ? `${c.n} online` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
   if (muted && c) st = '🔇 ' + st;
   status.textContent = st;
@@ -412,7 +437,7 @@ function renderList() {
   cfgs.forEach((cfg, i) => {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
-    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share">Delen</button><button class="del" data-a="del">✕</button>`;
+    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share" ${cfg.test ? 'hidden' : ''}>Delen</button><button class="del" data-a="del">✕</button>`;
     li.querySelector('b').textContent = `${String(i + 1).padStart(2, '0')} · ${cfg.name}`;
     li.querySelector('span').textContent = i === sel ? 'PTT praat hier' : 'luistert mee';
     li.onclick = (e) => {
@@ -461,6 +486,11 @@ $('muteBtn').onclick = () => { muted = !muted; localStorage.setItem('walkie-mute
 renderMute();
 
 $('closeBtn').onclick = () => dlg.close();
+$('testBtn').onclick = () => {
+  const i = cfgs.findIndex((c) => c.test);
+  if (i >= 0) sel = i; else { cfgs.push({ name: 'Test', code: 'test-echo', test: true }); sel = cfgs.length - 1; }
+  syncChannels(); renderList();
+};
 $('createBtn').onclick = () => {
   addChannel($('newName').value.trim(), genCode());
   $('newName').value = '';
