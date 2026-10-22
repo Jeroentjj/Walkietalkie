@@ -1,4 +1,4 @@
-// Cloudflare Pages Function: Web Push "ring" for Walkie.
+// Cloudflare Worker: serves the static app from public/ and a Web Push "ring" API.
 // Needs one KV namespace bound as WALKIE. VAPID keys are generated on first use and kept in KV.
 //   GET  /api/vapid      -> { key }            public key for pushManager.subscribe
 //   POST /api/subscribe  { ch, id, sub }       remember this device's push subscription for a channel
@@ -32,8 +32,15 @@ async function vapidHeader(endpoint, keys) {
   return `vapid t=${unsigned}.${b64u(sig)}, k=${keys.pub}`;
 }
 
-export async function onRequest({ request, env, params }) {
-  const route = (params.route || []).join('/');
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    return api(request, env, url.pathname.slice(5));
+  },
+};
+
+async function api(request, env, route) {
   if (!env.WALKIE) return json({ error: 'KV binding WALKIE missing' }, 500);
 
   if (route === 'vapid' && request.method === 'GET') return json({ key: (await vapidKeys(env)).pub });
