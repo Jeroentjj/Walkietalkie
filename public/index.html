@@ -53,6 +53,7 @@
   .prim { background:var(--or); color:#111; } .sec { background:#3d4145; color:#eee; } .del { background:#5a2323; color:#fcc; }
   dialog small { color:#999; line-height:1.4; display:block; }
   .row { display:flex; gap:8px; align-items:center; }
+  .row input { flex:1; min-width:0; }
   .chs { list-style:none; padding:0; margin:0; }
   .chs li { display:flex; gap:8px; align-items:center; padding:8px; border-radius:10px; background:#1b1d1f; margin:6px 0; }
   .chs li.sel { outline:2px solid var(--or); }
@@ -84,14 +85,18 @@
   <h4>Jouw naam</h4>
   <input id="myName" maxlength="24" placeholder="bijv. Jeroen">
   <ul class="chs" id="chList"></ul>
-  <h4>Kanaal toevoegen</h4>
-  <input id="newName" maxlength="24" placeholder="naam, bijv. Familie">
-  <input id="newCode" autocomplete="off" spellcheck="false" placeholder="geheime kanaalcode">
-  <div class="row" style="justify-content:space-between">
-    <button class="sec" id="genBtn">Nieuwe code</button>
-    <button class="prim" id="addBtn">Toevoegen</button>
+  <h4>Nieuw kanaal starten</h4>
+  <div class="row">
+    <input id="newName" maxlength="24" placeholder="naam, bijv. Familie">
+    <button class="prim" id="createBtn" style="white-space:nowrap">Maak &amp; deel</button>
   </div>
-  <small style="margin-top:10px">Deel de code alleen met wie mag meepraten. Het geluid wordt met de code versleuteld; de server kan niet meeluisteren.</small>
+  <small>Je krijgt een uitnodigingslink om te versturen. Wie erop tikt, zit direct in het kanaal.</small>
+  <h4>Uitnodiging gekregen?</h4>
+  <div class="row">
+    <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="plak hier de link">
+    <button class="prim" id="joinBtn">Doe mee</button>
+  </div>
+  <small style="margin-top:10px">Iedereen met de link kan meepraten, dus deel hem alleen met wie mag. Het geluid is versleuteld; de server kan niet meeluisteren.</small>
 </dialog>
 
 <script>
@@ -312,13 +317,11 @@ function renderList() {
     li.className = i === sel ? 'sel' : '';
     li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share">Delen</button><button class="del" data-a="del">✕</button>`;
     li.querySelector('b').textContent = `${String(i + 1).padStart(2, '0')} · ${cfg.name}`;
-    li.querySelector('span').textContent = cfg.code;
+    li.querySelector('span').textContent = i === sel ? 'PTT praat hier' : 'luistert mee';
     li.onclick = (e) => {
       const a = e.target.dataset.a;
-      if (a === 'share') {
-        const text = `Kom op mijn walkie-kanaal "${cfg.name}": ${location.origin}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
-        if (navigator.share) navigator.share({ text }).catch(() => {}); else navigator.clipboard.writeText(text).then(() => alert('Gekopieerd'));
-      } else if (a === 'del') {
+      if (a === 'share') share(cfg);
+      else if (a === 'del') {
         if (confirm(`Kanaal "${cfg.name}" verwijderen?`)) { cfgs.splice(i, 1); syncChannels(); renderList(); }
       } else { sel = i; syncChannels(); renderList(); }
     };
@@ -334,10 +337,36 @@ function addChannel(name, code) {
   syncChannels();
 }
 
-$('scr').onclick = () => { $('myName').value = myName; $('newCode').value = genCode(); $('newName').value = ''; renderList(); dlg.showModal(); };
+const inviteLink = (cfg) => `${location.origin}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
+
+function share(cfg) {
+  const url = inviteLink(cfg), text = `📻 Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`;
+  if (navigator.share) navigator.share({ text, url }).catch(() => {});
+  else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert('Link gekopieerd'));
+}
+
+// Accepts a full invite link, just the "#join=..." part, or a bare code.
+function parseInvite(s) {
+  const m = s.trim().match(/#?join=([^|]*)\|(.+)$/);
+  if (m) return { name: decodeURIComponent(m[1]), code: decodeURIComponent(m[2]).trim() };
+  return s.trim() ? { name: '', code: s.trim() } : null;
+}
+
+$('scr').onclick = () => { $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
 $('closeBtn').onclick = () => dlg.close();
-$('genBtn').onclick = () => ($('newCode').value = genCode());
-$('addBtn').onclick = () => { addChannel($('newName').value.trim(), $('newCode').value.trim()); renderList(); $('newCode').value = genCode(); $('newName').value = ''; };
+$('createBtn').onclick = () => {
+  addChannel($('newName').value.trim(), genCode());
+  $('newName').value = '';
+  renderList();
+  share(cfgs[sel]);
+};
+$('joinBtn').onclick = () => {
+  const inv = parseInvite($('joinLink').value);
+  if (!inv) return;
+  addChannel(inv.name, inv.code);
+  $('joinLink').value = '';
+  renderList();
+};
 $('myName').onchange = () => {
   myName = $('myName').value.trim();
   localStorage.setItem('walkie-name', myName);
@@ -345,11 +374,10 @@ $('myName').onchange = () => {
 };
 
 // Shared invite link: /#join=<name>|<code>
-const join = location.hash.match(/^#join=([^|]*)\|(.+)$/);
-if (join) {
+const invite = location.hash.startsWith('#join=') && parseInvite(location.hash);
+if (invite) {
   history.replaceState(null, '', location.pathname);
-  const [name, code] = [decodeURIComponent(join[1]), decodeURIComponent(join[2])];
-  if (confirm(`Kanaal "${name}" toevoegen?`)) addChannel(name, code);
+  addChannel(invite.name, invite.code);
 }
 
 // --- Push "ring": notify channel members whose app is closed.
@@ -395,7 +423,7 @@ if (tabs) {
 }
 
 syncChannels();
-if (!myName) setTimeout(() => $('scr').click(), 300);
+if (!myName || !cfgs.length) setTimeout(() => $('scr').click(), 300);
 
 if (location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
