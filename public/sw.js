@@ -1,6 +1,6 @@
 // Minimal offline shell so Android offers "Install app".
-const CACHE = 'walkie-v3';
-const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg'];
+const CACHE = 'walkie-v4';
+const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg', 'fonts/DSEG7Classic-Bold.woff2', 'fonts/DSEG14Classic-Bold.woff2'];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))));
 self.addEventListener('activate', (e) =>
