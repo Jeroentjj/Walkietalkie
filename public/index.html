@@ -38,21 +38,24 @@
   .num small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
-  .keys { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px; padding:0 4px; flex:none; }
+  /* Two keys left, square PTT in the middle, two keys right. */
+  .keys { display:grid; grid-template-columns:1fr var(--ptt) 1fr; grid-template-rows:var(--key) var(--key); gap:14px; margin:20px 4px 4px; flex:none;
+    --key:min(64px,9dvh); --ptt:calc(var(--key) * 2 + 14px); }
   /* Rubber keys: matte dark grey, icons and labels pressed into the rubber (no colour). */
   .k, #ptt { border:0; padding:0; color:#1c1c1c; touch-action:none;
     background:radial-gradient(120% 90% at 50% 15%,#4a4a4a,#333 55%,#262626);
     /* black ring = the gap between the key and its hole in the shell, then the shell's lit edge */
     box-shadow:0 0 0 2.5px #050505, 0 0 0 3.5px #0005, 0 1px 0 4px #ffd69a80, inset 0 1.5px 1px #ffffff38, inset 0 -3px 4px #0007;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:transform .05s, box-shadow .05s; }
-  .k { border-radius:16px; height:60px; }
+  .k { border-radius:16px; }
   .k svg, #ptt svg { width:28px; height:28px; }
-  .k svg *, #ptt svg * { fill:none; stroke:#0a0a0a; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
-  .k svg, #ptt svg, .k small, #ptt small, #ptt b { filter:drop-shadow(0 1.2px 0 #ffffff59) drop-shadow(0 -1px 0 #000c); }
-  .k small, #ptt small { font:900 11px system-ui; letter-spacing:1.5px; color:#0d0d0d; }
+  .k svg *, #ptt svg * { fill:none; stroke:#ececec; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+  .k svg, #ptt svg, .k small, #ptt small, #ptt b { filter:drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #ffffff1f); } /* white paint in an engraving */
+  .k small, #ptt small { font:900 11px system-ui; letter-spacing:1.5px; color:#ececec; }
   .k:active, .k.on, #ptt.down { transform:scale(.97); filter:brightness(.85); box-shadow:0 0 0 3.5px #050505, 0 0 0 4.5px #0005, 0 1px 0 5px #ffd69a80, inset 0 3px 5px #0009; }
-  #ptt { width:calc(100% - 8px); margin-left:4px; height:min(150px,22dvh); margin-top:22px; flex:none; border-radius:24px; gap:8px; }
-  #ptt b { font:900 38px system-ui; letter-spacing:6px; color:#0d0d0d; }
+  #prevBtn { grid-area:1/1; } #menuBtn { grid-area:2/1; } #nextBtn { grid-area:1/3; } #muteBtn { grid-area:2/3; }
+  #ptt { grid-row:1 / 3; grid-column:2; border-radius:22px; gap:6px; }
+  #ptt b { font:900 34px system-ui; letter-spacing:5px; color:#ececec; }
   #ptt:disabled { opacity:.75; }
   /* Speaker: staggered holes punched into a slightly sunken dish (lit lower rims, shadowed upper walls). */
   .grille { flex:1; min-height:40px; margin:14px 0 0; container-type:size; display:flex; align-items:center; justify-content:center; }
@@ -94,10 +97,10 @@
   <div class="keys">
     <button class="k" id="prevBtn" aria-label="Vorig kanaal"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><small>KANAAL</small></button>
     <button class="k" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg><small>MENU</small></button>
-    <button class="k" id="muteBtn" aria-label="Geluid aan/uit"></button>
     <button class="k" id="nextBtn" aria-label="Volgend kanaal"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg><small>KANAAL</small></button>
+    <button class="k" id="muteBtn" aria-label="Geluid aan/uit"></button>
+    <button id="ptt" disabled><b>PTT</b><small style="font-size:12px">Push-To-Talk</small></button>
   </div>
-  <button id="ptt" disabled><b>PTT</b><small style="font-size:13px">Push-To-Talk</small></button>
 </div>
 
 <dialog id="dlg">
