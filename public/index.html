@@ -33,25 +33,30 @@
   .num small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
-  .keys { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; flex:none; }
+  .keys { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px; padding:0 4px; flex:none; }
   /* Rubber keys: matte dark grey, icons and labels pressed into the rubber (no colour). */
   .k, #ptt { border:0; padding:0; color:#1c1c1c; touch-action:none;
     background:radial-gradient(120% 90% at 50% 15%,#4a4a4a,#333 55%,#262626);
-    box-shadow:0 5px 0 #121212, 0 8px 12px #0006, inset 0 1px 1px #ffffff2a, inset 0 -2px 3px #0005;
+    /* outer rings: the recess cut into the orange shell around each key */
+    box-shadow:0 0 0 3px #8f5507, 0 0 0 4.5px #ffd08a99, 0 5px 0 3px #6b3f05, 0 9px 14px 3px #0005, inset 0 1px 1px #ffffff33, inset 0 -2px 3px #0006;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:transform .05s, box-shadow .05s; }
   .k { border-radius:16px; height:60px; }
-  .k svg, #ptt svg { width:24px; height:24px; }
-  .k svg *, #ptt svg * { fill:none; stroke:#1a1a1a; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
-  .k svg, #ptt svg, .k small, #ptt small, #ptt b { filter:drop-shadow(0 1px 0 #ffffff26) drop-shadow(0 -1px 0 #0008); }
-  .k small, #ptt small { font:800 10px system-ui; letter-spacing:1.5px; color:#1c1c1c; text-shadow:0 1px 0 #ffffff26, 0 -1px 0 #0008; }
-  .k:active, .k.on, #ptt.down { transform:translateY(4px); box-shadow:0 1px 0 #121212, 0 2px 4px #0006, inset 0 2px 4px #0007; }
-  #ptt { width:100%; height:min(150px,22dvh); margin-top:14px; flex:none; border-radius:24px; gap:8px; }
-  #ptt b { font:900 34px system-ui; letter-spacing:6px; color:#1c1c1c; text-shadow:0 1px 0 #ffffff26, 0 -1px 0 #0008; }
+  .k svg, #ptt svg { width:28px; height:28px; }
+  .k svg *, #ptt svg * { fill:none; stroke:#0a0a0a; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .k svg, #ptt svg, .k small, #ptt small, #ptt b { filter:drop-shadow(0 1.2px 0 #ffffff59) drop-shadow(0 -1px 0 #000c); }
+  .k small, #ptt small { font:900 11px system-ui; letter-spacing:1.5px; color:#0d0d0d; }
+  .k:active, .k.on, #ptt.down { transform:translateY(4px); box-shadow:0 0 0 3px #8f5507, 0 0 0 4.5px #ffd08a99, 0 1px 0 3px #6b3f05, inset 0 3px 5px #0008; }
+  #ptt { width:calc(100% - 8px); margin-left:4px; height:min(150px,22dvh); margin-top:22px; flex:none; border-radius:24px; gap:8px; }
+  #ptt b { font:900 38px system-ui; letter-spacing:6px; color:#0d0d0d; }
   #ptt:disabled { opacity:.75; }
-  .grille { flex:1; min-height:40px; margin-top:14px; border-radius:20px 20px 50px 50px;
-    background:radial-gradient(circle,#0e0e0e 3.4px,transparent 4px) center/18px 18px,
-      radial-gradient(circle,#c27612 2.2px,transparent 2.6px) 0 0/16px 16px;
-    -webkit-mask:radial-gradient(ellipse 65% 60% at 50% 45%,#000 60%,#0008 75%,#0005); }
+  /* Speaker: holes punched into the shell. Each hole = dark shaft, shadowed top rim, lit bottom rim. */
+  .grille { flex:1; min-height:40px; margin:14px 6px 0; border-radius:28px;
+    background:
+      radial-gradient(circle at 50% 46%, #000 0 2.4px, #1a0f02 3.1px, transparent 3.6px) center/17px 17px,
+      radial-gradient(circle at 50% 62%, #ffd48a 0 3.4px, transparent 3.9px) center/17px 17px,
+      radial-gradient(circle at 50% 34%, #8a5208 0 3.5px, transparent 4px) center/17px 17px;
+    box-shadow:inset 0 2px 3px #0002, 0 1px 0 #ffffff40;
+    -webkit-mask:radial-gradient(closest-corner, #000 62%, transparent 74%); mask:radial-gradient(closest-corner, #000 62%, transparent 74%); }
   .brand { text-align:center; font:900 italic 20px system-ui; letter-spacing:2px; color:var(--ink); margin-top:10px; flex:none; }
   dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(94vw,400px); max-height:88dvh; padding:18px; }
   dialog::backdrop { background:#000b; }
