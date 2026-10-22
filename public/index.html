@@ -33,18 +33,23 @@
   .num small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
-  .keys { display:flex; align-items:center; justify-content:space-between; margin:22px 12px 8px; }
-  .k { border:0; background:none; color:var(--ink); font:900 44px/1 system-ui; width:64px; height:64px; padding:0; }
-  .k:active { transform:scale(.9); }
-  #ptt { width:84px; height:84px; border-radius:8px; border:0; background:linear-gradient(#2a2a2a,#0d0d0d); color:#f6a21a; font:900 14px system-ui;
-    letter-spacing:2px; box-shadow:0 6px 0 #000, 0 8px 14px #0006; touch-action:none; }
-  #ptt.down { transform:translateY(5px); box-shadow:0 1px 0 #000; color:#f33; }
+  .keys { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; flex:none; }
+  .k { border:0; border-radius:14px; height:58px; padding:0; background:linear-gradient(#2a2a2a,#111); color:var(--or);
+    font:900 22px/1 system-ui; box-shadow:0 4px 0 #000, 0 6px 10px #0005; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+  .k small { font:700 10px system-ui; letter-spacing:1px; color:#bbb; }
+  .k:active { transform:translateY(3px); box-shadow:0 1px 0 #000; }
+  .k.on { color:#f33; }
+  #ptt { width:100%; height:min(150px,22dvh); margin-top:14px; flex:none; border-radius:22px; border:0; background:linear-gradient(#2a2a2a,#0d0d0d); color:var(--or);
+    font:900 30px system-ui; letter-spacing:4px; box-shadow:0 8px 0 #000, 0 12px 18px #0006; touch-action:none;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+  #ptt small { font:700 12px system-ui; letter-spacing:1px; color:#999; }
+  #ptt.down { transform:translateY(6px); box-shadow:0 2px 0 #000; color:#f33; }
   #ptt:disabled { color:#666; }
-  .grille { flex:1; min-height:80px; margin-top:14px; border-radius:20px 20px 50px 50px;
+  .grille { flex:1; min-height:40px; margin-top:14px; border-radius:20px 20px 50px 50px;
     background:radial-gradient(circle,#0e0e0e 3.4px,transparent 4px) center/18px 18px,
       radial-gradient(circle,#c27612 2.2px,transparent 2.6px) 0 0/16px 16px;
     -webkit-mask:radial-gradient(ellipse 65% 60% at 50% 45%,#000 60%,#0008 75%,#0005); }
-  .brand { text-align:center; font:900 italic 22px system-ui; letter-spacing:2px; color:var(--ink); margin-top:14px; flex:none; }
+  .brand { text-align:center; font:900 italic 20px system-ui; letter-spacing:2px; color:var(--ink); margin-top:10px; flex:none; }
   dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(94vw,400px); max-height:88dvh; padding:18px; }
   dialog::backdrop { background:#000b; }
   dialog h3 { margin:0 0 10px; } dialog h4 { margin:16px 0 4px; font-size:14px; color:#bbb; }
@@ -68,15 +73,17 @@
     <div class="ch"><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
     <div class="num"><span id="chNum">--</span><small id="chSub">OFF</small></div>
     <div class="st" id="status">Tik hier voor kanalen</div>
-    <div class="hint">tik scherm = menu · −/+ = kanaal</div>
+    
   </div></div>
-  <div class="keys">
-    <button class="k" id="prevBtn" aria-label="Vorig kanaal">−</button>
-    <button id="ptt" disabled>PTT</button>
-    <button class="k" id="nextBtn" aria-label="Volgend kanaal">+</button>
-  </div>
-  <div class="grille"></div>
   <div class="brand">WALKIE</div>
+  <div class="grille"></div>
+  <div class="keys">
+    <button class="k" id="prevBtn">◀<small>KANAAL</small></button>
+    <button class="k" id="menuBtn">☰<small>MENU</small></button>
+    <button class="k" id="muteBtn">🔊<small>GELUID</small></button>
+    <button class="k" id="nextBtn">▶<small>KANAAL</small></button>
+  </div>
+  <button id="ptt" disabled>PTT<small>ingedrukt houden om te praten</small></button>
 </div>
 
 <dialog id="dlg">
@@ -117,6 +124,7 @@ let sel = Math.min(load('walkie-sel', 0), Math.max(cfgs.length - 1, 0));
 let myName = localStorage.getItem('walkie-name') || '';
 const chans = new Map(); // code -> Chan
 
+let muted = localStorage.getItem('walkie-muted') === '1';
 let audioCtx, mic, micNode, micStopTimer, holding = null; // holding: Chan PTT is held on
 
 async function sha256(text) {
@@ -191,7 +199,7 @@ class Chan {
   }
 
   async onAudio(buf) {
-    if (holding || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
+    if (holding || muted || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
     let pcm;
     try { pcm = new Int16Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, this.key, new Uint8Array(buf, 12))); }
     catch { return; }
@@ -270,6 +278,7 @@ function render() {
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
   else if (c.ws?.readyState !== 1) st = 'Verbinden…';
   else { st = c.n > 1 ? `${c.n} online` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
+  if (muted && c) st = '🔇 ' + st;
   status.textContent = st;
   led.className = 'led ' + l;
 }
@@ -352,7 +361,14 @@ function parseInvite(s) {
   return s.trim() ? { name: '', code: s.trim() } : null;
 }
 
-$('scr').onclick = () => { $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
+$('menuBtn').onclick = $('scr').onclick = () => { $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
+function renderMute() {
+  $('muteBtn').innerHTML = muted ? '🔇<small>STIL</small>' : '🔊<small>GELUID</small>';
+  $('muteBtn').classList.toggle('on', muted);
+}
+$('muteBtn').onclick = () => { muted = !muted; localStorage.setItem('walkie-muted', muted ? '1' : ''); renderMute(); render(); };
+renderMute();
+
 $('closeBtn').onclick = () => dlg.close();
 $('createBtn').onclick = () => {
   addChannel($('newName').value.trim(), genCode());
