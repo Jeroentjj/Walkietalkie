@@ -34,17 +34,20 @@
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
   .keys { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; flex:none; }
-  .k { border:0; border-radius:14px; height:58px; padding:0; background:linear-gradient(#2a2a2a,#111); color:var(--or);
-    font:900 22px/1 system-ui; box-shadow:0 4px 0 #000, 0 6px 10px #0005; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
-  .k small { font:700 10px system-ui; letter-spacing:1px; color:#bbb; }
-  .k:active { transform:translateY(3px); box-shadow:0 1px 0 #000; }
-  .k.on { color:#f33; }
-  #ptt { width:100%; height:min(150px,22dvh); margin-top:14px; flex:none; border-radius:22px; border:0; background:linear-gradient(#2a2a2a,#0d0d0d); color:var(--or);
-    font:900 30px system-ui; letter-spacing:4px; box-shadow:0 8px 0 #000, 0 12px 18px #0006; touch-action:none;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
-  #ptt small { font:700 12px system-ui; letter-spacing:1px; color:#999; }
-  #ptt.down { transform:translateY(6px); box-shadow:0 2px 0 #000; color:#f33; }
-  #ptt:disabled { color:#666; }
+  /* Rubber keys: matte dark grey, icons and labels pressed into the rubber (no colour). */
+  .k, #ptt { border:0; padding:0; color:#1c1c1c; touch-action:none;
+    background:radial-gradient(120% 90% at 50% 15%,#4a4a4a,#333 55%,#262626);
+    box-shadow:0 5px 0 #121212, 0 8px 12px #0006, inset 0 1px 1px #ffffff2a, inset 0 -2px 3px #0005;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:transform .05s, box-shadow .05s; }
+  .k { border-radius:16px; height:60px; }
+  .k svg, #ptt svg { width:24px; height:24px; }
+  .k svg *, #ptt svg * { fill:none; stroke:#1a1a1a; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+  .k svg, #ptt svg, .k small, #ptt small, #ptt b { filter:drop-shadow(0 1px 0 #ffffff26) drop-shadow(0 -1px 0 #0008); }
+  .k small, #ptt small { font:800 10px system-ui; letter-spacing:1.5px; color:#1c1c1c; text-shadow:0 1px 0 #ffffff26, 0 -1px 0 #0008; }
+  .k:active, .k.on, #ptt.down { transform:translateY(4px); box-shadow:0 1px 0 #121212, 0 2px 4px #0006, inset 0 2px 4px #0007; }
+  #ptt { width:100%; height:min(150px,22dvh); margin-top:14px; flex:none; border-radius:24px; gap:8px; }
+  #ptt b { font:900 34px system-ui; letter-spacing:6px; color:#1c1c1c; text-shadow:0 1px 0 #ffffff26, 0 -1px 0 #0008; }
+  #ptt:disabled { opacity:.75; }
   .grille { flex:1; min-height:40px; margin-top:14px; border-radius:20px 20px 50px 50px;
     background:radial-gradient(circle,#0e0e0e 3.4px,transparent 4px) center/18px 18px,
       radial-gradient(circle,#c27612 2.2px,transparent 2.6px) 0 0/16px 16px;
@@ -78,12 +81,12 @@
   <div class="brand">WALKIE</div>
   <div class="grille"></div>
   <div class="keys">
-    <button class="k" id="prevBtn">◀<small>KANAAL</small></button>
-    <button class="k" id="menuBtn">☰<small>MENU</small></button>
-    <button class="k" id="muteBtn">🔊<small>GELUID</small></button>
-    <button class="k" id="nextBtn">▶<small>KANAAL</small></button>
+    <button class="k" id="prevBtn" aria-label="Vorig kanaal"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><small>KANAAL</small></button>
+    <button class="k" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg><small>MENU</small></button>
+    <button class="k" id="muteBtn" aria-label="Geluid aan/uit"></button>
+    <button class="k" id="nextBtn" aria-label="Volgend kanaal"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg><small>KANAAL</small></button>
   </div>
-  <button id="ptt" disabled>PTT<small>ingedrukt houden om te praten</small></button>
+  <button id="ptt" disabled><b>PTT</b><small>INGEDRUKT HOUDEN OM TE PRATEN</small></button>
 </div>
 
 <dialog id="dlg">
@@ -384,7 +387,10 @@ function parseInvite(s) {
 
 $('menuBtn').onclick = $('scr').onclick = () => { $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
 function renderMute() {
-  $('muteBtn').innerHTML = muted ? '🔇<small>STIL</small>' : '🔊<small>GELUID</small>';
+  const speaker = '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>';
+  $('muteBtn').innerHTML = muted
+    ? `<svg viewBox="0 0 24 24">${speaker}<path d="M16 9.5l5 5M21 9.5l-5 5"/></svg><small>STIL</small>`
+    : `<svg viewBox="0 0 24 24">${speaker}<path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><small>GELUID</small>`;
   $('muteBtn').classList.toggle('on', muted);
 }
 $('muteBtn').onclick = () => { muted = !muted; localStorage.setItem('walkie-muted', muted ? '1' : ''); renderMute(); render(); };
