@@ -1,0 +1,13 @@
+{
+  "name": "Walkie",
+  "short_name": "Walkie",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0e0f",
+  "theme_color": "#1b1d1f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1b1d1f">
+<title>Walkie</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<style>
+  :root { --body:#2b2e31; --dark:#16181a; --accent:#f5a623; --lcd:#b7c9a0; --lcdtxt:#1f2a17; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html,body { margin:0; height:100%; background:#0d0e0f; font-family:system-ui,sans-serif; color:#ddd; }
+  body { display:flex; align-items:center; justify-content:center; padding:16px; }
+  .radio { width:100%; max-width:340px; background:linear-gradient(160deg,#3a3e42,var(--body) 40%,#1f2123);
+    border-radius:42px 42px 54px 54px; padding:22px 22px 30px; box-shadow:0 20px 50px #000a, inset 0 2px 2px #ffffff22, inset 0 -4px 8px #0008; }
+  .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .brand { font-weight:800; letter-spacing:3px; color:var(--accent); font-size:13px; }
+  .led { width:12px; height:12px; border-radius:50%; background:#400; box-shadow:inset 0 1px 2px #000; transition:.15s; }
+  .led.on { background:#4f4; box-shadow:0 0 10px #4f4; }
+  .led.tx { background:#f33; box-shadow:0 0 12px #f33; }
+  .lcd { background:var(--lcd); color:var(--lcdtxt); border-radius:10px; padding:12px 14px; font-family:ui-monospace,monospace;
+    box-shadow:inset 0 3px 8px #0006; border:4px solid var(--dark); min-height:92px; }
+  .lcd .ch { font-size:22px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lcd .st { font-size:13px; margin-top:6px; }
+  .bars { display:flex; gap:3px; height:14px; align-items:flex-end; margin-top:6px; }
+  .bars i { width:6px; background:var(--lcdtxt); opacity:.2; }
+  .bars i.a { opacity:1; }
+  .grille { margin:20px 0; height:110px; border-radius:16px; background:
+    radial-gradient(circle,#0b0c0d 2.6px,transparent 3px) 0 0/12px 12px, #222527; box-shadow:inset 0 3px 8px #000c; }
+  .keys { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .side { width:64px; height:44px; border-radius:12px; border:0; background:#3d4145; color:#ccc; font-weight:700; font-size:12px;
+    box-shadow:0 4px 0 #111, inset 0 1px 1px #fff3; }
+  .side:active { transform:translateY(3px); box-shadow:0 1px 0 #111; }
+  #ptt { width:128px; height:128px; border-radius:50%; border:0; color:#1a1a1a; font-weight:900; font-size:22px; letter-spacing:2px;
+    background:radial-gradient(circle at 35% 30%,#ffd27a,var(--accent) 55%,#b8720a); box-shadow:0 8px 0 #6b4306,0 12px 20px #000a, inset 0 2px 3px #fff8;
+    touch-action:none; transition:transform .05s; }
+  #ptt.down { transform:translateY(6px); box-shadow:0 2px 0 #6b4306,0 4px 8px #000a, inset 0 2px 3px #fff8; background:radial-gradient(circle at 35% 30%,#ff8a7a,#e8382a 55%,#8b1a10); }
+  #ptt:disabled { filter:grayscale(1) brightness(.6); }
+  dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(92vw,360px); padding:20px; }
+  dialog::backdrop { background:#000b; }
+  dialog input { width:100%; padding:12px; border-radius:10px; border:1px solid #555; background:#111; color:#fff; font-size:16px; margin:8px 0; }
+  dialog button { padding:11px 14px; border-radius:10px; border:0; font-weight:700; margin-top:6px; }
+  .prim { background:var(--accent); color:#111; } .sec { background:#3d4145; color:#eee; }
+  small { color:#999; line-height:1.4; display:block; }
+</style>
+</head>
+<body>
+<div class="radio">
+  <div class="top"><span class="brand">WALKIE</span><span class="led" id="led"></span></div>
+  <div class="lcd">
+    <div class="ch" id="chName">— geen kanaal —</div>
+    <div class="st" id="status">Druk op CH</div>
+    <div class="bars" id="bars"><i style="height:3px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i><i style="height:14px"></i></div>
+  </div>
+  <div class="grille"></div>
+  <div class="keys">
+    <button class="side" id="chBtn">CH</button>
+    <button id="ptt" disabled>PTT</button>
+    <button class="side" id="offBtn">OFF</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 style="margin-top:0">Privé kanaal</h3>
+  <small>Deel deze geheime code met één andere persoon (bijv. via WhatsApp). Wie de code heeft, kan meeluisteren — houd hem dus geheim.</small>
+  <input id="code" autocomplete="off" spellcheck="false" placeholder="geheime kanaalcode">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="sec" id="genBtn">Nieuwe code</button>
+    <button class="sec" id="shareBtn">Delen</button>
+    <button class="prim" id="joinBtn" style="margin-left:auto">Verbind</button>
+  </div>
+</dialog>
+
+<audio id="remote" autoplay playsinline></audio>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
