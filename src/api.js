@@ -25,7 +25,7 @@ async function vapidHeader(endpoint, keys) {
   const unsigned = `${enc({ typ: 'JWT', alg: 'ES256' })}.${enc({
     aud: new URL(endpoint).origin,
     exp: Math.floor(Date.now() / 1000) + 12 * 3600,
-    sub: 'mailto:walkie@domimo.app',
+    sub: 'mailto:walkie@dopimo.app',
   })}`;
   const key = await crypto.subtle.importKey('jwk', keys.jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));

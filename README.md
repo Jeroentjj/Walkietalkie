@@ -14,4 +14,4 @@ Installeerbare webapp (PWA) om met één andere persoon als walkietalkie te prat
 ## Hosting op Cloudflare Workers
 1. Workers & Pages → Create → Import a repository → deze repo. Deploy command: `npx wrangler deploy`.
 2. De KV-opslag `WALKIE` wordt bij de eerste deploy automatisch aangemaakt (zie `wrangler.jsonc`).
-3. Custom domain: `walkie.domimo.app`.
+3. Custom domain: `walkie.dopimo.app`.
