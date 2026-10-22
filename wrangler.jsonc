@@ -2,6 +2,7 @@
   "name": "walkietalkie",
   "main": "src/api.js",
   "compatibility_date": "2025-09-01",
+  "routes": [{ "pattern": "walkie.dopimo.app", "custom_domain": true }],
   "assets": { "directory": "./public", "binding": "ASSETS" },
   // Auto-provisioned on first deploy.
   "kv_namespaces": [{ "binding": "WALKIE", "id": "6b99de7982ee4ca3a67736b53f331399" }]
