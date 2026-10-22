@@ -40,8 +40,8 @@
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
   /* Two keys left, square PTT in the middle, two keys right. */
-  .keys { display:grid; grid-template-columns:1fr var(--ptt) 1fr; grid-template-rows:var(--key) var(--key); gap:14px; margin:20px 4px 4px; flex:none;
-    --key:min(64px,9dvh); --ptt:calc(var(--key) * 2 + 14px); }
+  .keys { display:grid; grid-template-columns:var(--key) var(--ptt) var(--key); justify-content:space-between; grid-template-rows:var(--key) var(--key); gap:14px; margin:20px 4px 4px; flex:none;
+    --key:min(76px,10dvh,calc((100vw - 110px) / 4)); --ptt:calc(var(--key) * 2 + 14px); }
   /* Rubber keys: matte dark grey, icons and labels pressed into the rubber (no colour). */
   .k, #ptt { border:0; padding:0; color:#1c1c1c; touch-action:none;
     background:radial-gradient(120% 90% at 50% 15%,#4a4a4a,#333 55%,#262626);
