@@ -30,3 +30,6 @@ De sleutel staat **niet** in de repo maar in de GitHub-secrets `KEYSTORE_B64` (b
   Oude, korte codes (van vóór deze versie) worden als onveilig gemarkeerd.
 - Server ziet: kanaal-hash, IP-adressen, tijdstippen en hoeveelheid data. Niet: code, geluid, chat of namen.
 - Iedereen met de link is lid; er is geen forward secrecy. Lekt een link, maak dan een nieuw kanaal.
+
+`tools/sleutelmaker.html` maakt zo'n sleutel offline in je browser (PKCS#12, alias `walkie`) en geeft direct de
+waarde voor `KEYSTORE_B64`. Gebruikt node-forge (BSD).
