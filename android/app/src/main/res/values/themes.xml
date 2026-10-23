@@ -3,5 +3,6 @@
         <item name="android:windowBackground">#111111</item>
         <item name="android:statusBarColor">#111111</item>
         <item name="android:navigationBarColor">#111111</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>

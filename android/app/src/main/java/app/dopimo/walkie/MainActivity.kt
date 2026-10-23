@@ -12,6 +12,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
@@ -42,6 +45,7 @@ class MainActivity : ComponentActivity() {
 
         web = WebView(this)
         setContentView(web)
+        goFullscreen()
         web.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -81,6 +85,20 @@ class MainActivity : ComponentActivity() {
 
         val invite = intent?.data
         if (invite?.host == INVITE_HOST) openInvite(invite) else web.loadUrl(START)
+    }
+
+    // Same look as the installed web app (display: fullscreen): no status or navigation bar.
+    private fun goFullscreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, web).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) goFullscreen()
     }
 
     override fun onNewIntent(intent: Intent) {
