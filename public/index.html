@@ -97,13 +97,17 @@
   .chs .nm span { font-size:12.5px; color:#8d9196; }
   .chs li.sel .nm span { color:#d9a34a; }
   .ib { width:38px; height:38px; padding:0 !important; display:grid; place-items:center; background:#33363a; color:#ddd; }
-  .ib svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .ib .ic { width:18px; height:18px; }
   .ib.del { background:#3a2222; color:#f99; }
   .empty { padding:14px; border-radius:14px; background:#26292c; color:#8d9196; text-align:center; font-size:14px; }
   .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .tile { display:flex !important; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; background:#26292c !important; color:#eee; padding:12px !important; border:2px solid transparent !important; }
   .tile.on { border-color:var(--or) !important; }
-  .tile span { font-size:22px; line-height:1; } .tile b { font-size:14px; } .tile i { font-style:normal; font-weight:400; font-size:12px; color:#8d9196; }
+  .ic { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  .ic.sm { width:14px; height:14px; vertical-align:-2px; }
+  .tile .ic { color:var(--or); margin-bottom:4px; }
+  .x .ic { width:20px; height:20px; }
+  .ibtn { display:flex; align-items:center; justify-content:center; gap:8px; } .ibtn .ic { width:18px; height:18px; } .tile b { font-size:14px; } .tile i { font-style:normal; font-weight:400; font-size:12px; color:#8d9196; }
   .panel { margin-top:10px; padding:12px; border-radius:14px; background:#26292c; display:grid; gap:8px; }
   .panel[hidden] { display:none; }
   .switch { display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; background:#26292c; margin-bottom:8px; cursor:pointer; }
@@ -139,7 +143,7 @@
 </div>
 
 <dialog id="dlg">
-  <div class="sheet-head"><h3>Kanalen</h3><button class="x" id="closeBtn" aria-label="Sluiten">✕</button></div>
+  <div class="sheet-head"><h3>Kanalen</h3><button class="x" id="closeBtn" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>
   <div class="sheet-body">
     <div class="sec-title">Mijn kanalen</div>
     <ul class="chs" id="chList"></ul>
@@ -147,10 +151,10 @@
 
     <div class="sec-title">Kanaal toevoegen</div>
     <div class="tiles">
-      <button class="tile" data-panel="pNew"><span>＋</span><b>Nieuw kanaal</b><i>maak en deel een link</i></button>
-      <button class="tile" data-panel="pJoin"><span>🔗</span><b>Link ontvangen</b><i>plak een uitnodiging</i></button>
-      <button class="tile" data-panel="pQr"><span>📷</span><b>Via QR-code</b><i>zonder internet</i></button>
-      <button class="tile" id="testBtn"><span>🎙</span><b>Testkanaal</b><i>hoor jezelf terug</i></button>
+      <button class="tile" data-panel="pNew"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg><b>Nieuw kanaal</b><i>maak en deel een link</i></button>
+      <button class="tile" data-panel="pJoin"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg><b>Link ontvangen</b><i>plak een uitnodiging</i></button>
+      <button class="tile" data-panel="pQr"><svg class="ic" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1" /> <rect width="5" height="5" x="16" y="3" rx="1" /> <rect width="5" height="5" x="3" y="16" rx="1" /> <path d="M21 16h-3a2 2 0 0 0-2 2v3" /> <path d="M21 21v.01" /> <path d="M12 7v3a2 2 0 0 1-2 2H7" /> <path d="M3 12h.01" /> <path d="M12 3h.01" /> <path d="M12 16v.01" /> <path d="M16 12h1" /> <path d="M21 12v.01" /> <path d="M12 21v-1" /></svg><b>Via QR-code</b><i>zonder internet</i></button>
+      <button class="tile" id="testBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /> <path d="M19 10v2a7 7 0 0 1-14 0v-2" /> <line x1="12" x2="12" y1="19" y2="22" /></svg><b>Testkanaal</b><i>hoor jezelf terug</i></button>
     </div>
     <div class="panel" id="pNew" hidden>
       <input id="newName" maxlength="24" placeholder="Naam, bijv. Familie">
@@ -163,8 +167,8 @@
     </div>
     <div class="panel" id="pQr" hidden>
       <div class="row">
-        <button class="prim" id="qrStartBtn" style="flex:1">Toon mijn code</button>
-        <button class="sec" id="qrJoinBtn" style="flex:1">Scan code</button>
+        <button class="prim ibtn" id="qrStartBtn" style="flex:1"><svg class="ic" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1" /> <rect width="5" height="5" x="16" y="3" rx="1" /> <rect width="5" height="5" x="3" y="16" rx="1" /> <path d="M21 16h-3a2 2 0 0 0-2 2v3" /> <path d="M21 21v.01" /> <path d="M12 7v3a2 2 0 0 1-2 2H7" /> <path d="M3 12h.01" /> <path d="M12 3h.01" /> <path d="M12 16v.01" /> <path d="M16 12h1" /> <path d="M21 12v.01" /> <path d="M12 21v-1" /></svg>Mijn code</button>
+        <button class="sec ibtn" id="qrJoinBtn" style="flex:1"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M7 12h10" /></svg>Scan code</button>
       </div>
       <small>Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.</small>
     </div>
@@ -175,7 +179,7 @@
     <label class="switch"><div><b>Walkie-talkie ruis</b><small>Radioklank, gekraak en "kssh"</small></div><input type="checkbox" id="fxBox"></label>
     <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
 
-    <small style="margin-top:14px">🔒 Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
+    <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
   </div>
 </dialog>
 
@@ -535,7 +539,7 @@ function render() {
   let st, l = '';
   if (!c) st = 'Tik hier om een kanaal toe te voegen';
   else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
-  else if (holding === c && c.you > 0) { st = `⏳ Wacht op je beurt (#${c.you})`; l = 'wait'; }
+  else if (holding === c && c.you > 0) { st = `Wacht op je beurt (#${c.you})`; l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
   else if (c.cfg.qr && c.n <= 1) st = 'Direct: verbinding verbroken';
   else if (c.offline && c.n <= 1) { st = 'Offline · zoeken in de buurt…'; l = 'wait'; }
@@ -543,7 +547,7 @@ function render() {
   else if (!c.offline && c.ws?.readyState !== 1) st = 'Verbinden…';
   else if (c.cfg.test) { st = 'Test: PTT = hoor jezelf'; l = 'on'; }
   else { st = c.n > 1 ? `${c.n} ${c.offline ? 'in de buurt' : 'online'}` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
-  if (muted && c) st = '🔇 ' + st;
+  if (muted && c) st = 'Stil · ' + st;
   status.textContent = st;
   led.className = 'led ' + l;
   hiss();
@@ -591,8 +595,8 @@ function renderList() {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
     li.innerHTML = `<div class="num">${String(i + 1).padStart(2, '0')}</div><div class="nm"><b></b><span></span></div>`
-      + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg></button>`)
-      + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>`;
+      + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" /></svg></button>`)
+      + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></svg></button>`;
     li.querySelector('b').textContent = cfg.name;
     li.querySelector('span').textContent = (i === sel ? '● PTT praat hier' : 'luistert mee') + (cfg.test ? ' · alleen jij' : cfg.qr ? ' · direct' : '');
     li.onclick = (e) => {
@@ -617,7 +621,7 @@ function addChannel(name, code) {
 const inviteLink = (cfg) => `${ORIGIN}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
 
 function share(cfg) {
-  const url = inviteLink(cfg), text = `📻 Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`;
+  const url = inviteLink(cfg), text = `Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`;
   if (navigator.share) navigator.share({ text, url }).catch(() => {});
   else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert('Link gekopieerd'));
 }
@@ -841,11 +845,11 @@ async function ring(c) {
   if (Date.now() - lastRing < 15000) return;
   lastRing = Date.now();
   navigator.vibrate?.(60);
-  status.textContent = '📣 Oproepen…';
+  status.textContent = 'Oproepen…';
   try {
     const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
     const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
-    status.textContent = sent ? `📣 ${sent} opgeroepen` : 'Niemand heeft meldingen aan';
+    status.textContent = sent ? `${sent} opgeroepen` : 'Niemand heeft meldingen aan';
   } catch { status.textContent = 'Oproepen niet beschikbaar'; }
   setTimeout(render, 3000);
 }
