@@ -53,4 +53,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-nearby:19.3.0")
     implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("com.google.android.play:integrity:1.4.0")
+    implementation("com.google.android.play:app-update:2.1.0")
 }

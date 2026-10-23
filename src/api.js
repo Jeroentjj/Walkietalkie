@@ -14,6 +14,7 @@ export { Quota } from './quota.js';
 //   POST /api/license/*                        paid versions, see license.js
 //   POST /api/admin/*                          gift links for specific people, see admin.js (secret ADMIN_KEY)
 //   POST /api/report                           problem report from a beta tester, see admin.js
+//   GET  /api/update                           -> { build, apk } newest Android build, for the in-app update
 // Pushes carry no payload, so no message encryption is needed; the service worker shows a fixed text.
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -80,6 +81,13 @@ async function api(request, env, route) {
   if (route.startsWith('license/')) return license(request, env, route.slice(8), json);
   if (route.startsWith('admin/')) return admin(request, env, route.slice(6), json);
   if (route === 'report') return report(request, env, json);
+  // Newest Android build (number written by the GitHub workflow), so an APK from outside Play can offer an update.
+  if (route === 'update' && request.method === 'GET') {
+    const base = `https://github.com/${env.GH_REPO || 'Jeroentjj/Walkietalkie'}/releases/download/latest/`;
+    const r = await fetch(base + 'version.txt', { cf: { cacheTtl: 600, cacheEverything: true } }).catch(() => null);
+    const build = r?.ok ? parseInt(await r.text(), 10) || 0 : 0;
+    return json({ build, apk: build ? base + 'wlky.apk' : '' });
+  }
   if (request.method !== 'POST') return json({ error: 'not found' }, 404);
 
   const body = await request.json().catch(() => ({}));

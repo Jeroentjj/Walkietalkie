@@ -16,6 +16,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.IntentSenderRequest
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 
@@ -32,6 +33,9 @@ class MainActivity : ComponentActivity() {
         pendingWebPermission?.let { if (res.values.all { ok -> ok }) it.grant(it.resources) else it.deny() }
         pendingWebPermission = null
     }
+
+    /** Play's own update screen (installs from Google Play only). */
+    val updateLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
     private val nearbyPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { res ->
         nearbyCallback?.invoke(res.values.all { it })
@@ -89,6 +93,7 @@ class MainActivity : ComponentActivity() {
         billing = BillingBridge(this, web)
         web.addJavascriptInterface(billing, "WalkieBilling")
         billing.connect()
+        web.addJavascriptInterface(UpdateBridge(this, web), "WalkieUpdate")
 
         val invite = intent?.data
         if (invite?.host == INVITE_HOST) openInvite(invite) else web.loadUrl(START)
