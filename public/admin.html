@@ -21,6 +21,8 @@
   button.prim { background:var(--or); color:#111; }
   .gift { display:flex; gap:10px; align-items:center; }
   .gift div { flex:1; min-width:0; } .gift b { display:block; }
+  .report { white-space:pre-wrap; overflow-wrap:anywhere; }
+  .report details { margin-top:6px; color:var(--mut); font-size:12px; }
   .tag { font:800 11px system-ui; padding:2px 7px; border-radius:6px; background:var(--or); color:#111; margin-left:6px; }
   .off { opacity:.5; } .err { color:#ff8a8a; }
   #made input { margin:8px 0; }
@@ -56,6 +58,9 @@
         <small>De link werkt op het gekozen aantal apparaten. Daarna weigert hij, ook als hij wordt doorgestuurd.</small>
       </div>
     </div>
+
+    <h2>Probleemrapporten (beta)</h2>
+    <div id="reports"></div>
 
     <h2>Uitgedeelde links</h2>
     <div id="list"></div>
@@ -99,9 +104,31 @@ async function load() {
   }
 }
 
+async function loadReports() {
+  const { reports } = await api('reports');
+  $('reports').innerHTML = reports.length ? '' : '<p>Geen meldingen.</p>';
+  for (const r of reports) {
+    const el = document.createElement('div'), head = document.createElement('small'), text = document.createElement('div');
+    el.className = 'card report';
+    head.textContent = `${new Date(r.t).toLocaleString('nl-NL')} · ${r.name || 'anoniem'}`;
+    text.textContent = r.text;
+    el.append(head, text);
+    if (r.info && r.info !== 'null') {
+      const d = document.createElement('details'), s = document.createElement('summary'), pre = document.createElement('div');
+      s.textContent = 'Technische info'; pre.textContent = JSON.stringify(JSON.parse(r.info), null, 2);
+      d.append(s, pre); el.appendChild(d);
+    }
+    const del = Object.assign(document.createElement('button'), { textContent: 'Afgehandeld' });
+    del.style.marginTop = '8px';
+    del.onclick = async () => { await api('report-del', { id: r.id }); loadReports(); };
+    el.appendChild(del);
+    $('reports').appendChild(el);
+  }
+}
+
 async function login() {
   try {
-    await load();
+    await load(); await loadReports();
     try { localStorage.setItem('wlky-admin', key); } catch {}
     $('login').hidden = true; $('app').hidden = false;
   } catch (e) {

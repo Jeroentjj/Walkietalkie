@@ -223,6 +223,7 @@
     <div class="switch" style="display:block;cursor:auto"><b>Jouw naam</b><small>Zien anderen als je praat</small>
       <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
     <button class="switch" id="planBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Versie</b><small id="planNow"></small></div><span class="badge" id="planBadge"></span></button>
+    <button class="switch" id="reportBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Probleem melden</b><small>Iets kapot of een idee? Laat het weten</small></div><svg class="ic" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></button>
     <button class="switch" id="tourBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Rondleiding</b><small>Bekijk hoe de app werkt</small></div><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg></button>
     <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
       <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
@@ -243,7 +244,7 @@
 </dialog>
 
 <dialog id="appDlg">
-  <div class="sheet-head"><h3>Versies</h3><button class="x" id="appClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+  <div class="sheet-head"><h3 id="planTitle">Versies</h3><button class="x" id="appClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
   <div class="sheet-body">
     <p id="appWhy" style="margin:14px 0 4px;font-size:16px;font-weight:700"></p>
     <div class="plans" id="plans"></div>
@@ -259,6 +260,17 @@
       <small>Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.</small>
       <div class="row" style="margin-top:8px"><input id="linkCode" autocomplete="off" spellcheck="false" placeholder="of plak de koppellink"><button class="tbtn" id="linkUse">OK</button></div>
     </div>
+  </div>
+</dialog>
+
+<dialog id="reportDlg">
+  <div class="sheet-head"><h3>Probleem melden</h3><button class="x" id="reportClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <small style="margin-top:12px">Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.</small>
+    <textarea id="reportText" maxlength="2000" rows="6" placeholder="Bijv. bij 3 kanalen hoor ik niets meer…" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:1px solid #3a3d40;background:#121314;color:#fff;font:15px system-ui;resize:vertical"></textarea>
+    <label class="switch" style="margin:10px 0"><div><b>Technische info meesturen</b><small>Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.</small></div><input type="checkbox" id="reportInfo" checked></label>
+    <button class="tbtn prim" id="reportSend" style="width:100%">Versturen</button>
+    <p class="plan-msg" id="reportMsg" hidden style="margin-top:10px"></p>
   </div>
 </dialog>
 
@@ -300,11 +312,15 @@
 // decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
 // channel code, so the server only ever sees a hash of the code and ciphertext.
 const $ = (id) => document.getElementById(id);
+// Last few errors, only sent along with a problem report.
+const errLog = [];
+addEventListener('error', (e) => errLog.push(`${new Date().toISOString()} ${e.message} @${e.lineno}`) > 20 && errLog.shift());
+addEventListener('unhandledrejection', (e) => errLog.push(`${new Date().toISOString()} ${e.reason}`) > 20 && errLog.shift());
 // --- Language: Dutch or English (auto from the phone, can be changed in the menu).
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+const STATIC_EN = {"Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -762,6 +778,9 @@ let prices = { wlky_plus: '€1,99', wlky_pro: '€4,99' }; // replaced by the r
 
 function renderPlans() {
   $('plans').innerHTML = '';
+  // Beta testers already have everything: just the message, no prices.
+  $('planTitle').textContent = tier === 'beta' ? 'WLKY beta' : T('Versies', 'Versions');
+  $('plans').hidden = tier === 'beta';
   for (const k of WEB ? ['web', 'basic', 'plus', 'pro'] : ['basic', 'plus', 'pro']) {
     const el = document.createElement('div'), h5 = document.createElement('h5'), tag = document.createElement('span'), p = document.createElement('p');
     el.className = 'plan' + (k === tier ? ' cur' : '');
@@ -779,14 +798,18 @@ function renderPlans() {
   $('appGet').href = APP_URL;
   $('appGet').hidden = !(WEB && ANDROID && tier === 'web');
   $('appNoAndroid').hidden = !(WEB && !ANDROID && tier === 'web');
-  $('linkBox').hidden = !WEB;
+  $('linkBox').hidden = !WEB || tier === 'beta';
   $('appActions').hidden = !NATIVE; $('linkBtn').hidden = RANK[tier] < 2 || tier === 'beta' || !!lic?.gift;
 }
 
 function planMsg(text) { $('planMsg').textContent = text; $('planMsg').hidden = !text; }
 
 // Shows the versions, with why the user got here. `replace` offers swapping the one web channel.
+let tourStarting = false, deferredUpsell = null;
 function upsell(why, replace) {
+  // During (or just before) the first-run tour, keep the message for when the tour ends.
+  linkBusy = false;
+  if (tourStarting || tourStep >= 0) { deferredUpsell = [why, replace]; return; }
   if (!why && tier === 'beta') why = T(`Je doet mee aan de beta: alles is onbeperkt t/m ${betaUntil()}.`, `You're in the beta: everything is unlimited until ${betaUntil()}.`);
   $('appWhy').textContent = why; $('appWhy').hidden = !why;
   planMsg('');
@@ -796,7 +819,8 @@ function upsell(why, replace) {
   document.querySelectorAll('dialog[open]').forEach((d) => d.id !== 'appDlg' && d.close());
   if (!$('appDlg').open) $('appDlg').showModal();
 }
-$('appClose').onclick = () => $('appDlg').close();
+// No channels yet (e.g. a new beta tester): continue to the menu to make one.
+$('appClose').onclick = () => { $('appDlg').close(); if (!cfgs.filter((c) => !c.test).length) $('menuBtn').click(); };
 
 function renderChatQuota() {
   const c = current(), test = c?.cfg.test, left = test ? Infinity : chatLeft();
@@ -1077,6 +1101,25 @@ qrTile.querySelector('b').insertAdjacentHTML('beforeend', '<span class="badge" i
 qrTile.onclick = () => (LIMITS.offline ? openPanel('pQr') : upsell(T('Praten zonder internet kan in de app.', 'Talking without internet works in the app.')));
 $('appBar').onclick = (e) => { e.preventDefault(); upsell(''); };
 $('planBtn').onclick = () => upsell('');
+$('reportBtn').onclick = () => { dlg.close(); $('reportMsg').hidden = true; $('reportSend').disabled = false; $('reportDlg').showModal(); $('reportText').focus(); };
+$('reportClose').onclick = () => $('reportDlg').close();
+$('reportSend').onclick = async () => {
+  const text = $('reportText').value.trim();
+  if (!text) return $('reportText').focus();
+  const info = $('reportInfo').checked ? {
+    ua: navigator.userAgent, app: NATIVE ? 'android' : 'web', tier, lang: LANG, conn: connMode, screen: `${innerWidth}x${innerHeight}`,
+    channels: [...chans.values()].map((c) => ({ online: c.ws?.readyState === 1, n: c.n, offline: !!c.offline, limited: !!c.limited, test: !!c.cfg.test })),
+    errors: errLog.slice(-10), at: new Date().toISOString(),
+  } : null;
+  $('reportSend').disabled = true;
+  try {
+    const r = await (await fetch(ORIGIN + '/api/report', { method: 'POST', body: JSON.stringify({ lic: serverLic(), dev: clientId, name: myName, text, info }) })).json();
+    if (!r.ok) throw new Error(r.error);
+    $('reportText').value = '';
+    $('reportMsg').textContent = T('Bedankt! Je melding is verstuurd.', 'Thanks! Your report has been sent.');
+  } catch { $('reportMsg').textContent = T('Versturen lukte niet. Probeer het later opnieuw.', 'Sending failed. Please try again later.'); $('reportSend').disabled = false; }
+  $('reportMsg').hidden = false;
+};
 function renderTier() {
   $('qrBadge').hidden = LIMITS.offline;
   $('appBar').hidden = !(WEB && ANDROID && tier === 'web');
@@ -1085,6 +1128,7 @@ function renderTier() {
     : NAMES[tier] + (WEB && RANK[tier] > 1 ? T(' (gekoppeld)', ' (linked)') : '');
   $('planBadge').textContent = RANK[tier] > 1 ? NAMES[tier].toUpperCase() : '';
   $('planBadge').hidden = RANK[tier] < 2;
+  $('reportBtn').hidden = tier !== 'beta';
   if ($('appDlg').open) renderPlans();
 }
 renderTier();
@@ -1346,16 +1390,18 @@ function betaUntil() { return new Date(lic?.x || 0).toLocaleDateString(EN ? 'en-
 
 // Private beta invite (#beta=CODE): everything unlimited until the end date set on the server.
 async function joinBeta(code) {
+  linkBusy = true;
   try {
     const r = await licApi('beta', { code, dev: clientId });
     if (!r.lic) return upsell(r.error === 'beta full' ? T('De beta zit vol.', 'The beta is full.') : T('Deze beta-link werkt niet (meer).', 'This beta link no longer works.'));
     lic = null; storeLic(r);
-    upsell(T(`Welkom bij de WLKY-beta! Alles is onbeperkt tot en met ${betaUntil()}.`, `Welcome to the WLKY beta! Everything is unlimited until ${betaUntil()}.`));
+    upsell(T(`Welkom bij de WLKY-beta! Alles is onbeperkt tot en met ${betaUntil()}. Iets kapot? Menu → Probleem melden.`, `Welcome to the WLKY beta! Everything is unlimited until ${betaUntil()}. Something broken? Menu → Report a problem.`));
   } catch { upsell(T('Geen verbinding. Open de beta-link opnieuw.', 'No connection. Open the beta link again.')); }
 }
 
 // Personal gift link (#gift=CODE), made by the owner on admin.html: Plus or Pro without a purchase.
 async function joinGift(code) {
+  linkBusy = true;
   try {
     const r = await licApi('gift', { code, dev: clientId });
     if (!r.lic) return upsell(r.error === 'gift used' ? T('Deze persoonlijke link is al gebruikt op het maximale aantal apparaten.', 'This personal link is already used on the maximum number of devices.') : T('Deze link werkt niet (meer).', 'This link no longer works.'));
@@ -1366,6 +1412,7 @@ async function joinGift(code) {
 }
 
 async function redeem(code) {
+  linkBusy = true;
   try {
     const r = await licApi('redeem', { code, dev: clientId });
     if (!r.lic) return upsell(T('Deze koppellink is verlopen of al gebruikt. Maak een nieuwe in de app.', 'This link has expired or was already used. Make a new one in the app.'));
@@ -1435,6 +1482,7 @@ function showTour(i) {
 }
 
 function startTour() {
+  tourStarting = false;
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
   $('tour').classList.add('on');
   showTour(0);
@@ -1445,7 +1493,8 @@ function endTour() {
   $('tour').classList.remove('on');
   try { localStorage.setItem('walkie-tour', '1'); } catch {}
   nearbyReady = true; render();
-  if (!myName || !cfgs.length) $('menuBtn').click();
+  if (deferredUpsell) { const [why, replace] = deferredUpsell; deferredUpsell = null; upsell(why, replace); }
+  else if (!myName || !cfgs.length) $('menuBtn').click();
 }
 
 $('tourNext').onclick = () => (TOUR[tourStep].last ? endTour() : showTour(tourStep + 1));
@@ -1454,12 +1503,14 @@ $('tourBtn').onclick = () => { dlg.close(); startTour(); };
 addEventListener('resize', () => tourStep >= 0 && showTour(tourStep));
 addEventListener('keydown', (e) => { if (tourStep >= 0 && e.key === 'Escape') endTour(); });
 
+let linkBusy = false; // a link is being checked; its message comes first
 // Invite (#join=) and device links (#link=). Also when the app is already open: then only the hash changes.
 function handleHash() {
   const h = location.hash, link = h.match(/^#link=([A-Za-z0-9_-]{16})$/), invite = h.startsWith('#join=') && parseInvite(h);
   const beta = h.match(/^#beta=([A-Za-z0-9_-]{8,64})$/), gift = h.match(/^#gift=([A-Za-z0-9_-]{20})$/);
   if (!link && !invite && !beta && !gift) return;
   history.replaceState(null, '', location.pathname);
+  linkBusy = !!(link || beta || gift);
   if (invite) addChannel(invite.name, invite.code);
   if (link && WEB) redeem(link[1]);
   if (beta) joinBeta(beta[1]);
@@ -1473,8 +1524,9 @@ if (NATIVE && BILLING && !(att?.x - Date.now() > 864e5)) attReady = attest();
 let seenTour = true; try { seenTour = !!localStorage.getItem('walkie-tour'); } catch {}
 nearbyReady = seenTour;
 syncChannels();
-if (!seenTour) setTimeout(startTour, 500);
-else if (!myName || !cfgs.length) setTimeout(() => $('menuBtn').click(), 300);
+if (!seenTour) { tourStarting = true; setTimeout(startTour, 500); }
+// First the message from a link (beta, gift, invite), if any; the menu follows when it is closed.
+else if (!myName || !cfgs.length) setTimeout(() => !$('appDlg').open && !linkBusy && $('menuBtn').click(), 300);
 
 if (!NATIVE && location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
