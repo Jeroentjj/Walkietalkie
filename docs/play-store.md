@@ -1,7 +1,7 @@
 # Google Play: invulhulp
 
 ## Basis
-- **App-naam:** Wlky
+- **App-naam:** WLKY
 - **Pakketnaam:** app.wlky
 - **Bestand:** `wlky.aab` uit de release `latest`
 - **Privacyverklaring:** https://wlky.app/privacy.html
@@ -14,12 +14,12 @@
 Walkietalkie op je telefoon: druk, praat, laat los. Ook offline en versleuteld.
 
 **Volledige beschrijving:**
-Wlky maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedrukt, praat, en iedereen op je kanaal hoort je, met echte radioklank en piepje.
+WLKY maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedrukt, praat, en iedereen op je kanaal hoort je, met echte radioklank en piepje.
 
 • Privé-kanalen: maak een kanaal en deel de link. Wie erop tikt, zit erin.
 • Om de beurt praten: tot 10 personen per kanaal, met wachtrij.
 • Luister naar meerdere kanalen tegelijk.
-• Automatisch offline: staan er telefoons in de buurt op hetzelfde kanaal, dan praat Wlky direct via Bluetooth/wifi, zonder internet. Anders gebruikt het internet. Of koppel direct via QR-code.
+• Automatisch offline: staan er telefoons in de buurt op hetzelfde kanaal, dan praat WLKY direct via Bluetooth/wifi, zonder internet. Anders gebruikt het internet. Of koppel direct via QR-code.
 • Chat: stuur ook tekstberichten, online en offline.
 • Versleuteld: geluid, berichten en namen worden op je telefoon versleuteld. Onze server kan niet meeluisteren.
 • Geen account, geen advertenties, geen tracking.
@@ -29,12 +29,12 @@ Wlky maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedr
 A real walkie-talkie on your phone: push, talk, release. Works offline, encrypted.
 
 **Full description:**
-Wlky turns your phone into a real walkie-talkie. Hold the big PTT button, talk, and everyone on your channel hears you, with real radio sound and roger beep.
+WLKY turns your phone into a real walkie-talkie. Hold the big PTT button, talk, and everyone on your channel hears you, with real radio sound and roger beep.
 
 • Private channels: create a channel and share the link. Anyone who taps it joins.
 • Take turns: up to 10 people per channel, with a queue.
 • Listen to several channels at once.
-• Automatically offline: if phones on the same channel are nearby, Wlky talks directly over Bluetooth/wifi, no internet needed. Otherwise it uses the internet. Or pair directly with a QR code.
+• Automatically offline: if phones on the same channel are nearby, WLKY talks directly over Bluetooth/wifi, no internet needed. Otherwise it uses the internet. Or pair directly with a QR code.
 • Chat: send text messages too, online and offline.
 • Encrypted: voice, messages and names are encrypted on your phone. Our server cannot listen in.
 • No account, no ads, no tracking.
@@ -60,7 +60,7 @@ Communicatie-app met door gebruikers gegenereerde inhoud tussen gebruikers onder
 
 ## Stappen
 1. Maak een ontwikkelaarsaccount op https://play.google.com/console (25 dollar eenmalig).
-2. App maken → naam "Wlky", standaardtaal Nederlands, App, Gratis.
+2. App maken → naam "WLKY", standaardtaal Nederlands, App, Gratis.
 3. Vul alles hierboven in (Beleid → App-content, en Groeien → Winkelvermelding).
 4. Testen → Gesloten test: upload `wlky.aab`, voeg minimaal 12 testers toe (Google-e-mailadressen) en laat ze 14 dagen meedoen.
 5. Daarna: Productie → Toegang aanvragen → publiceren.

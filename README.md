@@ -1,4 +1,4 @@
-# Wlky
+# WLKY
 
 Installeerbare webapp (PWA): walkietalkie met meerdere kanalen en meerdere mensen per kanaal.
 

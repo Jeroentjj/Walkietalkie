@@ -2,12 +2,7 @@
   "name": "walkietalkie",
   "main": "src/api.js",
   "compatibility_date": "2025-09-01",
-  // wlky.app is the real address; the other two only redirect to it (see src/api.js).
-  "routes": [
-    { "pattern": "wlky.app", "custom_domain": true },
-    { "pattern": "www.wlky.app", "custom_domain": true },
-    { "pattern": "walkie.dopimo.app", "custom_domain": true }
-  ],
+  "routes": [{ "pattern": "wlky.app", "custom_domain": true }],
   "assets": { "directory": "./public", "binding": "ASSETS" },
   "durable_objects": { "bindings": [{ "name": "CHANNEL", "class_name": "Channel" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Channel"] }],

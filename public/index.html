@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="theme-color" content="#f6a21a">
-<title>Wlky</title>
+<title>WLKY</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
 <style>
@@ -245,7 +245,7 @@
 
 <script src="vendor/qrcode.js"></script>
 <script>
-// Wlky: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
+// WLKY: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
 // decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
 // channel code, so the server only ever sees a hash of the code and ciphertext.
 const $ = (id) => document.getElementById(id);
@@ -833,7 +833,7 @@ function addChannel(name, code) {
 const inviteLink = (cfg) => `${ORIGIN}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
 
 function share(cfg) {
-  const url = inviteLink(cfg), text = T(`Praat met me via Wlky op kanaal "${cfg.name}". Tik op de link om mee te doen:`, `Talk to me on Wlky, channel "${cfg.name}". Tap the link to join:`);
+  const url = inviteLink(cfg), text = T(`Praat met me via WLKY op kanaal "${cfg.name}". Tik op de link om mee te doen:`, `Talk to me on WLKY, channel "${cfg.name}". Tap the link to join:`);
   if (navigator.share) navigator.share({ text, url }).catch(() => {});
   else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert(T('Link gekopieerd', 'Link copied')));
 }
@@ -1092,7 +1092,7 @@ if (tabs) {
 
 // --- Guided tour: dims the screen, cuts a hole around the real controls and explains them one by one.
 const TOUR = [
-  { t: T('Welkom bij Wlky', 'Welcome to Wlky'), p: T('Een walkietalkie op je telefoon. Een rondleiding van een halve minuut.', 'A walkie-talkie on your phone. A quick half-minute tour.') },
+  { t: T('Welkom bij WLKY', 'Welcome to WLKY'), p: T('Een walkietalkie op je telefoon. Een rondleiding van een halve minuut.', 'A walkie-talkie on your phone. A quick half-minute tour.') },
   { sel: ['#scr'], t: T('Het scherm', 'The display'), p: T('Hier zie je je kanaal, wie er praat en de status. Tik erop om te chatten.', 'Shows your channel, who is talking and the status. Tap it to chat.') },
   { sel: ['#ptt'], t: 'PTT', p: T('Houd ingedrukt om te praten, laat los om te luisteren. Praat er al iemand? Blijf ingedrukt houden: je bent zo aan de beurt.', 'Hold to talk, release to listen. Someone already talking? Keep holding: your turn comes next.') },
   { sel: ['#prevBtn', '#nextBtn'], t: T('Van kanaal wisselen', 'Switch channel'), p: T('Met de pijlen kies je het kanaal waarop je praat. Je luistert altijd naar al je kanalen tegelijk.', 'The arrows pick the channel you talk on. You always listen to all your channels at once.') },

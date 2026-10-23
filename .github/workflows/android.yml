@@ -40,5 +40,5 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk wlky.apk
           cp android/app/build/outputs/bundle/release/app-release.aab wlky.aab
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest wlky.apk wlky.aab --title "Wlky (Android)" \
+          gh release create latest wlky.apk wlky.aab --title "WLKY (Android)" \
             --notes "Automatisch gebouwd vanaf ${GITHUB_SHA::7}. wlky.apk = direct installeren, wlky.aab = uploaden naar Google Play."

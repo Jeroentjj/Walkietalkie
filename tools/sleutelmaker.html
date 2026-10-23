@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wlky Sleutelmaker</title>
+<title>WLKY Sleutelmaker</title>
 <style>
   :root { --or:#f6a21a; --bg:#151617; --card:#222427; --line:#34373b; --mut:#9a9ea3; }
   * { box-sizing:border-box; }
@@ -25,7 +25,7 @@
 </head>
 <body>
 <main>
-  <h1>Wlky sleutelmaker</h1>
+  <h1>WLKY sleutelmaker</h1>
   <p>Maakt de signeersleutel voor de Android-app, helemaal in deze pagina. Er wordt niets verstuurd; dit werkt ook zonder internet.</p>
 
   <div class="card">
@@ -88,7 +88,7 @@ async function makeKeystore(password) {
   cert.serialNumber = '01' + forge.util.bytesToHex(forge.random.getBytesSync(8));
   cert.validity.notBefore = new Date();
   cert.validity.notAfter = new Date(Date.now() + 100 * 365.25 * 864e5);
-  const subject = [{ name: 'commonName', value: 'Wlky' }, { name: 'organizationName', value: 'wlky.app' }, { name: 'countryName', value: 'NL' }];
+  const subject = [{ name: 'commonName', value: 'WLKY' }, { name: 'organizationName', value: 'wlky.app' }, { name: 'countryName', value: 'NL' }];
   cert.setSubject(subject); cert.setIssuer(subject);
   cert.sign(privateKey, forge.md.sha256.create());
 
