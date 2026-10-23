@@ -143,7 +143,8 @@ export async function license(request, env, route, json) {
       const n = Number(await env.WALKIE.get('beta:count')) || 0;
       if (n >= (Number(env.BETA_MAX) || 25)) return json({ error: 'beta full' }, 409);
       await env.WALKIE.put('beta:count', String(n + 1));
-      await env.WALKIE.put(`beta:${body.dev}`, '1', { expirationTtl: Math.max(60, Math.ceil((until - Date.now()) / 1000) + 86400) });
+      const ua = String(request.headers.get('user-agent') || '').slice(0, 200);
+      await env.WALKIE.put(`beta:${body.dev}`, JSON.stringify({ t: Date.now(), ua }), { expirationTtl: Math.max(60, Math.ceil((until - Date.now()) / 1000) + 86400) });
     }
     return json({ lic: await sign(env, { t: 'beta', d: body.dev, x: until }), tier: 'beta', x: until });
   }

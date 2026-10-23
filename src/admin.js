@@ -4,6 +4,7 @@
 //   POST /api/admin/revoke  { key, code }                            gift stops working at once
 //   POST /api/admin/reset   { key, code }                            forget its devices (new phone)
 //   POST /api/admin/reports     { key }                              -> { reports: [...] } (problem reports from beta testers)
+//   POST /api/admin/betas       { key }                              -> { betas: [...], count, max } (devices that joined the beta)
 //   POST /api/admin/report-del  { key, id }
 // "key" must equal the secret ADMIN_KEY. Gifts live in KV under gift:<code>; redeeming is /api/license/gift.
 
@@ -65,6 +66,21 @@ export async function admin(request, env, route, json) {
       cursor = page.list_complete ? null : page.cursor;
     } while (cursor);
     return json({ reports: reports.sort((a, b) => b.t - a.t) });
+  }
+
+  if (route === 'betas') {
+    const betas = [];
+    let cursor;
+    do {
+      const page = await env.WALKIE.list({ prefix: 'beta:', cursor });
+      for (const k of page.keys) {
+        if (k.name === 'beta:count') continue;
+        const b = await env.WALKIE.get(k.name, 'json').catch(() => null);
+        betas.push({ id: k.name.slice(5, 11), t: b?.t || 0, ua: b?.ua || '' });
+      }
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+    return json({ betas: betas.sort((a, b) => b.t - a.t), count: Number(await env.WALKIE.get('beta:count')) || betas.length, max: Number(env.BETA_MAX) || 25 });
   }
 
   if (route === 'report-del') {

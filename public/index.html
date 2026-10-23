@@ -26,8 +26,8 @@
   .led.rx { background:#ffd23f; box-shadow:0 0 12px #ffd23f; }
   .led.wait { background:#f6a21a; animation:blink .6s infinite alternate; }
   @keyframes blink { to { opacity:.3; } }
-  .lcd { background:#111; border-radius:16px; padding:10px; box-shadow:inset 0 0 0 3px #2a2a2a; }
-  .scr { background:#050505; border-radius:6px; padding:8px 12px; color:var(--seg); min-height:120px; position:relative; }
+  .lcd { background:#111; border-radius:16px; padding:10px; box-shadow:inset 0 0 0 3px #2a2a2a; flex:1 1 0; min-height:150px; display:flex; flex-direction:column; }
+  .scr { background:#050505; border-radius:6px; padding:8px 12px; color:var(--seg); flex:1 1 auto; min-height:0; position:relative; display:flex; flex-direction:column; overflow:hidden; }
   @font-face { font-family:Round; src:url(fonts/nunito-latin-700-normal.woff2) format('woff2'); font-weight:700; font-display:block; }
   @font-face { font-family:Seg7; src:url(fonts/DSEG7Classic-Bold.woff2) format('woff2'); font-display:block; }
   @font-face { font-family:Seg14; src:url(fonts/DSEG14Classic-Bold.woff2) format('woff2'); font-display:block; }
@@ -36,11 +36,25 @@
   .digits { position:relative; font:64px/1 Seg7; }
   .digits::before { content:'88'; position:absolute; inset:0; color:#ffffff12; }
   .num small { font:24px/1 Seg14; padding-bottom:2px; text-transform:uppercase; }
-  .ch { position:absolute; right:12px; top:8px; display:flex; gap:6px; align-items:center; font-size:11px; }
+  .ch { position:absolute; right:6px; top:2px; display:flex; gap:6px; align-items:center; font-size:11px; z-index:1; }
+  .who { display:flex; align-items:center; gap:4px; padding:6px 4px; border:0; background:none; color:var(--seg); font:12px Seg14, monospace; cursor:pointer; }
+  .who svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .bars { margin-right:6px; }
   .bars { display:flex; gap:2px; height:10px; align-items:flex-end; }
   .bars i { width:4px; background:var(--seg); opacity:.15; } .bars i.a { opacity:1; }
-  .st { font:14px Seg14, ui-monospace, monospace; text-transform:uppercase; letter-spacing:1px; margin-top:14px; flex:none; color:#ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .num small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
+  .st { font:14px Seg14, ui-monospace, monospace; text-transform:uppercase; letter-spacing:1px; margin-top:14px; flex:none; color:#ccc; white-space:nowrap; overflow:hidden; }
+  .num small { overflow:hidden; white-space:nowrap; max-width:60%; }
+  /* Text that does not fit slides back and forth (set by marquee()). */
+  .st span, .num small span { display:inline-block; white-space:nowrap; }
+  .mq span { animation:mq var(--dur) ease-in-out infinite alternate; }
+  @keyframes mq { 0%,15% { transform:translateX(0); } 85%,100% { transform:translateX(var(--d)); } }
+  /* Last messages on the display, and the line to tap to chat. */
+  .mini { flex:1 1 0; min-height:0; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; gap:3px; margin-top:8px; }
+  .ml { font:12.5px/1.3 ui-monospace, monospace; color:#c9c9c9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:none; }
+  .ml b { color:var(--or); font-weight:700; margin-right:6px; } .ml.me b { color:#8d9196; }
+  .chatrow { flex:none; display:flex; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; border-radius:8px; background:#161616; box-shadow:inset 0 0 0 1px #333; color:#9a9ea3; font:13px ui-monospace, monospace; cursor:pointer; }
+  .chatrow svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  .chatrow span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .scr { cursor:pointer; }
   .hint { font:10px ui-monospace,monospace; color:#777; margin-top:4px; }
   /* Two keys left, square PTT in the middle, two keys right. */
@@ -64,7 +78,7 @@
   #ptt b { font:700 42px Round, system-ui; letter-spacing:5px; color:#e6e6e6; }
   #ptt:disabled { opacity:.75; }
   /* Speaker: staggered holes punched into a slightly sunken dish (lit lower rims, shadowed upper walls). */
-  .grille { flex:1; min-height:40px; margin:14px 0 0; container-type:size; display:flex; align-items:center; justify-content:center; }
+  .grille { flex:0 0 clamp(44px,8dvh,80px); margin:12px 0 0; container-type:size; display:flex; align-items:center; justify-content:center; }
   .spk { width:min(100cqw,100cqh); aspect-ratio:1; position:relative; }
   .spk::before { content:''; position:absolute; inset:0; border-radius:50%;
     background:radial-gradient(ellipse at 50% 40%, #fbb43d, #f19b14 70%, #e48d0c);
@@ -73,7 +87,9 @@
     -webkit-mask:radial-gradient(closest-side, #000 82%, transparent 96%); mask:radial-gradient(closest-side, #000 82%, transparent 96%); }
   .brand { text-align:center; font:900 30px system-ui; letter-spacing:12px; text-indent:12px; color:#141414; margin-top:6px; flex:none;
     text-shadow:0 1px 0 #ffd99a, 0 -1px 0 #0004; } /* debossed into the shell */
-  dialog { border:0; border-radius:20px; background:#1d1f21; color:#eee; width:min(94vw,420px); max-height:88dvh; padding:0; font-family:system-ui,sans-serif; }
+  dialog { border:0; border-radius:20px; background:#1d1f21; color:#eee; width:min(94vw,420px); max-height:88dvh; padding:0; font-family:system-ui,sans-serif; overflow-x:hidden; scrollbar-width:none; }
+  dialog::-webkit-scrollbar, .msgs::-webkit-scrollbar { display:none; }
+  .msgs { scrollbar-width:none; }
   dialog::backdrop { background:#000c; }
   dialog h3 { margin:0; font-size:20px; } 
   dialog input { width:100%; padding:12px; border-radius:12px; border:1px solid #3a3d40; background:#121314; color:#fff; font-size:16px; margin:0; user-select:text; }
@@ -87,21 +103,25 @@
   .sheet-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; padding:16px 18px 12px; background:#1d1f21; border-bottom:1px solid #2a2d30; }
   .sheet-head h3 { flex:1; }
   .x { width:38px; height:38px; padding:0 !important; border-radius:50% !important; background:#2c2f33; color:#ddd; font-size:18px !important; }
-  .sheet-body { padding:6px 18px 20px; }
+  .sheet-body { padding:6px 18px 20px; min-width:0; overflow-x:hidden; }
   .sec-title { margin:18px 0 8px; font:700 12px system-ui; letter-spacing:1px; text-transform:uppercase; color:#8d9196; }
-  .chs { list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+  .chs, .mems { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+  .mems li { display:flex; gap:10px; align-items:center; padding:10px 10px 10px 14px; border-radius:14px; background:#26292c; }
+  .mems .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; font-weight:700; }
+  .mems .tag { font:800 10px system-ui; padding:2px 6px; border-radius:6px; background:var(--or); color:#111; letter-spacing:.5px; flex:none; }
+  .mems .tag.talk { background:#ffd23f; }
   .chs li { display:flex; gap:12px; align-items:center; padding:10px 10px 10px 12px; border-radius:14px; background:#26292c; cursor:pointer; border:2px solid transparent; }
   .chs li.sel { border-color:var(--or); background:#2b2a24; }
   .chs .num { font:700 18px Seg7, monospace; color:#777; width:32px; text-align:center; }
   .chs li.sel .num { color:var(--or); }
-  .chs .nm { flex:1; min-width:0; } .chs .nm b { display:block; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chs .nm { flex:1; min-width:0; } .chs .nm b { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:16px; overflow:hidden; overflow-wrap:anywhere; }
   .chs .nm span { font-size:12.5px; color:#8d9196; }
   .chs li.sel .nm span { color:#d9a34a; }
   .ib { width:38px; height:38px; padding:0 !important; display:grid; place-items:center; background:#33363a; color:#ddd; }
   .ib .ic { width:18px; height:18px; }
   .ib.del { background:#3a2222; color:#f99; }
   .empty { padding:14px; border-radius:14px; background:#26292c; color:#8d9196; text-align:center; font-size:14px; }
-  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .tile { display:flex !important; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; background:#26292c !important; color:#eee; padding:12px !important; border:2px solid transparent !important; }
   .tile.on { border-color:var(--or) !important; }
   .ic { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
@@ -171,10 +191,11 @@
 <div class="radio">
   <span class="led" id="led"></span>
   <div class="lcd"><div class="scr" id="scr">
-    <div class="ch"><span id="unread" hidden></span><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
+    <div class="ch"><span id="unread" hidden></span><button class="who" id="whoBtn" aria-label="Wie zit erin"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span id="whoN">0</span></button><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
     <div class="num"><span class="digits"><span id="chNum">--</span></span><small id="chSub">OFF</small></div>
     <div class="st" id="status">Tik hier voor kanalen</div>
-    
+    <div class="mini" id="mini"></div>
+    <div class="chatrow" id="chatRow"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="chatRowT">Tik om te chatten</span></div>
   </div></div>
   <div class="brand">WLKY</div>
   <div class="grille"><div class="spk"></div></div>
@@ -221,10 +242,10 @@
 
     <div class="sec-title">Instellingen</div>
     <div class="switch" style="display:block;cursor:auto"><b>Jouw naam</b><small>Zien anderen als je praat</small>
-      <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><input id="myName" maxlength="24" placeholder="bijv. Jeroen"><button class="prim" id="nameSave">Opslaan</button></div></div>
     <button class="switch" id="planBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Versie</b><small id="planNow"></small></div><span class="badge" id="planBadge"></span></button>
     <button class="switch" id="reportBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Probleem melden</b><small>Iets kapot of een idee? Laat het weten</small></div><svg class="ic" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></button>
-    <button class="switch" id="installBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Op beginscherm zetten</b><small>WLKY als app, schermvullend</small></div><svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:-4px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></button>
+    <button class="switch" id="installBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Op beginscherm zetten</b><small>WLKY als app, schermvullend</small></div><svg class="ic" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></button>
     <button class="switch" id="tourBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Rondleiding</b><small>Bekijk hoe de app werkt</small></div><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg></button>
     <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
       <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
@@ -234,6 +255,16 @@
 
     <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
     <small style="margin-top:8px"><a href="https://wlky.app/privacy.html" target="_blank" style="color:#d9a34a">Privacy</a></small>
+  </div>
+</dialog>
+
+<dialog id="memDlg">
+  <div class="sheet-head"><h3 id="memTitle">Wie zit erin</h3><button class="x" id="memClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="sec-title" id="memCount"></div>
+    <ul class="mems" id="memList"></ul>
+    <small id="memNote" style="margin-top:10px"></small>
+    <button class="tbtn prim ibtn" id="memRing" style="width:100%;margin-top:14px"><svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Bel iedereen</span></button>
   </div>
 </dialog>
 
@@ -331,7 +362,7 @@ addEventListener('unhandledrejection', (e) => errLog.push(`${new Date().toISOStr
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Zet WLKY op je beginscherm": "Add WLKY to your home screen", "Dan opent WLKY als een echte app: schermvullend, met een eigen icoon.": "Then WLKY opens like a real app: full screen, with its own icon.", "Installeren": "Install", "Niet nu": "Not now", "Op beginscherm zetten": "Add to home screen", "WLKY als app, schermvullend": "WLKY as an app, full screen", "1. Tik onderin Safari op Delen": "1. In Safari, tap Share", "2. Kies": "2. Choose", "Zet op beginscherm": "Add to Home Screen", "3. Tik op": "3. Tap", "Voeg toe": "Add", "Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+const STATIC_EN = {"Zet WLKY op je beginscherm": "Add WLKY to your home screen", "Dan opent WLKY als een echte app: schermvullend, met een eigen icoon.": "Then WLKY opens like a real app: full screen, with its own icon.", "Installeren": "Install", "Niet nu": "Not now", "Op beginscherm zetten": "Add to home screen", "WLKY als app, schermvullend": "WLKY as an app, full screen", "1. Tik onderin Safari op Delen": "1. In Safari, tap Share", "2. Kies": "2. Choose", "Zet op beginscherm": "Add to Home Screen", "3. Tik op": "3. Tap", "Voeg toe": "Add", "Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off", "Opslaan": "Save", "Wie zit erin": "Who is in", "Bel iedereen": "Call everyone", "Tik om te chatten": "Tap to chat"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -342,6 +373,23 @@ if (EN) {
 }
 
 const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
+// Text that does not fit the display slides back and forth instead of being cut off.
+function marquee(el, text) {
+  if (el._t === text) return;
+  el._t = text;
+  if (!el.firstElementChild) el.textContent = ''; // drop the text that came with the page
+  const s = el.firstElementChild || el.appendChild(document.createElement('span'));
+  s.textContent = text; el.classList.remove('mq');
+  requestAnimationFrame(() => {
+    const d = s.scrollWidth - el.clientWidth;
+    if (d > 2) { el.style.setProperty('--d', `-${d + 4}px`); el.style.setProperty('--dur', `${Math.max(4, d / 25 + 3)}s`); el.classList.add('mq'); }
+  });
+}
+const setStatus = (t) => marquee(status, t);
+// A message that takes over the status line for a few seconds (calls, removed from channel, ...).
+let notice = '', noticeT;
+function showNotice(text, ms = 5000) { notice = text; clearTimeout(noticeT); noticeT = setTimeout(() => { notice = ''; render(); }, ms); render(); }
+document.fonts?.ready.then(() => { status._t = $('chSub')._t = null; render(); });
 const RATE = 16000;
 // Wire format v2 of an audio frame: [0x02][12-byte IV][AES-GCM( 8-bit mu-law samples )]. A frame is ~128 ms,
 // so ~8 messages/s instead of ~23, and half the bytes of 16-bit PCM. Receivers ignore other versions.
@@ -410,6 +458,8 @@ const chans = new Map(); // code -> Chan
 
 let muted = localStorage.getItem('walkie-muted') === '1';
 let audioCtx, mic, micNode, micStopTimer, holding = null; // holding: Chan PTT is held on
+// Only while you really transmit does incoming sound stop; waiting for your turn you keep hearing the speaker.
+const txing = () => !!holding && holding.you === 'tx';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('walkie:' + text));
@@ -477,7 +527,7 @@ function squelch(dur, at = 0) {
 
 function hiss() {
   if (!fx) { if (!fxOn) return; if (!audioCtx || audioCtx.state !== 'running') return; }
-  const on = fxOn && !muted && !holding && [...chans.values()].some((c) => c.speaker);
+  const on = fxOn && !muted && !txing() && [...chans.values()].some((c) => c.speaker);
   radioFx().hissGain.gain.setTargetAtTime(on ? 0.005 : 0, audioCtx.currentTime, 0.05);
 }
 
@@ -517,7 +567,7 @@ class Chan {
     const name = await this.seal(myName || T('Iemand', 'Someone'));
     // Checked after the last await: two overlapping connect() calls must not open two sockets.
     if (this.closed || this.offline || (this.ws && this.ws.readyState <= 1)) return;
-    const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}&dev=${clientId}&lic=${encodeURIComponent(serverLic())}`;
+    const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}&dev=${clientId}&lic=${encodeURIComponent(serverLic())}${this.cfg.own ? '&own=' + encodeURIComponent(this.cfg.own) : ''}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
     ws.onmessage = (e) => {
@@ -528,7 +578,7 @@ class Chan {
       if (this.ws !== ws) return; // an old socket we replaced
       clearInterval(this.ping);
       if (this.offline) return;
-      this.n = 0; this.you = 0; this.speaker = null; render();
+      this.n = 0; this.you = 0; this.speaker = null; this.members = null; render();
       if (!this.closed) setTimeout(() => this.connect(), this.full || this.limited ? 60000 : 2000);
     };
     ws.onopen = () => {
@@ -633,17 +683,34 @@ class Chan {
     if (m.t === 'limit') return this.onLimit(m);
     if (m.t === 'state') this.limited = false;
     if (m.t === 'chat') return this.onChat(m.d);
+    if (m.t === 'kicked') return this.onKicked();
+    if (m.t === 'ring') return playRing(await this.open(m.from), this.cfg.name);
     if (m.t !== 'state') return;
     this.full = false;
     const seq = (this.seq = (this.seq || 0) + 1);
     if (m.speaker) m.speaker = await this.open(m.speaker);
+    const names = (this.names ||= new Map()); // encrypted name -> name
+    const members = await Promise.all((m.members || []).map(async (x) => {
+      if (!names.has(x.name)) { names.set(x.name, await this.open(x.name)); if (names.size > 200) names.delete(names.keys().next().value); }
+      return { id: x.id, o: !!x.o, name: names.get(x.name) };
+    }));
     if (seq !== this.seq) return; // a newer state arrived while decrypting
     const wasTx = this.you === 'tx', wasSpeaker = this.speaker;
-    Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker });
+    Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker, sid: m.sid, members, meId: m.me, isOwner: !!m.own });
     if (!wasTx && m.you === 'tx') { beep([900, 1300]); navigator.vibrate?.(80); talkTimer(this); } // your turn
-    if (wasSpeaker && !m.speaker && holding !== this) { squelch(0.3, this.next); beep([1200, 900]); } // squelch tail + roger beep
+    if (wasSpeaker && !m.speaker && m.you !== 'tx') { squelch(0.3, this.next); beep([1200, 900]); } // squelch tail + roger beep
     if (!wasSpeaker && m.speaker) { this.next = 0; squelch(0.12); }
     render();
+    if (memChan === this) renderMembers();
+  }
+
+  // The founder removed this phone from the channel.
+  onKicked() {
+    const name = this.cfg.name;
+    cfgs = cfgs.filter((x) => x.code !== this.cfg.code);
+    if (memChan === this) $('memDlg').close();
+    syncChannels(); renderList();
+    showNotice(T(`Je bent uit "${name}" verwijderd`, `You were removed from "${name}"`), 8000);
   }
 
   onAudio(buf) {
@@ -652,7 +719,7 @@ class Chan {
   }
 
   async playFrame(buf) {
-    if (holding || muted || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
+    if (txing() || muted || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
     const u = new Uint8Array(buf);
     if (u[0] !== FRAME_V) return; // other (older) frame format
     let ulaw;
@@ -881,7 +948,7 @@ async function ensureMic() {
   if (mic) return true;
   try {
     mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-  } catch { status.textContent = T('Microfoon geweigerd', 'Microphone denied'); return false; }
+  } catch { showNotice(T('Microfoon geweigerd', 'Microphone denied')); return false; }
   const a = ctx(), src = a.createMediaStreamSource(mic);
   micNode = a.createScriptProcessor(2048, 1, 1);
   micNode.onaudioprocess = (e) => {
@@ -948,7 +1015,7 @@ if (NATIVE) window.walkieNative = {
   onBillingError(m) { planMsg(T('Kopen lukte niet: ', 'Purchase failed: ') + m); },
   onError(e) {
     if (e === 'perm') { nearbyDenied = true; offChan?.nearbyStop(); }
-    status.textContent = e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e;
+    showNotice(e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e);
   },
 };
 
@@ -957,14 +1024,16 @@ function render() {
   const c = current();
   ptt.disabled = !c;
   $('chNum').textContent = c ? String(sel + 1).padStart(2, '0') : '--';
-  $('chSub').textContent = c ? c.cfg.name : 'OFF';
+  marquee($('chSub'), c ? c.cfg.name : 'OFF');
+  $('whoN').textContent = c && c.n ? c.n : 0;
+  renderMini(c);
   document.querySelectorAll('#bars i').forEach((b, i) => b.classList.toggle('a', !!c && c.n > i));
   // Someone talking on any channel?
   const rx = [...chans.values()].find((x) => x.speaker);
   let st, l = '';
   if (!c) st = T('Tik hier om een kanaal toe te voegen', 'Tap MENU to add a channel');
   else if (holding === c && c.you === 'tx') { st = T('▶ Zenden…', '▶ Sending…'); l = 'tx'; }
-  else if (holding === c && c.you > 0) { st = T(`Wacht op je beurt (#${c.you})`, `Waiting for your turn (#${c.you})`); l = 'wait'; }
+  else if (holding === c && c.you > 0) { st = T(`Wacht op je beurt (#${c.you})`, `Waiting for your turn (#${c.you})`) + (rx ? ` · ◀ ${rx.speaker}` : ''); l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
   else if (weakCode(c.cfg) && !rx) { st = T('Onveilig kanaal: maak opnieuw', 'Insecure channel: recreate it'); l = 'wait'; }
   else if (c.cfg.qr && c.n <= 1) st = T('Direct: verbinding verbroken', 'Direct: connection lost');
@@ -976,7 +1045,8 @@ function render() {
   else { st = c.n > 1 ? `${c.n} ${c.offline ? T('in de buurt', 'nearby') : 'online'}` : T('Alleen jij · PTT = oproepen', 'Only you · PTT = call'); l = 'on';
     if (isFinite(LIMITS.talksPerDay) && talksLeft() <= 5) st += T(` · nog ${talksLeft()}`, ` · ${talksLeft()} left`); }
   if (muted && c) st = T('Stil · ', 'Muted · ') + st;
-  status.textContent = st;
+  if (notice) { st = notice; l = 'wait'; }
+  setStatus(st);
   led.className = 'led ' + l;
   hiss();
   const unread = [...chans.values()].reduce((s, x) => s + (x.unread || 0), 0);
@@ -1030,7 +1100,7 @@ function renderList() {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
     li.innerHTML = `<div class="num">${String(i + 1).padStart(2, '0')}</div><div class="nm"><b></b><span></span></div>`
-      + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" /></svg></button>`)
+      + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="who" aria-label="Wie zit erin"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button><button class="ib" data-a="share" aria-label="Delen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" /></svg></button>`)
       + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></svg></button>`;
     li.querySelector('b').textContent = cfg.name;
     li.querySelector('span').textContent = weakCode(cfg) ? T('Onveilig (oude code): verwijder en maak opnieuw', 'Insecure (old code): delete and recreate')
@@ -1038,7 +1108,8 @@ function renderList() {
     if (weakCode(cfg)) li.querySelector('span').style.color = '#f88';
     li.onclick = (e) => {
       const a = e.target.closest('[data-a]')?.dataset.a;
-      if (a === 'share') share(cfg);
+      if (a === 'who') openMembers(chans.get(cfg.code));
+      else if (a === 'share') share(cfg);
       else if (a === 'del') {
         if (confirm(T(`Kanaal "${cfg.name}" verwijderen?`, `Delete channel "${cfg.name}"?`))) { cfgs.splice(i, 1); syncChannels(); renderList(); }
       } else { sel = i; syncChannels(); renderList(); }
@@ -1047,7 +1118,7 @@ function renderList() {
   });
 }
 
-function addChannel(name, code) {
+function addChannel(name, code, own) {
   if (code.length < 22) return alert(T('Deze uitnodiging is van een oude, onveilige versie. Vraag om een nieuwe link.', 'This invite is from an old, insecure version. Ask for a new link.'));
   const i = cfgs.findIndex((c) => c.code === code);
   const mine = cfgs.filter((c) => !c.test && !c.qr);
@@ -1055,7 +1126,7 @@ function addChannel(name, code) {
     return upsell(T(`${NAMES[tier]} heeft max. ${LIMITS.channels} ${LIMITS.channels > 1 ? 'kanalen' : 'kanaal'}.`, `${NAMES[tier]} has max. ${LIMITS.channels} channel${LIMITS.channels > 1 ? 's' : ''}.`), LIMITS.channels === 1 && (() => {
       cfgs = cfgs.filter((c) => c.test || c.qr); syncChannels(); addChannel(name, code); renderList();
     }));
-  if (i >= 0) sel = i; else { cfgs.push({ name: name || T(`Kanaal ${cfgs.length + 1}`, `Channel ${cfgs.length + 1}`), code }); sel = cfgs.length - 1; }
+  if (i >= 0) sel = i; else { cfgs.push({ name: name || T(`Kanaal ${cfgs.length + 1}`, `Channel ${cfgs.length + 1}`), code, ...(own && { own }) }); sel = cfgs.length - 1; }
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(code));
   syncChannels();
 }
@@ -1077,6 +1148,7 @@ function parseInvite(s) {
 
 $('menuBtn').onclick = () => { closePanels(); $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
 $('scr').onclick = openChat;
+$('chatRow').onclick = (e) => { e.stopPropagation(); openChat(); };
 $('chatClose').onclick = () => { chatOpen = false; $('chatDlg').close(); };
 $('chatDlg').addEventListener('close', () => (chatOpen = false));
 $('chatForm').onsubmit = (e) => {
@@ -1152,7 +1224,7 @@ $('testBtn').onclick = () => {
   syncChannels(); renderList();
 };
 $('createBtn').onclick = () => {
-  addChannel($('newName').value.trim(), genCode());
+  addChannel($('newName').value.trim(), genCode(), genCode()); // the second code proves you are the founder
   $('newName').value = '';
   closePanels(); renderList();
   share(cfgs[sel]);
@@ -1171,11 +1243,20 @@ $('langSel').value = LANG;
 $('langSel').onchange = () => { localStorage.setItem('walkie-lang', $('langSel').value); location.reload(); };
 $('fxBox').checked = fxOn;
 $('fxBox').onchange = () => { fxOn = $('fxBox').checked; localStorage.setItem('walkie-fx', fxOn ? '1' : '0'); hiss(); };
-$('myName').onchange = () => {
-  myName = $('myName').value.trim();
-  localStorage.setItem('walkie-name', myName);
-  for (const c of chans.values()) c.ws?.close(); // reconnect with new name
-};
+function saveName() {
+  const name = $('myName').value.trim(), b = $('nameSave');
+  if (name !== myName) {
+    myName = name;
+    localStorage.setItem('walkie-name', myName);
+    for (const c of chans.values()) c.ws?.close(); // reconnect with new name
+  }
+  b.dataset.t ||= b.textContent;
+  b.textContent = T('Opgeslagen', 'Saved'); b.disabled = true;
+  clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = b.dataset.t; b.disabled = false; }, 1500);
+}
+$('myName').onchange = saveName;
+$('myName').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } };
+$('nameSave').onclick = saveName;
 
 // Shared invite link: /#join=<name>|<code>
 
@@ -1334,13 +1415,93 @@ async function ring(c) {
   if (Date.now() - lastRing < 15000) return;
   lastRing = Date.now();
   navigator.vibrate?.(60);
-  status.textContent = T('Oproepen…', 'Calling…');
+  showNotice(T('Oproepen…', 'Calling…'), 10000);
+  c.send({ t: 'ring' }); // everyone online hears a ringtone at once
   try {
     const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
     const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
-    status.textContent = sent ? T(`${sent} opgeroepen`, `${sent} called`) : T('Niemand heeft meldingen aan', 'Nobody has notifications on');
-  } catch { status.textContent = T('Oproepen niet beschikbaar', 'Calling not available'); }
-  setTimeout(render, 3000);
+    showNotice(sent || c.n > 1 ? T(`${sent + Math.max(c.n - 1, 0)} opgeroepen`, `${sent + Math.max(c.n - 1, 0)} called`) : T('Niemand heeft meldingen aan', 'Nobody has notifications on'), 3000);
+  } catch { showNotice(c.n > 1 ? T('Opgeroepen', 'Called') : T('Oproepen niet beschikbaar', 'Calling not available'), 3000); }
+}
+
+// Incoming call: ringtone (when the app is open and sound is on), vibration and a line on the display.
+// The push and the live message can both arrive; the second one is ignored.
+let lastIncoming = 0;
+function playRing(from, where) {
+  if (Date.now() - lastIncoming < 8000) return;
+  lastIncoming = Date.now();
+  navigator.vibrate?.([400, 150, 400, 150, 400, 150, 400]);
+  showNotice(from ? T(`${from} roept je op!`, `${from} is calling you!`) + (where ? ` · ${where}` : '') : T('Je wordt opgeroepen!', 'You are being called!'), 9000);
+  if (muted || !audioCtx || audioCtx.state !== 'running') return;
+  const a = audioCtx, g = a.createGain();
+  g.gain.value = 0.16; g.connect(a.destination);
+  let t = a.currentTime + 0.05;
+  for (let i = 0; i < 5; i++, t += 0.5) for (const [f, off] of [[880, 0], [660, 0.2]]) { // two-tone, five times
+    const o = a.createOscillator(); o.type = 'square'; o.frequency.value = f;
+    o.connect(g); o.start(t + off); o.stop(t + off + 0.17);
+  }
+}
+navigator.serviceWorker?.addEventListener('message', (e) => { if (e.data?.t === 'ring') playRing('', ''); });
+
+// --- Who is in the channel (names are decrypted here), with removal for the founder and a call button.
+let memChan = null;
+function openMembers(c) {
+  if (!c) return;
+  memChan = c; $('memNote').textContent = '';
+  const can = !c.cfg.test && !c.cfg.qr;
+  $('memRing').hidden = !can; $('memRing').disabled = false; $('memRing').lastElementChild.textContent = T('Bel iedereen', 'Call everyone');
+  renderMembers(); $('memDlg').showModal();
+}
+const XUSER = '<svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg>';
+function renderMembers() {
+  const c = memChan, ul = $('memList');
+  if (!c) return;
+  $('memTitle').textContent = c.cfg.name;
+  ul.innerHTML = '';
+  const list = !c.offline && !c.cfg.qr && !c.cfg.test && c.members;
+  $('memCount').textContent = T(`${c.n || 0} in het kanaal`, `${c.n || 0} in the channel`);
+  if (!list) { $('memNote').textContent = c.cfg.test ? T('Alleen jij en de echo.', 'Only you and the echo.') : c.offline || c.cfg.qr ? T('Zonder internet zie je alleen hoeveel mensen er zijn.', 'Without internet you only see how many people there are.') : T('Niet verbonden…', 'Not connected…'); return; }
+  for (const m of list) {
+    const li = document.createElement('li'), nm = document.createElement('span');
+    nm.className = 'nm'; nm.textContent = m.name + (m.id === c.meId ? T(' (jij)', ' (you)') : '');
+    li.appendChild(nm);
+    const tag = (txt, cls) => li.appendChild(Object.assign(document.createElement('span'), { className: 'tag ' + (cls || ''), textContent: txt }));
+    if (m.o) tag(T('OPRICHTER', 'FOUNDER'));
+    if (m.id === c.sid || (m.id === c.meId && c.you === 'tx')) tag(T('PRAAT', 'TALKING'), 'talk');
+    if (c.isOwner && m.id !== c.meId) {
+      const b = document.createElement('button');
+      b.className = 'ib del'; b.setAttribute('aria-label', T('Verwijderen', 'Remove')); b.innerHTML = XUSER;
+      b.onclick = () => { if (confirm(T(`${m.name} uit "${c.cfg.name}" verwijderen? Diegene kan er niet meer in met deze link.`, `Remove ${m.name} from "${c.cfg.name}"? They cannot rejoin with this link.`))) c.send({ t: 'kick', id: m.id }); };
+      li.appendChild(b);
+    }
+    ul.appendChild(li);
+  }
+  $('memNote').textContent = c.isOwner ? T('Jij hebt dit kanaal gemaakt en kunt mensen verwijderen.', 'You created this channel and can remove people.') : '';
+}
+$('memClose').onclick = () => $('memDlg').close();
+$('memDlg').addEventListener('close', () => (memChan = null));
+$('memRing').onclick = () => {
+  const c = memChan; if (!c) return;
+  ring(c);
+  $('memRing').disabled = true; $('memRing').lastElementChild.textContent = T('Opgeroepen', 'Called');
+  setTimeout(() => { $('memRing').disabled = false; $('memRing').lastElementChild.textContent = T('Bel iedereen', 'Call everyone'); }, 15000);
+};
+$('whoBtn').onclick = (e) => { e.stopPropagation(); openMembers(current()); };
+
+// The last messages on the display.
+function renderMini(c) {
+  const box = $('mini'), list = c ? loadMsgs(c).slice(-6) : [], key = c ? c.cfg.code + ':' + list.length + ':' + (list.at(-1)?.t || 0) : '';
+  if (box._k !== key) {
+    box._k = key; box.textContent = '';
+    for (const m of list) {
+      const el = document.createElement('div'), b = document.createElement('b');
+      el.className = 'ml' + (m.me ? ' me' : '');
+      b.textContent = m.me ? T('JIJ', 'YOU') : String(m.from).toUpperCase();
+      el.append(b, document.createTextNode(m.text));
+      box.appendChild(el);
+    }
+  }
+  $('chatRowT').textContent = !c ? T('Voeg eerst een kanaal toe', 'Add a channel first') : c.unread ? T(`${c.unread} nieuw · tik om te lezen`, `${c.unread} new · tap to read`) : T('Tik om te chatten', 'Tap to chat');
 }
 
 // Only one window per device may be active (installed app + browser tab share storage).
@@ -1351,7 +1512,7 @@ if (tabs) {
     if (e.data !== 'takeover') return;
     for (const c of chans.values()) c.close();
     chans.clear(); cfgs = []; render();
-    status.textContent = T('Actief in ander venster', 'Active in another window');
+    setStatus(T('Actief in ander venster', 'Active in another window'));
   };
 }
 
@@ -1483,7 +1644,7 @@ for (const d of ['dlg', 'appDlg']) $(d).addEventListener('close', () => setTimeo
 // --- Guided tour: dims the screen, cuts a hole around the real controls and explains them one by one.
 const TOUR = [
   { t: T('Welkom bij WLKY', 'Welcome to WLKY'), p: T('Een walkietalkie op je telefoon. Een rondleiding van een halve minuut.', 'A walkie-talkie on your phone. A quick half-minute tour.') },
-  { sel: ['#scr'], t: T('Het scherm', 'The display'), p: T('Hier zie je je kanaal, wie er praat en de status. Tik erop om te chatten.', 'Shows your channel, who is talking and the status. Tap it to chat.') },
+  { sel: ['#scr'], t: T('Het scherm', 'The display'), p: T('Hier zie je je kanaal, wie er praat, de status en de laatste berichten. Tik op het scherm om te chatten, of op het poppetje om te zien wie er in het kanaal zitten.', 'Shows your channel, who is talking, the status and the latest messages. Tap the screen to chat, or the person icon to see who is in the channel.') },
   { sel: ['#ptt'], t: 'PTT', p: T('Houd ingedrukt om te praten, laat los om te luisteren. Praat er al iemand? Blijf ingedrukt houden: je bent zo aan de beurt.', 'Hold to talk, release to listen. Someone already talking? Keep holding: your turn comes next.') },
   { sel: ['#prevBtn', '#nextBtn'], t: T('Van kanaal wisselen', 'Switch channel'), p: T('Met de pijlen kies je het kanaal waarop je praat. Je luistert altijd naar al je kanalen tegelijk.', 'The arrows pick the channel you talk on. You always listen to all your channels at once.') },
   { sel: ['#menuBtn'], t: 'Menu', p: T('Maak een kanaal en deel de link, doe mee met een link of QR-code (ook zonder internet) en stel je naam in.', 'Create a channel and share the link, join with a link or QR code (works without internet) and set your name.') },

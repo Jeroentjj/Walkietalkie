@@ -118,6 +118,7 @@ async function api(request, env, route) {
 
 const PLAY_URL = 'https://play.google.com/store/apps/details?id=app.wlky';
 const MAX_PEOPLE = 10;
+const sha = async (s) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 // One instance per channel. Holds who may talk (speaker) and who is waiting (queue), and relays
 // encrypted audio frames from the speaker to everyone else. It never has the key to decrypt them.
@@ -141,7 +142,21 @@ export class Channel extends DurableObject {
     // The name is encrypted by the clients; we only pass it along.
     const raw = url.searchParams.get('name') || '';
     const name = /^[A-Za-z0-9_-]{1,200}$/.test(raw) ? raw : 'x';
+    // The founder proves it with a secret only their phone has; the first one to show it owns the channel.
+    const own = url.searchParams.get('own') || '';
+    let owner = false;
+    if (/^[A-Za-z0-9_-]{16,64}$/.test(own)) {
+      const h = await sha(own), saved = await this.ctx.storage.get('owner');
+      if (!saved) await this.ctx.storage.put('owner', h);
+      owner = !saved || saved === h;
+    }
     const [client, server] = Object.values(new WebSocketPair());
+    if (!owner && who.dev !== 'x' && ((await this.ctx.storage.get('banned')) || []).includes(who.dev)) {
+      server.accept();
+      server.send(JSON.stringify({ t: 'kicked' }));
+      server.close(4002, 'kicked');
+      return new Response(null, { status: 101, webSocket: client });
+    }
     if (this.sockets().length >= MAX_PEOPLE) {
       server.accept();
       server.send(JSON.stringify({ t: 'full' }));
@@ -155,7 +170,7 @@ export class Channel extends DurableObject {
       return new Response(null, { status: 101, webSocket: client });
     }
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name, ...who });
+    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name, owner, ...who });
     this.broadcast();
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -174,10 +189,11 @@ export class Channel extends DurableObject {
   broadcast(skip) {
     const all = this.sockets(skip);
     const sp = this.speaker && this.find(this.speaker);
+    const members = all.map((w) => { const a = this.info(w); return { id: a.id, name: a.name, o: a.owner ? 1 : 0 }; });
     for (const w of all) {
-      const me = this.info(w).id;
+      const a = this.info(w), me = a.id;
       const you = this.speaker === me ? 'tx' : this.queue.indexOf(me) + 1;
-      try { w.send(JSON.stringify({ t: 'state', n: all.length, speaker: sp && this.speaker !== me ? this.info(sp).name : null, you })); } catch {}
+      try { w.send(JSON.stringify({ t: 'state', n: all.length, speaker: sp && this.speaker !== me ? this.info(sp).name : null, sid: sp && this.speaker !== me ? this.speaker : null, you, me, own: a.owner ? 1 : 0, members })); } catch {}
     }
   }
 
@@ -224,6 +240,21 @@ export class Channel extends DurableObject {
       else if (this.speaker !== me && !this.queue.includes(me)) this.queue.push(me);
       this.broadcast();
     } else if (m.t === 'rel') { this.want?.set(me, false); this.leave(me); }
+    else if (m.t === 'kick' && who.owner && typeof m.id === 'string' && m.id !== me) {
+      const target = this.find(m.id);
+      if (!target) return;
+      // Remembered by device code, so the same phone cannot walk back in with the old link.
+      const dev = this.info(target).dev, banned = (await this.ctx.storage.get('banned')) || [];
+      if (dev !== 'x' && !banned.includes(dev)) await this.ctx.storage.put('banned', [...banned, dev].slice(-50));
+      try { target.send(JSON.stringify({ t: 'kicked' })); } catch {}
+      try { target.close(4002, 'kicked'); } catch {}
+    } else if (m.t === 'ring') {
+      // A call to everyone online in this channel; at most once per 10 s per person.
+      const now = Date.now(), last = (this.rang ||= new Map()).get(me) || 0;
+      if (now - last < 10000) return;
+      this.rang.set(me, now);
+      for (const w of this.sockets(ws)) try { w.send(JSON.stringify({ t: 'ring', from: who.name })); } catch {}
+    }
     else if (m.t === 'chat' && typeof m.d === 'string' && m.d.length < 4000) {
       if (L.chatPerDay !== Infinity && !(await this.quota(who, '/chat')).ok) return ws.send(JSON.stringify({ t: 'limit', what: 'chat' }));
       // Encrypted chat text; relayed, never stored.
@@ -238,6 +269,7 @@ export class Channel extends DurableObject {
     if (who.subject) return this.quota(who, '/leave').catch(() => {});
   }
 
-  webSocketClose(ws) { return this.closed(ws); }
+  // Answer the close ourselves, or the client's socket stays half-closed and never reconnects.
+  webSocketClose(ws, code) { try { ws.close(code >= 1000 && code < 1005 ? code : 1000); } catch {} return this.closed(ws); }
   webSocketError(ws) { return this.closed(ws); }
 }

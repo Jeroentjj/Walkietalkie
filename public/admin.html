@@ -59,6 +59,9 @@
       </div>
     </div>
 
+    <h2 id="betaHead">Beta-testers</h2>
+    <div id="betas"></div>
+
     <h2>Probleemrapporten (beta)</h2>
     <div id="reports"></div>
 
@@ -126,9 +129,30 @@ async function loadReports() {
   }
 }
 
+// "Mozilla/5.0 (iPhone; ...) Safari" -> "iPhone · Safari"
+function device(ua) {
+  const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : '?';
+  const br = /Edg\//.test(ua) ? 'Edge' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Chrome|CriOS/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : '';
+  return br ? `${os} · ${br}` : os;
+}
+
+async function loadBetas() {
+  const { betas, count, max } = await api('betas');
+  $('betaHead').textContent = `Beta-testers (${count}/${max})`;
+  $('betas').innerHTML = betas.length ? '' : '<p>Nog niemand.</p>';
+  for (const b of betas) {
+    const el = document.createElement('div'), s = document.createElement('small');
+    el.className = 'card';
+    el.textContent = device(b.ua);
+    s.textContent = `${b.t ? 'sinds ' + date(b.t) : 'sinds de eerste versie'} · apparaat ${b.id}`;
+    el.appendChild(s);
+    $('betas').appendChild(el);
+  }
+}
+
 async function login() {
   try {
-    await load(); await loadReports();
+    await load(); await loadBetas(); await loadReports();
     try { localStorage.setItem('wlky-admin', key); } catch {}
     $('login').hidden = true; $('app').hidden = false;
   } catch (e) {
