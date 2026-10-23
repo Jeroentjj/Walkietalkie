@@ -24,8 +24,8 @@ class MainActivity : ComponentActivity() {
     private var pendingWebPermission: PermissionRequest? = null
     private var nearbyCallback: ((Boolean) -> Unit)? = null
 
-    private val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        pendingWebPermission?.let { if (ok) it.grant(it.resources) else it.deny() }
+    private val webPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { res ->
+        pendingWebPermission?.let { if (res.values.all { ok -> ok }) it.grant(it.resources) else it.deny() }
         pendingWebPermission = null
     }
 
@@ -61,13 +61,18 @@ class MainActivity : ComponentActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
+            // Microphone for talking, camera for scanning QR codes.
             override fun onPermissionRequest(request: PermissionRequest) {
-                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                    request.grant(request.resources)
-                } else {
-                    pendingWebPermission = request
-                    micPermission.launch(Manifest.permission.RECORD_AUDIO)
-                }
+                val needed = request.resources.mapNotNull {
+                    when (it) {
+                        PermissionRequest.RESOURCE_AUDIO_CAPTURE -> Manifest.permission.RECORD_AUDIO
+                        PermissionRequest.RESOURCE_VIDEO_CAPTURE -> Manifest.permission.CAMERA
+                        else -> null
+                    }
+                }.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+                if (needed.isEmpty()) return request.grant(request.resources)
+                pendingWebPermission = request
+                webPermissions.launch(needed.toTypedArray())
             }
         }
 

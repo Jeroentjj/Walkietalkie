@@ -126,6 +126,12 @@
   </div>
   <small>Je krijgt een uitnodigingslink om te versturen. Wie erop tikt, zit direct in het kanaal.</small>
   <button class="sec" id="testBtn" style="margin-top:8px">🎙 Testkanaal toevoegen (hoor jezelf terug)</button>
+  <h4>Zonder internet (zelfde wifi of hotspot)</h4>
+  <div class="row">
+    <button class="sec" id="qrStartBtn" style="flex:1">Toon QR-code</button>
+    <button class="sec" id="qrJoinBtn" style="flex:1">Scan QR-code</button>
+  </div>
+  <small>Verbind direct met één persoon naast je, zonder server.</small>
   <h4>Uitnodiging gekregen?</h4>
   <div class="row">
     <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="plak hier de link">
@@ -134,6 +140,21 @@
   <small style="margin-top:10px">Iedereen met de link kan meepraten, dus deel hem alleen met wie mag. Het geluid is versleuteld; de server kan niet meeluisteren en ziet ook geen namen. Max. 10 personen per kanaal.</small>
 </dialog>
 
+<dialog id="qrDlg">
+  <div class="row"><h3 style="flex:1" id="qrTitle"></h3><button class="sec" id="qrClose">Sluiten</button></div>
+  <small id="qrHelp"></small>
+  <div id="qrBox" style="background:#fff;border-radius:12px;margin:10px 0;display:flex;justify-content:center"></div>
+  <video id="qrCam" playsinline muted hidden style="width:100%;border-radius:12px;margin:10px 0"></video>
+  <div class="row" id="qrActions">
+    <button class="prim" id="qrScanBtn" style="flex:1">Scan code</button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input id="qrText" autocomplete="off" spellcheck="false" placeholder="of plak de code">
+    <button class="sec" id="qrUseBtn">OK</button>
+  </div>
+</dialog>
+
+<script src="vendor/qrcode.js"></script>
 <script>
 // Walkie: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
 // decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
@@ -233,13 +254,14 @@ function hiss() {
 class Chan {
   constructor(cfg) {
     this.cfg = cfg; this.n = 0; this.you = 0; this.speaker = null; this.ws = null; this.next = 0; this.closed = false;
+    this.offline = !!cfg.qr; // QR channels talk over a direct WebRTC data channel (this.dc)
     this.ready = this.init();
   }
 
   async init() {
     this.room = (await sha256(this.cfg.code)).slice(0, 40);
     this.key = await crypto.subtle.importKey('raw', hexBytes(await sha256('key:' + this.cfg.code)), 'AES-GCM', false, ['encrypt', 'decrypt']);
-    setupPush(this.cfg.code);
+    if (!this.cfg.qr) setupPush(this.cfg.code);
     this.connect();
     render();
   }
@@ -295,6 +317,7 @@ class Chan {
   offSend(type, bytes) {
     const m = new Uint8Array(bytes.length + 1);
     m[0] = type; m.set(bytes, 1);
+    if (this.cfg.qr) { if (this.dc?.readyState === 'open') this.dc.send(m); return; }
     let s = ''; for (const b of m) s += String.fromCharCode(b);
     NATIVE.send(btoa(s));
   }
@@ -373,7 +396,13 @@ class Chan {
     else if (this.ws?.readyState === 1) this.ws.send(msg);
   }
 
-  close() { this.closed = true; this.setOffline(false); this.ws?.close(); }
+  // Frame from a nearby/direct peer: type byte 0 = encrypted audio, 1 = JSON floor message.
+  offReceive(b) {
+    if (b[0] === 0) this.onAudio(b.slice(1).buffer);
+    else try { this.offMessage(JSON.parse(new TextDecoder().decode(b.slice(1)))); } catch {}
+  }
+
+  close() { this.closed = true; if (this.cfg.qr) { this.dc?.close(); qrPc?.close(); } else this.setOffline(false); this.ws?.close(); }
 }
 
 // Local echo channel: records while PTT is held, then plays it back through the radio effect.
@@ -426,7 +455,7 @@ function syncChannels() {
   for (const [code, c] of chans) if (!cfgs.some((x) => x.code === code)) { c.close(); chans.delete(code); }
   for (const cfg of cfgs) { if (chans.has(cfg.code)) chans.get(cfg.code).cfg = cfg; else chans.set(cfg.code, cfg.test ? new TestChan(cfg) : new Chan(cfg)); }
   if (sel >= cfgs.length) sel = Math.max(cfgs.length - 1, 0);
-  save('walkie-chs', cfgs); save('walkie-sel', sel);
+  save('walkie-chs', cfgs.filter((c) => !c.qr)); save('walkie-sel', sel);
   render();
 }
 
@@ -438,7 +467,7 @@ let offChan = null;
 function applyMode() {
   if (!NATIVE) return;
   const c = current();
-  for (const x of chans.values()) if (x.room && !x.cfg.test) x.setOffline(offline && x === c);
+  for (const x of chans.values()) if (x.room && !x.cfg.test && !x.cfg.qr) x.setOffline(offline && x === c);
 }
 
 if (NATIVE) window.walkieNative = {
@@ -450,9 +479,7 @@ if (NATIVE) window.walkieNative = {
   },
   onData(b64) {
     const c = offChan; if (!c) return;
-    const b = Uint8Array.from(atob(b64), (x) => x.charCodeAt(0));
-    if (b[0] === 0) c.onAudio(b.slice(1).buffer);
-    else try { c.offMessage(JSON.parse(new TextDecoder().decode(b.slice(1)))); } catch {}
+    c.offReceive(Uint8Array.from(atob(b64), (x) => x.charCodeAt(0)));
   },
   onError(e) { status.textContent = e === 'perm' ? 'Geen toegang tot Bluetooth/wifi' : 'Offline fout: ' + e; },
 };
@@ -471,6 +498,7 @@ function render() {
   else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
   else if (holding === c && c.you > 0) { st = `⏳ Wacht op je beurt (#${c.you})`; l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
+  else if (c.cfg.qr && c.n <= 1) st = 'Direct: verbinding verbroken';
   else if (c.offline && c.n <= 1) { st = 'Offline · zoeken in de buurt…'; l = 'wait'; }
   else if (c.full) st = 'Kanaal vol (max 10)';
   else if (!c.offline && c.ws?.readyState !== 1) st = 'Verbinden…';
@@ -523,7 +551,7 @@ function renderList() {
   cfgs.forEach((cfg, i) => {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
-    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share" ${cfg.test ? 'hidden' : ''}>Delen</button><button class="del" data-a="del">✕</button>`;
+    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share" ${cfg.test || cfg.qr ? 'hidden' : ''}>Delen</button><button class="del" data-a="del">✕</button>`;
     li.querySelector('b').textContent = `${String(i + 1).padStart(2, '0')} · ${cfg.name}`;
     li.querySelector('span').textContent = i === sel ? 'PTT praat hier' : 'luistert mee';
     li.onclick = (e) => {
@@ -607,6 +635,140 @@ if (invite) {
   history.replaceState(null, '', location.pathname);
   addChannel(invite.name, invite.code);
 }
+
+// --- Direct connection via QR codes (no server, no internet): two phones on the same wifi/hotspot
+// swap a WebRTC offer and answer by scanning each other's screen. Only the ICE/DTLS essentials go in
+// the code; the rest of the SDP is rebuilt from a fixed data-channel template.
+let qrPc = null, qrResolve = null, qrStream = null;
+const qrDlg = $('qrDlg');
+
+const b64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+async function squeeze(text, mode) {
+  const s = new Blob([text]).stream().pipeThrough(mode === 'in' ? new CompressionStream('deflate-raw') : new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+async function packSdp(type, sdp, code) {
+  const keep = sdp.split(/\r?\n/).filter((l) => /^a=(ice-ufrag|ice-pwd|fingerprint|candidate):/.test(l) && !(l.startsWith('a=candidate') && !/ udp /i.test(l)));
+  return 'W1' + b64u(await squeeze([type === 'offer' ? 'O' : 'A', code, ...keep.map((l) => l.slice(2))].join('\n'), 'in'));
+}
+
+async function unpackSdp(s) {
+  s = s.trim();
+  if (!s.startsWith('W1')) throw new Error('geen walkie-code');
+  const [t, code, ...lines] = new TextDecoder().decode(await squeeze(unb64u(s.slice(2)), 'out')).split('\n');
+  const type = t === 'O' ? 'offer' : 'answer';
+  const sdp = ['v=0', 'o=- 1 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=group:BUNDLE 0', 'a=msid-semantic: WMS',
+    'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0',
+    ...lines.filter((l) => !l.startsWith('candidate')).map((l) => 'a=' + l),
+    `a=setup:${type === 'offer' ? 'actpass' : 'active'}`, 'a=mid:0', 'a=sctp-port:5000', 'a=max-message-size:262144',
+    ...lines.filter((l) => l.startsWith('candidate')).map((l) => 'a=' + l)].join('\r\n') + '\r\n';
+  return { type, code, sdp };
+}
+
+function newPeer(code) {
+  qrPc?.close();
+  const pc = (qrPc = new RTCPeerConnection({ iceServers: [] }));
+  const dc = pc.createDataChannel('walkie', { negotiated: true, id: 0 });
+  dc.binaryType = 'arraybuffer';
+  dc.onopen = () => attachDirect(dc, code);
+  return pc;
+}
+
+async function gathered(pc) {
+  if (pc.iceGatheringState !== 'complete')
+    await new Promise((ok) => { pc.onicegatheringstatechange = () => pc.iceGatheringState === 'complete' && ok(); setTimeout(ok, 3000); });
+  return pc.localDescription.sdp;
+}
+
+function showQr(text) {
+  const q = qrcode(0, 'L'); q.addData(text); q.make();
+  $('qrBox').innerHTML = q.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
+  $('qrBox').querySelector('svg').style.cssText = 'width:100%;max-width:320px;height:auto';
+  $('qrText').value = '';
+  $('qrText').placeholder = 'of plak de code van de ander';
+  $('qrBox').dataset.code = text;
+}
+
+function qrScreen(title, help, { qr = null, scan = false } = {}) {
+  $('qrTitle').textContent = title; $('qrHelp').textContent = help;
+  $('qrBox').hidden = !qr; if (qr) showQr(qr);
+  $('qrActions').hidden = !scan;
+  if (!qrDlg.open) qrDlg.showModal();
+}
+
+// Resolves with the scanned (or pasted) code text.
+function readCode() {
+  return new Promise((ok) => { qrResolve = ok; });
+}
+
+async function scanCamera() {
+  if (!('BarcodeDetector' in window)) return alert('Scannen wordt hier niet ondersteund. Plak de code in het tekstveld.');
+  const video = $('qrCam');
+  try { qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
+  catch { return alert('Geen toegang tot de camera'); }
+  video.srcObject = qrStream; video.hidden = false; $('qrBox').hidden = true;
+  await video.play();
+  const det = new BarcodeDetector({ formats: ['qr_code'] });
+  while (qrStream) {
+    const found = (await det.detect(video).catch(() => []))[0];
+    if (found?.rawValue.startsWith('W1')) { stopCamera(); qrResolve?.(found.rawValue); return; }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+}
+
+function stopCamera() {
+  qrStream?.getTracks().forEach((t) => t.stop());
+  qrStream = null; $('qrCam').hidden = true;
+}
+
+async function qrStart() {
+  await ensureMic(); releaseMicSoon(); // with mic access Chrome offers real LAN addresses instead of mDNS names
+  const code = genCode(), pc = newPeer(code);
+  qrScreen('Toon QR-code', 'Bezig…');
+  await pc.setLocalDescription(await pc.createOffer());
+  const offer = await packSdp('offer', await gathered(pc), code);
+  qrScreen('Stap 1 van 2', 'Laat de ander deze code scannen met "Scan QR-code". Tik daarna op "Scan code" en scan hun code.', { qr: offer, scan: true });
+  try { await pc.setRemoteDescription(await unpackSdp(await readCode())); qrScreen('Verbinden…', 'Even geduld.'); }
+  catch (e) { qrScreen('Dat ging mis', String(e.message || e)); }
+}
+
+async function qrJoin() {
+  await ensureMic(); releaseMicSoon();
+  qrScreen('Scan QR-code', 'Scan de code op het scherm van de ander.', { scan: true });
+  scanCamera();
+  try {
+    const { sdp, code } = await unpackSdp(await readCode());
+    const pc = newPeer(code);
+    await pc.setRemoteDescription({ type: 'offer', sdp });
+    await pc.setLocalDescription(await pc.createAnswer());
+    const answer = await packSdp('answer', await gathered(pc), code);
+    qrScreen('Stap 2 van 2', 'Laat de ander nu deze code scannen. Jullie worden daarna automatisch verbonden.', { qr: answer });
+  } catch (e) { qrScreen('Dat ging mis', String(e.message || e)); }
+}
+
+function attachDirect(dc, code) {
+  stopCamera(); qrDlg.close(); dlg.close();
+  cfgs = cfgs.filter((c) => !c.qr);
+  cfgs.push({ name: 'Direct', code, qr: true });
+  sel = cfgs.length - 1;
+  syncChannels();
+  const c = chans.get(code);
+  c.dc = dc; c.n = 2;
+  dc.onmessage = (e) => c.offReceive(new Uint8Array(e.data));
+  dc.onclose = () => { c.n = 1; c.speaker = null; render(); };
+  beep([900, 1300]); navigator.vibrate?.(80);
+  render();
+}
+
+$('qrStartBtn').onclick = () => qrStart();
+$('qrJoinBtn').onclick = () => qrJoin();
+$('qrScanBtn').onclick = () => scanCamera();
+$('qrUseBtn').onclick = () => { const v = $('qrText').value.trim(); if (v) { stopCamera(); qrResolve?.(v); } };
+$('qrClose').onclick = () => { stopCamera(); qrDlg.close(); };
+// Tapping the QR copies its text, for pairing a phone with a laptop that has no camera.
+$('qrBox').onclick = () => navigator.clipboard?.writeText($('qrBox').dataset.code || '').then(() => ($('qrHelp').textContent = 'Code gekopieerd'));
 
 // --- Push "ring": notify channel members whose app is closed.
 const clientId = localStorage.getItem('walkie-id') || crypto.randomUUID().replace(/-/g, '');
