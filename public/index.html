@@ -232,7 +232,7 @@
 <dialog id="chatDlg">
   <div class="sheet-head"><h3 id="chatTitle">Chat</h3><button class="x" id="chatClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
   <div class="msgs" id="msgs"></div>
-  <div class="chat-lock" id="chatLock" hidden><div>Berichten sturen kan in de app.</div><button class="tbtn prim" id="chatGetApp">App</button></div>
+  <div class="chat-lock" id="chatLock" hidden><div id="chatLockText"></div><button class="tbtn prim" id="chatGetApp">App</button></div>
   <form class="chat-in" id="chatForm"><input id="chatText" maxlength="500" autocomplete="off" placeholder="Bericht"><button class="prim" aria-label="Versturen"><svg class="ic" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></button></form>
 </dialog>
 
@@ -313,7 +313,13 @@ const NATIVE = window.WalkieNative;
 // --- Versions: the web app is a taster, the Android app (Play Store) is the full product.
 // Web limits are a nudge, enforced in this page only. Change the numbers here.
 const WEB = !NATIVE;
-const LIMITS = WEB ? { channels: 1, talkSec: 20, sendChat: false, offline: false } : { channels: Infinity, talkSec: 60, sendChat: true, offline: true };
+const LIMITS = WEB ? { channels: 1, talkSec: 20, chatPerDay: 0, offline: false } : { channels: Infinity, talkSec: 60, chatPerDay: 5, offline: true };
+
+// Chat messages sent today on this device (test channel not counted). Resets at local midnight.
+const today = () => new Date().toLocaleDateString('sv'); // YYYY-MM-DD
+function chatSentToday() { const q = load('walkie-chatday', {}); return q.d === today() ? q.n : 0; }
+function countChat() { save('walkie-chatday', { d: today(), n: chatSentToday() + 1 }); }
+const chatLeft = () => Math.max(0, LIMITS.chatPerDay - chatSentToday());
 const APP_URL = 'https://wlky.app/app'; // redirects to the Play Store listing (src/api.js)
 const ANDROID = /Android/i.test(navigator.userAgent);
 const HOST = NATIVE ? 'wlky.app' : location.host;
@@ -693,12 +699,20 @@ function upsell(why, replace) {
 }
 $('appClose').onclick = () => $('appDlg').close();
 
+function renderChatQuota() {
+  const c = current(), test = c?.cfg.test, left = test ? Infinity : chatLeft();
+  $('chatForm').hidden = !left; $('chatLock').hidden = !!left; $('chatGetApp').hidden = !WEB; // paid tiers: later
+  $('chatLockText').textContent = !LIMITS.chatPerDay ? T('Berichten sturen kan in de app.', 'Sending messages works in the app.')
+    : T(`Je ${LIMITS.chatPerDay} berichten van vandaag zijn op. Morgen kan het weer.`, `You've used today's ${LIMITS.chatPerDay} messages. More tomorrow.`);
+  $('chatText').placeholder = test || !isFinite(left) ? T('Bericht', 'Message') : T(`Bericht (nog ${left} vandaag)`, `Message (${left} left today)`);
+}
+
 function openChat() {
   const c = current();
   if (!c) return $('menuBtn').click();
   c.unread = 0; chatOpen = true;
   renderChat(); render();
-  $('chatForm').hidden = !LIMITS.sendChat; $('chatLock').hidden = LIMITS.sendChat;
+  renderChatQuota();
   $('chatDlg').showModal();
 }
 
@@ -921,8 +935,10 @@ $('chatForm').onsubmit = (e) => {
   e.preventDefault();
   const text = $('chatText').value.trim(), c = current();
   if (!text || !c) return;
+  if (!c.cfg.test) { if (!chatLeft()) return renderChatQuota(); countChat(); }
   $('chatText').value = '';
   c.sendChat(text);
+  renderChatQuota();
 };
 function renderMute() {
   const speaker = '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>';

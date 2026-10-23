@@ -45,7 +45,7 @@ De webapp is een proefversie; de Android-app (Play Store) is het volledige produ
 |---|---|---|
 | Kanalen | 1 (+ testkanaal) | onbeperkt |
 | Per keer praten | 20 s | 60 s |
-| Chat | alleen lezen | lezen en sturen |
+| Chat | alleen lezen | 5 berichten per dag |
 | Zonder internet (QR / in de buurt) | nee | ja |
 
 "Haal de app"-knoppen gaan naar `https://wlky.app/app`, dat doorstuurt naar de Play Store (`PLAY_URL` in `src/api.js`).
