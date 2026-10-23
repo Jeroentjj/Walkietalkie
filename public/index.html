@@ -115,6 +115,7 @@
   <div class="row"><h3 style="flex:1">Kanalen</h3><button class="sec" id="closeBtn">Klaar</button></div>
   <small>Je luistert naar alle kanalen tegelijk. PTT praat op het geselecteerde kanaal.</small>
   <label class="row" style="margin-top:12px"><input type="checkbox" id="fxBox" style="width:auto;margin:0"> Walkie-talkie ruis</label>
+  <label class="row" id="offRow" hidden style="margin-top:8px"><input type="checkbox" id="offBox" style="width:auto;margin:0"> Offline: via Bluetooth/wifi in de buurt</label>
   <h4>Jouw naam</h4>
   <input id="myName" maxlength="24" placeholder="bijv. Jeroen">
   <ul class="chs" id="chList"></ul>
@@ -140,6 +141,11 @@
 const $ = (id) => document.getElementById(id);
 const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
 const RATE = 16000;
+// Inside the Android app the page is served from bundled assets; the server lives at walkie.dopimo.app.
+const NATIVE = window.WalkieNative;
+const HOST = NATIVE ? 'walkie.dopimo.app' : location.host;
+const ORIGIN = NATIVE ? 'https://walkie.dopimo.app' : location.origin;
+let offline = !!NATIVE && localStorage.getItem('walkie-offline') === '1';
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -235,6 +241,7 @@ class Chan {
     this.key = await crypto.subtle.importKey('raw', hexBytes(await sha256('key:' + this.cfg.code)), 'AES-GCM', false, ['encrypt', 'decrypt']);
     setupPush(this.cfg.code);
     this.connect();
+    render();
   }
 
   // Names travel encrypted with the channel key, so the server can't read them either.
@@ -252,14 +259,15 @@ class Chan {
   }
 
   async connect() {
-    if (this.closed) return;
+    if (this.closed || this.offline) return;
     const name = await this.seal(myName || 'Iemand');
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ch/${this.room}?name=${name}`;
+    const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
     ws.onmessage = (e) => (typeof e.data === 'string' ? this.onState(JSON.parse(e.data)) : this.onAudio(e.data));
     ws.onclose = () => {
       clearInterval(this.ping);
+      if (this.offline) return;
       this.n = 0; this.you = 0; this.speaker = null; render();
       if (!this.closed) setTimeout(() => this.connect(), this.full ? 30000 : 2000);
     };
@@ -269,7 +277,56 @@ class Chan {
     };
   }
 
-  send(m) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); }
+  send(m) {
+    if (this.offline) return this.offFloor(m);
+    if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m));
+  }
+
+  // --- Offline (Android app): nearby phones over Bluetooth/wifi via WalkieNative. There is no server
+  // to decide turns, so peers announce 'talk'/'over' and wait for the channel to be free.
+  setOffline(on) {
+    if (on === !!this.offline) return;
+    this.offline = on;
+    this.n = 0; this.you = 0; this.speaker = null; this.wantTalk = false;
+    if (on) { this.ws?.close(); NATIVE.join(this.room); offChan = this; }
+    else { NATIVE.leave(); offChan = null; this.connect(); }
+  }
+
+  offSend(type, bytes) {
+    const m = new Uint8Array(bytes.length + 1);
+    m[0] = type; m.set(bytes, 1);
+    let s = ''; for (const b of m) s += String.fromCharCode(b);
+    NATIVE.send(btoa(s));
+  }
+
+  async offFloor(m) {
+    if (m.t === 'req') {
+      if (this.speaker) { this.wantTalk = true; this.you = 1; render(); } else this.offGrant();
+    } else if (m.t === 'rel') {
+      this.wantTalk = false;
+      if (this.you === 'tx') this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'over' })));
+      this.you = 0; render();
+    }
+  }
+
+  async offGrant() {
+    this.wantTalk = false; this.you = 'tx';
+    beep([900, 1300]); navigator.vibrate?.(80); render();
+    this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'talk', name: await this.seal(myName || 'Iemand') })));
+  }
+
+  async offMessage(m) {
+    if (m.t === 'talk') {
+      const name = await this.open(m.name);
+      if (!this.speaker) { this.next = 0; squelch(0.12); }
+      this.speaker = name;
+    } else if (m.t === 'over') {
+      this.speaker = null;
+      if (holding !== this) { squelch(0.3, this.next); beep([1200, 900]); }
+      if (this.wantTalk && holding === this) this.offGrant();
+    }
+    render();
+  }
 
   async onState(m) {
     if (m.t === 'full') { this.full = true; render(); return; }
@@ -312,10 +369,11 @@ class Chan {
     const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, out.buffer);
     const msg = new Uint8Array(12 + ct.byteLength);
     msg.set(iv); msg.set(new Uint8Array(ct), 12);
-    if (this.ws?.readyState === 1) this.ws.send(msg);
+    if (this.offline) this.offSend(0, msg);
+    else if (this.ws?.readyState === 1) this.ws.send(msg);
   }
 
-  close() { this.closed = true; this.ws?.close(); }
+  close() { this.closed = true; this.setOffline(false); this.ws?.close(); }
 }
 
 // Local echo channel: records while PTT is held, then plays it back through the radio effect.
@@ -374,7 +432,33 @@ function syncChannels() {
 
 const current = () => cfgs[sel] && chans.get(cfgs[sel].code);
 
+let offChan = null;
+
+// Offline mode drives only the selected channel; the others keep using the internet when available.
+function applyMode() {
+  if (!NATIVE) return;
+  const c = current();
+  for (const x of chans.values()) if (x.room && !x.cfg.test) x.setOffline(offline && x === c);
+}
+
+if (NATIVE) window.walkieNative = {
+  onPeers(n) {
+    const c = offChan; if (!c) return;
+    c.n = n + 1;
+    if (!n) c.speaker = null;
+    render();
+  },
+  onData(b64) {
+    const c = offChan; if (!c) return;
+    const b = Uint8Array.from(atob(b64), (x) => x.charCodeAt(0));
+    if (b[0] === 0) c.onAudio(b.slice(1).buffer);
+    else try { c.offMessage(JSON.parse(new TextDecoder().decode(b.slice(1)))); } catch {}
+  },
+  onError(e) { status.textContent = e === 'perm' ? 'Geen toegang tot Bluetooth/wifi' : 'Offline fout: ' + e; },
+};
+
 function render() {
+  applyMode();
   const c = current();
   ptt.disabled = !c;
   $('chNum').textContent = c ? String(sel + 1).padStart(2, '0') : '--';
@@ -387,10 +471,11 @@ function render() {
   else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
   else if (holding === c && c.you > 0) { st = `⏳ Wacht op je beurt (#${c.you})`; l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
+  else if (c.offline && c.n <= 1) { st = 'Offline · zoeken in de buurt…'; l = 'wait'; }
   else if (c.full) st = 'Kanaal vol (max 10)';
-  else if (c.ws?.readyState !== 1) st = 'Verbinden…';
+  else if (!c.offline && c.ws?.readyState !== 1) st = 'Verbinden…';
   else if (c.cfg.test) { st = 'Test: PTT = hoor jezelf'; l = 'on'; }
-  else { st = c.n > 1 ? `${c.n} online` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
+  else { st = c.n > 1 ? `${c.n} ${c.offline ? 'in de buurt' : 'online'}` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
   if (muted && c) st = '🔇 ' + st;
   status.textContent = st;
   led.className = 'led ' + l;
@@ -401,7 +486,7 @@ async function pttDown() {
   const c = current();
   if (!c || holding) return;
   ctx();
-  if (c.n <= 1) return ring(c);
+  if (c.n <= 1) return c.offline ? undefined : ring(c);
   holding = c;
   render();
   if (!(await ensureMic()) || holding !== c) { if (holding === c) pttUp(); return; }
@@ -460,7 +545,7 @@ function addChannel(name, code) {
   syncChannels();
 }
 
-const inviteLink = (cfg) => `${location.origin}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
+const inviteLink = (cfg) => `${ORIGIN}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
 
 function share(cfg) {
   const url = inviteLink(cfg), text = `📻 Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`;
@@ -505,6 +590,9 @@ $('joinBtn').onclick = () => {
   $('joinLink').value = '';
   renderList();
 };
+$('offRow').hidden = !NATIVE;
+$('offBox').checked = offline;
+$('offBox').onchange = () => { offline = $('offBox').checked; localStorage.setItem('walkie-offline', offline ? '1' : '0'); render(); };
 $('fxBox').checked = fxOn;
 $('fxBox').onchange = () => { fxOn = $('fxBox').checked; localStorage.setItem('walkie-fx', fxOn ? '1' : '0'); hiss(); };
 $('myName').onchange = () => {
@@ -527,13 +615,13 @@ let lastRing = 0;
 
 async function setupPush(code) {
   try {
-    if (Notification.permission !== 'granted') return;
+    if (NATIVE || Notification.permission !== 'granted') return;
     const ch = (await sha256(code + ':push')).slice(0, 40);
     const reg = await navigator.serviceWorker.ready;
-    const { key } = await (await fetch('/api/vapid')).json();
+    const { key } = await (await fetch(ORIGIN + '/api/vapid')).json();
     const appKey = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
     const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey }));
-    await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify({ ch, id: clientId, sub }) });
+    await fetch(ORIGIN + '/api/subscribe', { method: 'POST', body: JSON.stringify({ ch, id: clientId, sub }) });
   } catch { /* no push support */ }
 }
 
@@ -544,7 +632,7 @@ async function ring(c) {
   status.textContent = '📣 Oproepen…';
   try {
     const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
-    const { sent } = await (await fetch('/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
+    const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
     status.textContent = sent ? `📣 ${sent} opgeroepen` : 'Niemand heeft meldingen aan';
   } catch { status.textContent = 'Oproepen niet beschikbaar'; }
   setTimeout(render, 3000);
@@ -565,7 +653,7 @@ if (tabs) {
 syncChannels();
 if (!myName || !cfgs.length) setTimeout(() => $('scr').click(), 300);
 
-if (location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if (!NATIVE && location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>

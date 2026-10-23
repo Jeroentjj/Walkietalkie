@@ -13,3 +13,9 @@ Installeerbare webapp (PWA): walkietalkie met meerdere kanalen en meerdere mense
 
 ## Hosting op Cloudflare Workers
 Workers & Pages → Import repository → deze repo, deploy command `npx wrangler deploy`. Domein en bindings staan in `wrangler.jsonc`.
+
+## Android-app (APK)
+`android/` is een kleine Kotlin-app die de webapp (`public/`) meelevert in een WebView. Extra: **offline modus**
+(menu → "Offline: via Bluetooth/wifi in de buurt") via Google Nearby Connections, zonder internet.
+GitHub Actions bouwt bij elke push de APK en zet hem in de release `latest`:
+https://github.com/Jeroentjj/Walkietalkie/releases/latest/download/walkie.apk

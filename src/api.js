@@ -9,7 +9,7 @@ import { DurableObject } from 'cloudflare:workers';
 // Pushes carry no payload, so no message encryption is needed; the service worker shows a fixed text.
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } }); // the Android app calls from its own origin
 const valid = (s) => typeof s === 'string' && /^[a-zA-Z0-9_-]{8,80}$/.test(s);
 
 async function vapidKeys(env) {
