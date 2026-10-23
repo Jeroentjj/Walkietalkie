@@ -112,6 +112,21 @@
   .panel[hidden] { display:none; }
   .switch { display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; background:#26292c; margin-bottom:8px; cursor:pointer; }
   .switch[hidden] { display:none; }
+  #unread { display:flex; align-items:center; gap:3px; font:11px Seg14, monospace; color:var(--or); }
+  #unread .ic { width:13px; height:13px; }
+  #unread[hidden] { display:none; }
+  /* Chat */
+  #chatDlg { height:80dvh; display:none; flex-direction:column; }
+  #chatDlg[open] { display:flex; }
+  .msgs { flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .msg { max-width:80%; padding:8px 12px; border-radius:16px 16px 16px 4px; background:#2c2f33; align-self:flex-start; font-size:15px; line-height:1.35; user-select:text; overflow-wrap:anywhere; }
+  .msg b { display:block; font-size:12px; color:var(--or); margin-bottom:2px; }
+  .msg.me { align-self:flex-end; background:var(--or); color:#111; border-radius:16px 16px 4px 16px; }
+  .msg time { display:block; font-size:10.5px; opacity:.55; margin-top:2px; text-align:right; }
+  .chat-empty { margin:auto; color:#8d9196; text-align:center; font-size:14px; }
+  .chat-in { display:flex; gap:8px; padding:10px 12px; border-top:1px solid #2a2d30; }
+  .chat-in input { flex:1; min-width:0; border-radius:22px; }
+  .chat-in button { width:46px; height:46px; padding:0; border-radius:50%; display:grid; place-items:center; }
   .switch div { flex:1; } .switch b { display:block; font-size:15px; } .switch small { margin-top:2px; }
   .switch input[type=checkbox] { appearance:none; -webkit-appearance:none; width:46px !important; height:28px; flex:none; border-radius:14px; background:#45494e; border:0; padding:0; position:relative; transition:.2s; }
   .switch input[type=checkbox]::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:.2s; }
@@ -126,7 +141,7 @@
 <div class="radio">
   <span class="led" id="led"></span>
   <div class="lcd"><div class="scr" id="scr">
-    <div class="ch"><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
+    <div class="ch"><span id="unread" hidden></span><div class="bars" id="bars"><i style="height:3px"></i><i style="height:5px"></i><i style="height:7px"></i><i style="height:10px"></i></div></div>
     <div class="num"><span class="digits"><span id="chNum">--</span></span><small id="chSub">OFF</small></div>
     <div class="st" id="status">Tik hier voor kanalen</div>
     
@@ -181,6 +196,12 @@
 
     <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
   </div>
+</dialog>
+
+<dialog id="chatDlg">
+  <div class="sheet-head"><h3 id="chatTitle">Chat</h3><button class="x" id="chatClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+  <div class="msgs" id="msgs"></div>
+  <form class="chat-in" id="chatForm"><input id="chatText" maxlength="500" autocomplete="off" placeholder="Bericht"><button class="prim" aria-label="Versturen"><svg class="ic" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></button></form>
 </dialog>
 
 <dialog id="qrDlg">
@@ -382,6 +403,7 @@ class Chan {
   }
 
   async offMessage(m) {
+    if (m.t === 'chat') return this.onChat(m.d);
     if (m.t === 'talk') {
       const name = await this.open(m.name);
       if (!this.speaker) { this.next = 0; squelch(0.12); }
@@ -396,6 +418,7 @@ class Chan {
 
   async onState(m) {
     if (m.t === 'full') { this.full = true; render(); return; }
+    if (m.t === 'chat') return this.onChat(m.d);
     if (m.t !== 'state') return;
     this.full = false;
     const seq = (this.seq = (this.seq || 0) + 1);
@@ -449,6 +472,60 @@ class Chan {
 }
 
 // Local echo channel: records while PTT is held, then plays it back through the radio effect.
+// --- Text chat. Works over every link: server relay online, Nearby/QR offline. Messages are
+// encrypted with the channel key and only kept on this phone (last 100 per channel).
+const chatKey = (c) => 'walkie-msg-' + c.cfg.code;
+const loadMsgs = (c) => (c.msgs ||= load(chatKey(c), []));
+let chatOpen = false;
+
+function addMsg(c, m) {
+  const list = loadMsgs(c);
+  list.push(m); if (list.length > 100) list.splice(0, list.length - 100);
+  if (!c.cfg.qr) save(chatKey(c), list);
+  if (!m.me && !(chatOpen && c === current())) c.unread = (c.unread || 0) + 1;
+  if (chatOpen && c === current()) renderChat();
+  render();
+}
+
+Chan.prototype.sendChat = async function (text) {
+  const d = await this.seal(JSON.stringify({ n: myName || 'Iemand', x: text }));
+  if (this.offline) this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'chat', d })));
+  else this.send({ t: 'chat', d });
+  addMsg(this, { me: true, text, t: Date.now() });
+};
+
+Chan.prototype.onChat = async function (d) {
+  let m; try { m = JSON.parse(await this.open(d)); } catch { return; }
+  addMsg(this, { from: String(m.n).slice(0, 24), text: String(m.x).slice(0, 500), t: Date.now() });
+  if (!muted) beep([1600, 1600]);
+  navigator.vibrate?.([30, 60, 30]);
+};
+
+function renderChat() {
+  const c = current(), box = $('msgs');
+  if (!c) return;
+  $('chatTitle').textContent = c.cfg.name;
+  const list = loadMsgs(c);
+  box.innerHTML = list.length ? '' : '<div class="chat-empty">Nog geen berichten.<br>Werkt ook zonder internet in offline- of QR-modus.</div>';
+  for (const m of list) {
+    const el = document.createElement('div');
+    el.className = 'msg' + (m.me ? ' me' : '');
+    if (!m.me) el.appendChild(Object.assign(document.createElement('b'), { textContent: m.from }));
+    el.appendChild(document.createTextNode(m.text));
+    el.appendChild(Object.assign(document.createElement('time'), { textContent: new Date(m.t).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) }));
+    box.appendChild(el);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+function openChat() {
+  const c = current();
+  if (!c) return $('menuBtn').click();
+  c.unread = 0; chatOpen = true;
+  renderChat(); render();
+  $('chatDlg').showModal();
+}
+
 class TestChan {
   constructor(cfg) { this.cfg = cfg; this.n = 2; this.you = 0; this.speaker = null; this.ws = { readyState: 1 }; this.rec = []; }
   send(m) {
@@ -456,6 +533,10 @@ class TestChan {
     if (m.t === 'rel') setTimeout(() => this.play(), 400);
   }
   sendAudio(f32, rate) { this.rec.push({ f32, rate }); }
+  sendChat(text) {
+    addMsg(this, { me: true, text, t: Date.now() });
+    setTimeout(() => { addMsg(this, { from: 'Echo', text, t: Date.now() }); beep([1600, 1600]); }, 600);
+  }
   play() {
     if (!this.rec.length || !audioCtx) return;
     const a = audioCtx, start = a.currentTime + 0.15;
@@ -551,6 +632,9 @@ function render() {
   status.textContent = st;
   led.className = 'led ' + l;
   hiss();
+  const unread = [...chans.values()].reduce((s, x) => s + (x.unread || 0), 0);
+  $('unread').hidden = !unread;
+  $('unread').innerHTML = unread ? '<svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + unread : '';
 }
 
 async function pttDown() {
@@ -633,7 +717,17 @@ function parseInvite(s) {
   return s.trim() ? { name: '', code: s.trim() } : null;
 }
 
-$('menuBtn').onclick = $('scr').onclick = () => { closePanels(); $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
+$('menuBtn').onclick = () => { closePanels(); $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
+$('scr').onclick = openChat;
+$('chatClose').onclick = () => { chatOpen = false; $('chatDlg').close(); };
+$('chatDlg').addEventListener('close', () => (chatOpen = false));
+$('chatForm').onsubmit = (e) => {
+  e.preventDefault();
+  const text = $('chatText').value.trim(), c = current();
+  if (!text || !c) return;
+  $('chatText').value = '';
+  c.sendChat(text);
+};
 function renderMute() {
   const speaker = '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>';
   $('muteBtn').innerHTML = muted

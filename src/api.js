@@ -157,6 +157,10 @@ export class Channel extends DurableObject {
       else if (this.speaker !== me && !this.queue.includes(me)) this.queue.push(me);
       this.broadcast();
     } else if (m.t === 'rel') this.leave(me);
+    else if (m.t === 'chat' && typeof m.d === 'string' && m.d.length < 4000) {
+      // Encrypted chat text; relayed, never stored.
+      for (const w of this.sockets(ws)) try { w.send(JSON.stringify({ t: 'chat', d: m.d })); } catch {}
+    }
   }
 
   webSocketClose(ws) { this.leave(this.info(ws).id, ws); }
