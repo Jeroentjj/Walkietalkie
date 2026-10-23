@@ -65,3 +65,8 @@ De manifest-velden `related_applications` en `prefer_related_applications` laten
 Een link `https://wlky.app/#beta=<code>` geeft testers alles onbeperkt (Pro-grenzen), ook in de webapp, tot `BETA_UNTIL`
 (`wrangler.jsonc`), voor maximaal `BETA_MAX` apparaten. De code is het Cloudflare-geheim `BETA_CODE`; verwijder dat
 geheim om de beta direct te stoppen. Na de einddatum vallen testers terug op hun normale versie.
+
+## Persoonlijke links (cadeau)
+Op `https://wlky.app/admin` (beveiligd met het Cloudflare-geheim `ADMIN_KEY`) maak je per persoon een link
+`https://wlky.app/#gift=<code>` met Plus of Pro, een duur en een maximum aantal apparaten. Daar zie je ook wie hem
+gebruikt, en kun je hem intrekken (werkt direct) of de apparaten resetten. Code: `src/admin.js`, `public/admin.html`.

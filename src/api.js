@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { license, identify } from './license.js';
+import { admin } from './admin.js';
 import { TIERS } from './tiers.js';
 export { Quota } from './quota.js';
 
@@ -11,6 +12,7 @@ export { Quota } from './quota.js';
 //   POST /api/subscribe  { ch, id, sub }       remember this device's push subscription for a channel
 //   POST /api/ring       { ch, id }            push a notification to the other device(s) in the channel
 //   POST /api/license/*                        paid versions, see license.js
+//   POST /api/admin/*                          gift links for specific people, see admin.js (secret ADMIN_KEY)
 // Pushes carry no payload, so no message encryption is needed; the service worker shows a fixed text.
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -75,6 +77,7 @@ async function api(request, env, route) {
 
   if (route === 'vapid' && request.method === 'GET') return json({ key: (await vapidKeys(env)).pub });
   if (route.startsWith('license/')) return license(request, env, route.slice(8), json);
+  if (route.startsWith('admin/')) return admin(request, env, route.slice(6), json);
   if (request.method !== 'POST') return json({ error: 'not found' }, 404);
 
   const body = await request.json().catch(() => ({}));

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>WLKY Beheer</title>
+<style>
+  :root { --or:#f6a21a; --bg:#151617; --card:#222427; --line:#34373b; --mut:#9a9ea3; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:#eee; font:15px/1.5 system-ui,sans-serif; padding:16px; }
+  main { max-width:560px; margin:0 auto; }
+  h1 { font-size:22px; margin:8px 0 4px; } h2 { font-size:16px; margin:22px 0 8px; color:#ccc; }
+  p, small { color:var(--mut); } small { display:block; }
+  .card { background:var(--card); border-radius:16px; padding:14px; margin-bottom:10px; }
+  label { display:block; font-weight:700; margin:10px 0 4px; }
+  input, select { width:100%; padding:11px; border-radius:10px; border:1px solid var(--line); background:#111; color:#fff; font-size:16px; }
+  .row { display:flex; gap:8px; } .row > * { flex:1; }
+  button { padding:11px 14px; border:0; border-radius:10px; font-weight:700; font-size:15px; cursor:pointer; background:#34373b; color:#eee; }
+  button.prim { background:var(--or); color:#111; }
+  .gift { display:flex; gap:10px; align-items:center; }
+  .gift div { flex:1; min-width:0; } .gift b { display:block; }
+  .tag { font:800 11px system-ui; padding:2px 7px; border-radius:6px; background:var(--or); color:#111; margin-left:6px; }
+  .off { opacity:.5; } .err { color:#ff8a8a; }
+  #made input { margin:8px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>WLKY beheer</h1>
+  <p>Geef specifieke mensen Plus of Pro met een persoonlijke link, zonder aankoop.</p>
+
+  <div class="card" id="login">
+    <label for="key">Beheersleutel</label>
+    <input id="key" type="password" autocomplete="current-password">
+    <small>Het geheim ADMIN_KEY uit Cloudflare. Wordt alleen op dit apparaat onthouden.</small>
+    <div class="row" style="margin-top:10px"><button class="prim" id="loginBtn">Inloggen</button></div>
+    <small class="err" id="loginErr"></small>
+  </div>
+
+  <section id="app" hidden>
+    <h2>Nieuwe persoonlijke link</h2>
+    <div class="card">
+      <label for="name">Voor wie</label>
+      <input id="name" maxlength="40" placeholder="bijv. Lisa">
+      <div class="row">
+        <div><label for="tier">Versie</label><select id="tier"><option value="pro">Pro</option><option value="plus">Plus</option></select></div>
+        <div><label for="days">Hoe lang</label><select id="days"><option value="7">7 dagen</option><option value="30" selected>30 dagen</option><option value="90">90 dagen</option><option value="365">1 jaar</option><option value="0">Altijd</option></select></div>
+        <div><label for="devices">Apparaten</label><select id="devices"><option>1</option><option selected>2</option><option>3</option><option>5</option></select></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="prim" id="createBtn">Maak link</button></div>
+      <div id="made" hidden>
+        <input id="madeUrl" readonly>
+        <div class="row"><button id="copyBtn">Kopieer</button><button class="prim" id="shareBtn">Delen</button></div>
+        <small>De link werkt op het gekozen aantal apparaten. Daarna weigert hij, ook als hij wordt doorgestuurd.</small>
+      </div>
+    </div>
+
+    <h2>Uitgedeelde links</h2>
+    <div id="list"></div>
+    <div class="row" style="margin-top:10px"><button id="logoutBtn">Uitloggen</button></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let key = '';
+try { key = localStorage.getItem('wlky-admin') || ''; } catch {}
+
+async function api(path, body = {}) {
+  const r = await fetch('/api/admin/' + path, { method: 'POST', body: JSON.stringify({ key, ...body }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+const date = (t) => new Date(t).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
+
+async function load() {
+  const { gifts } = await api('list');
+  $('list').innerHTML = gifts.length ? '' : '<p>Nog geen links.</p>';
+  for (const g of gifts) {
+    const el = document.createElement('div'), info = document.createElement('div'), b = document.createElement('b'), s = document.createElement('small');
+    el.className = 'card gift' + (g.revoked || (g.until && g.until < Date.now()) ? ' off' : '');
+    b.textContent = g.name; b.insertAdjacentHTML('beforeend', `<span class="tag">${g.tier.toUpperCase()}</span>`);
+    s.textContent = (g.revoked ? 'Ingetrokken · ' : g.until && g.until < Date.now() ? 'Verlopen · ' : '')
+      + (g.until ? `tot ${date(g.until)}` : 'altijd') + ` · ${g.used}/${g.devices} apparaten · gemaakt ${date(g.created)}`;
+    info.append(b, s); el.appendChild(info);
+    if (!g.revoked) {
+      const reset = Object.assign(document.createElement('button'), { textContent: 'Reset' });
+      reset.title = 'Apparaten vergeten, bijvoorbeeld bij een nieuwe telefoon';
+      reset.onclick = async () => { if (confirm(`Apparaten van ${g.name} vergeten? De link werkt daarna weer op ${g.devices} nieuwe apparaten.`)) { await api('reset', { code: g.code }); load(); } };
+      const revoke = Object.assign(document.createElement('button'), { textContent: 'Intrekken' });
+      revoke.onclick = async () => { if (confirm(`Link van ${g.name} intrekken? Werkt direct.`)) { await api('revoke', { code: g.code }); load(); } };
+      el.append(reset, revoke);
+    }
+    $('list').appendChild(el);
+  }
+}
+
+async function login() {
+  try {
+    await load();
+    try { localStorage.setItem('wlky-admin', key); } catch {}
+    $('login').hidden = true; $('app').hidden = false;
+  } catch (e) {
+    $('loginErr').textContent = e.message === 'wrong key' ? 'Verkeerde sleutel.' : e.message.includes('not configured') ? 'ADMIN_KEY staat nog niet in Cloudflare.' : 'Mislukt: ' + e.message;
+  }
+}
+
+$('loginBtn').onclick = () => { key = $('key').value.trim(); login(); };
+$('logoutBtn').onclick = () => { try { localStorage.removeItem('wlky-admin'); } catch {} location.reload(); };
+$('createBtn').onclick = async () => {
+  const name = $('name').value.trim();
+  if (!name) return $('name').focus();
+  const r = await api('create', { name, tier: $('tier').value, days: Number($('days').value), devices: Number($('devices').value) });
+  $('madeUrl').value = r.url; $('made').hidden = false; $('name').value = '';
+  load();
+};
+$('copyBtn').onclick = () => navigator.clipboard.writeText($('madeUrl').value).then(() => ($('copyBtn').textContent = 'Gekopieerd'));
+$('shareBtn').onclick = () => navigator.share ? navigator.share({ text: 'Je persoonlijke WLKY-link:', url: $('madeUrl').value }).catch(() => {}) : $('copyBtn').click();
+
+if (key) login();
+</script>
+</body>
+</html>

@@ -526,7 +526,8 @@ class Chan {
     if (m.what === 'talk') { save('walkie-talkday', { d: today(), n: 1e9 }); if (holding === this) pttUp(); }
     if (m.what === 'chat') { save('walkie-chatday', { d: today(), n: 1e9 }); renderChatQuota(); }
     render();
-    if (m.what !== 'channels' || !this.limitShown) upsell(notPlay ? T('Deze app komt niet uit Google Play. Online gelden daarom de grenzen van de webversie.', 'This app was not installed from Google Play, so the web version limits apply online.') : why);
+    // Don't replace a message that is already on screen (e.g. why a link didn't work).
+    if (!$('appDlg').open && (m.what !== 'channels' || !this.limitShown)) upsell(notPlay ? T('Deze app komt niet uit Google Play. Online gelden daarom de grenzen van de webversie.', 'This app was not installed from Google Play, so the web version limits apply online.') : why);
     this.limitShown = true;
   }
 
@@ -779,7 +780,7 @@ function renderPlans() {
   $('appGet').hidden = !(WEB && ANDROID && tier === 'web');
   $('appNoAndroid').hidden = !(WEB && !ANDROID && tier === 'web');
   $('linkBox').hidden = !WEB;
-  $('appActions').hidden = !NATIVE; $('linkBtn').hidden = RANK[tier] < 2;
+  $('appActions').hidden = !NATIVE; $('linkBtn').hidden = RANK[tier] < 2 || tier === 'beta' || !!lic?.gift;
 }
 
 function planMsg(text) { $('planMsg').textContent = text; $('planMsg').hidden = !text; }
@@ -1080,6 +1081,7 @@ function renderTier() {
   $('qrBadge').hidden = LIMITS.offline;
   $('appBar').hidden = !(WEB && ANDROID && tier === 'web');
   $('planNow').textContent = tier === 'beta' ? T(`Beta, alles onbeperkt t/m ${betaUntil()}`, `Beta, everything unlimited until ${betaUntil()}`)
+    : lic?.gift ? NAMES[tier] + T(' (cadeau', ' (gift') + (lic.x ? T(` t/m ${betaUntil()}`, ` until ${betaUntil()}`) : '') + ')'
     : NAMES[tier] + (WEB && RANK[tier] > 1 ? T(' (gekoppeld)', ' (linked)') : '');
   $('planBadge').textContent = RANK[tier] > 1 ? NAMES[tier].toUpperCase() : '';
   $('planBadge').hidden = RANK[tier] < 2;
@@ -1327,7 +1329,7 @@ function reconnectAll() {
 
 function storeLic(r) {
   if (!r?.lic || (lic && RANK[lic.tier] > RANK[r.tier])) return; // keep Pro when a Plus purchase is restored too
-  lic = { lic: r.lic, tier: r.tier, at: Date.now(), x: r.x };
+  lic = { lic: r.lic, tier: r.tier, at: Date.now(), x: r.x, gift: !!r.gift };
   save('walkie-lic', lic); setTier(); renderTier(); render();
   reconnectAll();
 }
@@ -1350,6 +1352,17 @@ async function joinBeta(code) {
     lic = null; storeLic(r);
     upsell(T(`Welkom bij de WLKY-beta! Alles is onbeperkt tot en met ${betaUntil()}.`, `Welcome to the WLKY beta! Everything is unlimited until ${betaUntil()}.`));
   } catch { upsell(T('Geen verbinding. Open de beta-link opnieuw.', 'No connection. Open the beta link again.')); }
+}
+
+// Personal gift link (#gift=CODE), made by the owner on admin.html: Plus or Pro without a purchase.
+async function joinGift(code) {
+  try {
+    const r = await licApi('gift', { code, dev: clientId });
+    if (!r.lic) return upsell(r.error === 'gift used' ? T('Deze persoonlijke link is al gebruikt op het maximale aantal apparaten.', 'This personal link is already used on the maximum number of devices.') : T('Deze link werkt niet (meer).', 'This link no longer works.'));
+    lic = null; storeLic(r);
+    const until = r.x ? T(` tot en met ${betaUntil()}`, ` until ${betaUntil()}`) : '';
+    upsell(T(`Welkom ${r.name}! Je hebt WLKY ${NAMES[r.tier]} gekregen${until}.`, `Welcome ${r.name}! You've been given WLKY ${NAMES[r.tier]}${until}.`));
+  } catch { upsell(T('Geen verbinding. Open de link opnieuw.', 'No connection. Open the link again.')); }
 }
 
 async function redeem(code) {
@@ -1444,12 +1457,13 @@ addEventListener('keydown', (e) => { if (tourStep >= 0 && e.key === 'Escape') en
 // Invite (#join=) and device links (#link=). Also when the app is already open: then only the hash changes.
 function handleHash() {
   const h = location.hash, link = h.match(/^#link=([A-Za-z0-9_-]{16})$/), invite = h.startsWith('#join=') && parseInvite(h);
-  const beta = h.match(/^#beta=([A-Za-z0-9_-]{8,64})$/);
-  if (!link && !invite && !beta) return;
+  const beta = h.match(/^#beta=([A-Za-z0-9_-]{8,64})$/), gift = h.match(/^#gift=([A-Za-z0-9_-]{20})$/);
+  if (!link && !invite && !beta && !gift) return;
   history.replaceState(null, '', location.pathname);
   if (invite) addChannel(invite.name, invite.code);
   if (link && WEB) redeem(link[1]);
   if (beta) joinBeta(beta[1]);
+  if (gift) joinGift(gift[1]);
 }
 addEventListener('hashchange', handleHash);
 handleHash();

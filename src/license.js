@@ -6,6 +6,7 @@
 //   POST /api/license/nonce   {}                       app: one-time nonce for a Play Integrity request
 //   POST /api/license/attest  { token, nonce, dev }    app: Play Integrity proof -> 7-day Basic licence
 //   POST /api/license/beta    { code, dev }            private beta: invite code -> unlimited until BETA_UNTIL
+//   POST /api/license/gift    { code, dev }            personal gift link (admin.js) -> Plus/Pro on up to N devices
 //        (secret BETA_CODE; vars BETA_UNTIL, BETA_MAX devices. Deleting the secret ends the beta at once.)
 // identify() turns a licence into the version the server enforces (see tiers.js); no valid licence = web.
 // A licence is "<payload>.<HMAC>" signed with a key that is generated once and kept in KV, so nobody can forge one.
@@ -97,10 +98,16 @@ async function verifyIntegrity(env, token, nonce) {
     && p.appIntegrity?.packageName === PACKAGE && p.appIntegrity?.appRecognitionVerdict === 'PLAY_RECOGNIZED';
 }
 
+const giftValid = (g) => g && !g.revoked && (!g.until || g.until > Date.now());
+
 // The version for a connection. Shared licences give nothing extra: the quota belongs to the licence + device.
 export async function identify(env, licence, dev, ip) {
   const p = await open(env, licence);
   if (p?.t === 'beta' && p.d === dev && p.x > Date.now() && env.BETA_CODE) return { tier: 'beta', subject: `T:${dev}` };
+  if (p?.g && p.d === dev) {
+    const g = await env.WALKIE.get(`gift:${p.g}`, 'json');
+    if (giftValid(g) && g.web.some((d) => d.id === dev)) return { tier: g.tier, subject: `G:${p.g}:${dev}` };
+  }
   if (p?.b && p.d === dev && p.x > Date.now()) return { tier: 'basic', subject: `B:${dev}` };
   if (p?.r && p.d === dev) {
     const rec = await env.WALKIE.get(`lic:${p.r}`, 'json');
@@ -141,6 +148,19 @@ export async function license(request, env, route, json) {
     return json({ lic: await sign(env, { t: 'beta', d: body.dev, x: until }), tier: 'beta', x: until });
   }
 
+  if (route === 'gift') {
+    if (typeof body.code !== 'string' || !/^[A-Za-z0-9_-]{20}$/.test(body.code) || !okId(body.dev)) return json({ error: 'bad request' }, 400);
+    const g = await env.WALKIE.get(`gift:${body.code}`, 'json');
+    if (!giftValid(g)) return json({ error: 'gift not valid' }, 410);
+    // Personal: works on the number of devices the owner chose; a forwarded link stops there.
+    if (!g.web.some((d) => d.id === body.dev)) {
+      if (g.web.length >= g.devices) return json({ error: 'gift used' }, 409);
+      g.web.push({ id: body.dev, t: Date.now() });
+      await env.WALKIE.put(`gift:${body.code}`, JSON.stringify(g));
+    }
+    return json({ lic: await sign(env, { g: body.code, d: body.dev }), tier: g.tier, x: g.until || 0, name: g.name, gift: true });
+  }
+
   if (route === 'nonce') {
     const nonce = b64u(crypto.getRandomValues(new Uint8Array(24)));
     await env.WALKIE.put(`nonce:${nonce}`, '1', { expirationTtl: 300 });
@@ -161,6 +181,7 @@ export async function license(request, env, route, json) {
     const p = await open(env, body.lic);
     if (p?.b) return json({ tier: p.x > Date.now() ? 'basic' : null });
     if (p?.t === 'beta') return json({ tier: p.x > Date.now() && env.BETA_CODE ? 'beta' : null, x: p.x });
+    if (p?.g) { const g = await env.WALKIE.get(`gift:${p.g}`, 'json'); return json({ tier: giftValid(g) && g.web.some((d) => d.id === p.d) ? g.tier : null, x: g?.until || 0 }); }
     const rec = p?.r && (await env.WALKIE.get(`lic:${p.r}`, 'json'));
     if (!rec || (p.w && !rec.web.some((d) => d.id === p.d))) return json({ tier: null });
     return json({ tier: rec.tier });
