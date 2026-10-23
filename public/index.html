@@ -72,20 +72,47 @@
     -webkit-mask:radial-gradient(closest-side, #000 82%, transparent 96%); mask:radial-gradient(closest-side, #000 82%, transparent 96%); }
   .brand { text-align:center; font:900 20px system-ui; letter-spacing:3px; color:#141414; margin-top:10px; flex:none;
     text-shadow:0 1px 0 #ffd99a, 0 -1px 0 #0004; } /* debossed into the shell */
-  dialog { border:0; border-radius:18px; background:#24272a; color:#eee; width:min(94vw,400px); max-height:88dvh; padding:18px; }
-  dialog::backdrop { background:#000b; }
-  dialog h3 { margin:0 0 10px; } dialog h4 { margin:16px 0 4px; font-size:14px; color:#bbb; }
-  dialog input { width:100%; padding:11px; border-radius:10px; border:1px solid #555; background:#111; color:#fff; font-size:16px; margin:4px 0; user-select:text; }
-  dialog button { padding:10px 12px; border-radius:10px; border:0; font-weight:700; }
-  .prim { background:var(--or); color:#111; } .sec { background:#3d4145; color:#eee; } .del { background:#5a2323; color:#fcc; }
-  dialog small { color:#999; line-height:1.4; display:block; }
+  dialog { border:0; border-radius:20px; background:#1d1f21; color:#eee; width:min(94vw,420px); max-height:88dvh; padding:0; font-family:system-ui,sans-serif; }
+  dialog::backdrop { background:#000c; }
+  dialog h3 { margin:0; font-size:20px; } 
+  dialog input { width:100%; padding:12px; border-radius:12px; border:1px solid #3a3d40; background:#121314; color:#fff; font-size:16px; margin:0; user-select:text; }
+  dialog input:focus { outline:2px solid var(--or); border-color:transparent; }
+  dialog button { padding:11px 14px; border-radius:12px; border:0; font-weight:700; font-size:15px; cursor:pointer; }
+  .prim { background:var(--or); color:#111; } .sec { background:#33363a; color:#eee; } .del { background:#4a2020; color:#fbb; }
+  dialog small { color:#8d9196; line-height:1.4; display:block; font-size:12.5px; }
   .row { display:flex; gap:8px; align-items:center; }
   .row input { flex:1; min-width:0; }
-  .chs { list-style:none; padding:0; margin:0; }
-  .chs li { display:flex; gap:8px; align-items:center; padding:8px; border-radius:10px; background:#1b1d1f; margin:6px 0; }
-  .chs li.sel { outline:2px solid var(--or); }
-  .chs .nm { flex:1; min-width:0; } .chs .nm b { display:block; } .chs .nm span { font-size:12px; color:#999; }
-  .chs button { padding:8px 10px; font-size:12px; }
+  /* Menu sheet */
+  .sheet-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; padding:16px 18px 12px; background:#1d1f21; border-bottom:1px solid #2a2d30; }
+  .sheet-head h3 { flex:1; }
+  .x { width:38px; height:38px; padding:0 !important; border-radius:50% !important; background:#2c2f33; color:#ddd; font-size:18px !important; }
+  .sheet-body { padding:6px 18px 20px; }
+  .sec-title { margin:18px 0 8px; font:700 12px system-ui; letter-spacing:1px; text-transform:uppercase; color:#8d9196; }
+  .chs { list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+  .chs li { display:flex; gap:12px; align-items:center; padding:10px 10px 10px 12px; border-radius:14px; background:#26292c; cursor:pointer; border:2px solid transparent; }
+  .chs li.sel { border-color:var(--or); background:#2b2a24; }
+  .chs .num { font:700 18px Seg7, monospace; color:#777; width:32px; text-align:center; }
+  .chs li.sel .num { color:var(--or); }
+  .chs .nm { flex:1; min-width:0; } .chs .nm b { display:block; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chs .nm span { font-size:12.5px; color:#8d9196; }
+  .chs li.sel .nm span { color:#d9a34a; }
+  .ib { width:38px; height:38px; padding:0 !important; display:grid; place-items:center; background:#33363a; color:#ddd; }
+  .ib svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .ib.del { background:#3a2222; color:#f99; }
+  .empty { padding:14px; border-radius:14px; background:#26292c; color:#8d9196; text-align:center; font-size:14px; }
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tile { display:flex !important; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; background:#26292c !important; color:#eee; padding:12px !important; border:2px solid transparent !important; }
+  .tile.on { border-color:var(--or) !important; }
+  .tile span { font-size:22px; line-height:1; } .tile b { font-size:14px; } .tile i { font-style:normal; font-weight:400; font-size:12px; color:#8d9196; }
+  .panel { margin-top:10px; padding:12px; border-radius:14px; background:#26292c; display:grid; gap:8px; }
+  .panel[hidden] { display:none; }
+  .switch { display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; background:#26292c; margin-bottom:8px; cursor:pointer; }
+  .switch[hidden] { display:none; }
+  .switch div { flex:1; } .switch b { display:block; font-size:15px; } .switch small { margin-top:2px; }
+  .switch input[type=checkbox] { appearance:none; -webkit-appearance:none; width:46px !important; height:28px; flex:none; border-radius:14px; background:#45494e; border:0; padding:0; position:relative; transition:.2s; }
+  .switch input[type=checkbox]::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:.2s; }
+  .switch input[type=checkbox]:checked { background:var(--or); } .switch input:checked::after { left:21px; }
+  .switch input[type=checkbox]:focus { outline:none; }
 </style>
 </head>
 <body>
@@ -112,32 +139,44 @@
 </div>
 
 <dialog id="dlg">
-  <div class="row"><h3 style="flex:1">Kanalen</h3><button class="sec" id="closeBtn">Klaar</button></div>
-  <small>Je luistert naar alle kanalen tegelijk. PTT praat op het geselecteerde kanaal.</small>
-  <label class="row" style="margin-top:12px"><input type="checkbox" id="fxBox" style="width:auto;margin:0"> Walkie-talkie ruis</label>
-  <label class="row" id="offRow" hidden style="margin-top:8px"><input type="checkbox" id="offBox" style="width:auto;margin:0"> Offline: via Bluetooth/wifi in de buurt</label>
-  <h4>Jouw naam</h4>
-  <input id="myName" maxlength="24" placeholder="bijv. Jeroen">
-  <ul class="chs" id="chList"></ul>
-  <h4>Nieuw kanaal starten</h4>
-  <div class="row">
-    <input id="newName" maxlength="24" placeholder="naam, bijv. Familie">
-    <button class="prim" id="createBtn" style="white-space:nowrap">Maak &amp; deel</button>
+  <div class="sheet-head"><h3>Kanalen</h3><button class="x" id="closeBtn" aria-label="Sluiten">✕</button></div>
+  <div class="sheet-body">
+    <div class="sec-title">Mijn kanalen</div>
+    <ul class="chs" id="chList"></ul>
+    <small style="margin-top:8px">Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.</small>
+
+    <div class="sec-title">Kanaal toevoegen</div>
+    <div class="tiles">
+      <button class="tile" data-panel="pNew"><span>＋</span><b>Nieuw kanaal</b><i>maak en deel een link</i></button>
+      <button class="tile" data-panel="pJoin"><span>🔗</span><b>Link ontvangen</b><i>plak een uitnodiging</i></button>
+      <button class="tile" data-panel="pQr"><span>📷</span><b>Via QR-code</b><i>zonder internet</i></button>
+      <button class="tile" id="testBtn"><span>🎙</span><b>Testkanaal</b><i>hoor jezelf terug</i></button>
+    </div>
+    <div class="panel" id="pNew" hidden>
+      <input id="newName" maxlength="24" placeholder="Naam, bijv. Familie">
+      <button class="prim" id="createBtn">Maak kanaal &amp; deel link</button>
+      <small>Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.</small>
+    </div>
+    <div class="panel" id="pJoin" hidden>
+      <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="Plak hier de link">
+      <button class="prim" id="joinBtn">Doe mee</button>
+    </div>
+    <div class="panel" id="pQr" hidden>
+      <div class="row">
+        <button class="prim" id="qrStartBtn" style="flex:1">Toon mijn code</button>
+        <button class="sec" id="qrJoinBtn" style="flex:1">Scan code</button>
+      </div>
+      <small>Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.</small>
+    </div>
+
+    <div class="sec-title">Instellingen</div>
+    <div class="switch" style="display:block;cursor:auto"><b>Jouw naam</b><small>Zien anderen als je praat</small>
+      <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
+    <label class="switch"><div><b>Walkie-talkie ruis</b><small>Radioklank, gekraak en "kssh"</small></div><input type="checkbox" id="fxBox"></label>
+    <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
+
+    <small style="margin-top:14px">🔒 Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
   </div>
-  <small>Je krijgt een uitnodigingslink om te versturen. Wie erop tikt, zit direct in het kanaal.</small>
-  <button class="sec" id="testBtn" style="margin-top:8px">🎙 Testkanaal toevoegen (hoor jezelf terug)</button>
-  <h4>Zonder internet (zelfde wifi of hotspot)</h4>
-  <div class="row">
-    <button class="sec" id="qrStartBtn" style="flex:1">Toon QR-code</button>
-    <button class="sec" id="qrJoinBtn" style="flex:1">Scan QR-code</button>
-  </div>
-  <small>Verbind direct met één persoon naast je, zonder server.</small>
-  <h4>Uitnodiging gekregen?</h4>
-  <div class="row">
-    <input id="joinLink" autocomplete="off" spellcheck="false" placeholder="plak hier de link">
-    <button class="prim" id="joinBtn">Doe mee</button>
-  </div>
-  <small style="margin-top:10px">Iedereen met de link kan meepraten, dus deel hem alleen met wie mag. Het geluid is versleuteld; de server kan niet meeluisteren en ziet ook geen namen. Max. 10 personen per kanaal.</small>
 </dialog>
 
 <dialog id="qrDlg">
@@ -547,15 +586,17 @@ $('nextBtn').onclick = () => { if (cfgs.length && !holding) { sel = (sel + 1) % 
 // --- Menu
 function renderList() {
   const ul = $('chList');
-  ul.innerHTML = '';
+  ul.innerHTML = cfgs.length ? '' : '<li class="empty">Nog geen kanalen. Voeg er hieronder een toe.</li>';
   cfgs.forEach((cfg, i) => {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
-    li.innerHTML = `<div class="nm"><b></b><span></span></div><button class="sec" data-a="share" ${cfg.test || cfg.qr ? 'hidden' : ''}>Delen</button><button class="del" data-a="del">✕</button>`;
-    li.querySelector('b').textContent = `${String(i + 1).padStart(2, '0')} · ${cfg.name}`;
-    li.querySelector('span').textContent = i === sel ? 'PTT praat hier' : 'luistert mee';
+    li.innerHTML = `<div class="num">${String(i + 1).padStart(2, '0')}</div><div class="nm"><b></b><span></span></div>`
+      + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg></button>`)
+      + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>`;
+    li.querySelector('b').textContent = cfg.name;
+    li.querySelector('span').textContent = (i === sel ? '● PTT praat hier' : 'luistert mee') + (cfg.test ? ' · alleen jij' : cfg.qr ? ' · direct' : '');
     li.onclick = (e) => {
-      const a = e.target.dataset.a;
+      const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'share') share(cfg);
       else if (a === 'del') {
         if (confirm(`Kanaal "${cfg.name}" verwijderen?`)) { cfgs.splice(i, 1); syncChannels(); renderList(); }
@@ -588,7 +629,7 @@ function parseInvite(s) {
   return s.trim() ? { name: '', code: s.trim() } : null;
 }
 
-$('menuBtn').onclick = $('scr').onclick = () => { $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
+$('menuBtn').onclick = $('scr').onclick = () => { closePanels(); $('myName').value = myName; $('newName').value = ''; $('joinLink').value = ''; renderList(); dlg.showModal(); };
 function renderMute() {
   const speaker = '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>';
   $('muteBtn').innerHTML = muted
@@ -600,6 +641,15 @@ $('muteBtn').onclick = () => { muted = !muted; localStorage.setItem('walkie-mute
 renderMute();
 
 $('closeBtn').onclick = () => dlg.close();
+// Add-channel tiles open one form panel at a time.
+function openPanel(id) {
+  document.querySelectorAll('#dlg .panel').forEach((p) => (p.hidden = p.id !== id || !p.hidden));
+  document.querySelectorAll('#dlg .tile[data-panel]').forEach((t) => t.classList.toggle('on', t.dataset.panel === id && !$(id).hidden));
+  $(id).querySelector('input')?.focus();
+}
+document.querySelectorAll('#dlg .tile[data-panel]').forEach((t) => (t.onclick = () => openPanel(t.dataset.panel)));
+const closePanels = () => { document.querySelectorAll('#dlg .panel').forEach((p) => (p.hidden = true)); document.querySelectorAll('#dlg .tile').forEach((t) => t.classList.remove('on')); };
+
 $('testBtn').onclick = () => {
   const i = cfgs.findIndex((c) => c.test);
   if (i >= 0) sel = i; else { cfgs.push({ name: 'Test', code: 'test-echo', test: true }); sel = cfgs.length - 1; }
@@ -608,7 +658,7 @@ $('testBtn').onclick = () => {
 $('createBtn').onclick = () => {
   addChannel($('newName').value.trim(), genCode());
   $('newName').value = '';
-  renderList();
+  closePanels(); renderList();
   share(cfgs[sel]);
 };
 $('joinBtn').onclick = () => {
@@ -616,7 +666,7 @@ $('joinBtn').onclick = () => {
   if (!inv) return;
   addChannel(inv.name, inv.code);
   $('joinLink').value = '';
-  renderList();
+  closePanels(); renderList();
 };
 $('offRow').hidden = !NATIVE;
 $('offBox').checked = offline;
