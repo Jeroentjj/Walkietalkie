@@ -14,12 +14,16 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.google.android.play.core.integrity.IntegrityManagerFactory
+import com.google.android.play.core.integrity.IntegrityTokenRequest
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Google Play purchases of the paid versions (one-time products wlky_plus / wlky_pro) for the web UI.
- * JS calls refresh() and buy(id); results come back via window.walkieNative.onProducts / onPurchase / onBillingError.
+ * Google Play for the web UI: purchases of the paid versions (one-time products wlky_plus / wlky_pro) and the
+ * Play Integrity proof that this is the real app from Play (gives the free app its Basic limits on the server).
+ * JS calls refresh(), buy(id) and attest(nonce); results come back via window.walkieNative.onProducts /
+ * onPurchase / onBillingError / onAttest.
  * The server verifies and acknowledges each purchase (src/license.js), so nothing is trusted on the phone.
  */
 class BillingBridge(private val activity: MainActivity, private val web: WebView) : PurchasesUpdatedListener {
@@ -50,6 +54,14 @@ class BillingBridge(private val activity: MainActivity, private val web: WebView
             listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details).build())
         ).build()
         client.launchBillingFlow(activity, params)
+    }
+
+    @JavascriptInterface
+    fun attest(nonce: String) = activity.runOnUiThread {
+        IntegrityManagerFactory.create(activity)
+            .requestIntegrityToken(IntegrityTokenRequest.builder().setNonce(nonce).build())
+            .addOnSuccessListener { emit("onAttest", JSONObject.quote(it.token())) }
+            .addOnFailureListener { emit("onAttest", "null,${JSONObject.quote(it.message ?: "error")}") }
     }
 
     private fun load() {

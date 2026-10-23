@@ -43,7 +43,7 @@ WLKY turns your phone into a real walkie-talkie. Hold the big PTT button, talk, 
 - **Verzamelt de app gegevens?** Ja, alleen technisch noodzakelijk:
   - *Audio → spraak:* verzonden, versleuteld, **niet** opgeslagen; doel: app-functionaliteit; niet optioneel.
   - *Berichten → overige berichten in de app:* verzonden, versleuteld, niet opgeslagen op server; doel: app-functionaliteit.
-  - *Apparaat- of andere ID's:* nee.
+  - *Apparaat- of andere ID's:* ja, een willekeurige apparaatcode, alleen om de dagelijkse grenzen van de gratis versie te tellen; niet gedeeld.
   - *Locatie:* nee (Bluetooth-scan wordt niet voor locatie gebruikt).
   - *Financiële info → aankoopgeschiedenis:* ja, alleen om Plus/Pro te controleren (onherleidbare code van de aankoop); niet gedeeld.
 - **Versleuteld tijdens verzending:** Ja.
@@ -78,4 +78,7 @@ Communicatie-app met door gebruikers gegenereerde inhoud tussen gebruikers onder
    app-rechten *Financiële gegevens bekijken* en *Bestellingen beheren*.
 4. **Cloudflare:** Workers & Pages → `wlky` → *Settings* → *Variables and Secrets* → *Add* → type **Secret**, naam `GOOGLE_SA`,
    waarde = de volledige inhoud van het JSON-bestand → opslaan (er volgt een nieuwe deploy).
-5. **Testen zonder te betalen:** Play Console → *Instellingen* → *Licentietests* → voeg je eigen Gmail-adres toe.
+5. **Play Integrity (nodig voor de gratis app):** Play Console → je app → *Release* → *App-integriteit* → *Play Integrity API* →
+   *Cloud-project koppelen* (hetzelfde project als het serviceaccount) en in Google Cloud de *Play Integrity API* inschakelen.
+   Zonder dit krijgt ook de app online de grenzen van de webversie. Een APK van GitHub (niet uit Play) krijgt altijd de webgrenzen.
+6. **Testen zonder te betalen:** Play Console → *Instellingen* → *Licentietests* → voeg je eigen Gmail-adres toe.

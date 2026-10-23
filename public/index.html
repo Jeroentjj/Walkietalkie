@@ -334,17 +334,23 @@ const BILLING = window.WalkieBilling; // Google Play purchases, Android app only
 // --- Versions: the web app is a taster, the Android app (Play Store) is the full product.
 // Web limits are a nudge, enforced in this page only. Change the numbers here.
 const WEB = !NATIVE;
+// The server enforces these (src/tiers.js); the page only uses them to explain a limit before it is hit.
 const TIERS = {
-  web: { channels: 1, talkSec: 20, chatPerDay: 0, offline: false },
-  basic: { channels: 3, talkSec: 60, chatPerDay: 5, offline: true },
-  plus: { channels: 10, talkSec: 60, chatPerDay: 50, offline: true },
-  pro: { channels: 25, talkSec: 60, chatPerDay: Infinity, offline: true },
+  web: { channels: 1, talkSec: 20, talksPerDay: 25, chatPerDay: 0, offline: false },
+  basic: { channels: 3, talkSec: 60, talksPerDay: Infinity, chatPerDay: 5, offline: true },
+  plus: { channels: 10, talkSec: 60, talksPerDay: Infinity, chatPerDay: 50, offline: true },
+  pro: { channels: 25, talkSec: 60, talksPerDay: Infinity, chatPerDay: Infinity, offline: true },
 };
 const RANK = { web: 0, basic: 1, plus: 2, pro: 3 };
 // Paid version (Plus/Pro): a licence signed by the server, from a Play purchase or a linked app (src/license.js).
 let lic = null; try { lic = JSON.parse(localStorage.getItem('walkie-lic')); } catch {} // { lic, tier, at }
+// Free app (Basic): a 7-day licence the server gives after Google Play Integrity confirms this is the real app.
+let att = null; try { att = JSON.parse(localStorage.getItem('walkie-att')); } catch {} // { lic, x }
+let attReady = Promise.resolve(), attFailed = false, attWait = null;
+const serverLic = () => lic?.lic || att?.lic || '';
 let tier, LIMITS;
-function setTier() { tier = RANK[lic?.tier] > 1 ? lic.tier : WEB ? 'web' : 'basic'; LIMITS = TIERS[tier]; }
+// An app that Google Play does not recognise (sideloaded or modified) gets the web limits from the server; show the same.
+function setTier() { tier = RANK[lic?.tier] > 1 ? lic.tier : WEB || attFailed ? 'web' : 'basic'; LIMITS = TIERS[tier]; }
 setTier();
 
 // Chat messages sent today on this device (test channel not counted). Resets at local midnight.
@@ -352,6 +358,8 @@ const today = () => new Date().toLocaleDateString('sv'); // YYYY-MM-DD
 function chatSentToday() { const q = load('walkie-chatday', {}); return q.d === today() ? q.n : 0; }
 function countChat() { save('walkie-chatday', { d: today(), n: chatSentToday() + 1 }); }
 const chatLeft = () => Math.max(0, LIMITS.chatPerDay - chatSentToday());
+function talksToday() { const q = load('walkie-talkday', {}); return q.d === today() ? q.n : 0; }
+const talksLeft = () => Math.max(0, LIMITS.talksPerDay - talksToday());
 const APP_URL = 'https://wlky.app/app'; // redirects to the Play Store listing (src/api.js)
 const ANDROID = /Android/i.test(navigator.userAgent);
 const HOST = NATIVE ? 'wlky.app' : location.host;
@@ -476,8 +484,10 @@ class Chan {
 
   async connect() {
     if (this.closed || this.offline) return;
+    await Promise.race([attReady, new Promise((r) => setTimeout(r, 10000))]); // the app first proves it is the app
+    if (this.closed || this.offline) return;
     const name = await this.seal(myName || T('Iemand', 'Someone'));
-    const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}`;
+    const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}&dev=${clientId}&lic=${encodeURIComponent(serverLic())}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
     ws.onmessage = (e) => {
@@ -489,7 +499,7 @@ class Chan {
       clearInterval(this.ping);
       if (this.offline) return;
       this.n = 0; this.you = 0; this.speaker = null; render();
-      if (!this.closed) setTimeout(() => this.connect(), this.full ? 30000 : 2000);
+      if (!this.closed) setTimeout(() => this.connect(), this.full || this.limited ? 60000 : 2000);
     };
     ws.onopen = () => {
       this.ping = setInterval(() => ws.readyState === 1 && ws.send('ping'), 25000);
@@ -500,6 +510,21 @@ class Chan {
   send(m) {
     if (this.offline) return this.offFloor(m);
     if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m));
+  }
+
+  // The server refused something because of the version's limits (src/tiers.js).
+  onLimit(m) {
+    const notPlay = NATIVE && !att, why = {
+      channels: T(`${NAMES[tier]} heeft max. ${LIMITS.channels} ${LIMITS.channels > 1 ? 'kanalen' : 'kanaal'}. "${this.cfg.name}" is niet verbonden.`, `${NAMES[tier]} has max. ${LIMITS.channels} channel${LIMITS.channels > 1 ? 's' : ''}. "${this.cfg.name}" is not connected.`),
+      talk: T(`Je ${LIMITS.talksPerDay} audioberichten van vandaag zijn op.`, `You've used today's ${LIMITS.talksPerDay} voice messages.`),
+      chat: T('Je chatberichten van vandaag zijn op.', "You've used today's chat messages."),
+    }[m.what];
+    if (m.what === 'channels') this.limited = true;
+    if (m.what === 'talk') { save('walkie-talkday', { d: today(), n: 1e9 }); if (holding === this) pttUp(); }
+    if (m.what === 'chat') { save('walkie-chatday', { d: today(), n: 1e9 }); renderChatQuota(); }
+    render();
+    if (m.what !== 'channels' || !this.limitShown) upsell(notPlay ? T('Deze app komt niet uit Google Play. Online gelden daarom de grenzen van de webversie.', 'This app was not installed from Google Play, so the web version limits apply online.') : why);
+    this.limitShown = true;
   }
 
   // --- Nearby (Android app): phones close by over Bluetooth/wifi via WalkieNative, no internet needed.
@@ -574,6 +599,8 @@ class Chan {
 
   async onState(m) {
     if (m.t === 'full') { this.full = true; render(); return; }
+    if (m.t === 'limit') return this.onLimit(m);
+    if (m.t === 'state') this.limited = false;
     if (m.t === 'chat') return this.onChat(m.d);
     if (m.t !== 'state') return;
     this.full = false;
@@ -722,8 +749,8 @@ function talkTimer(c) {
 // Shows why something needs the app, with a Play Store button. `replace` offers swapping the one web channel.
 const NAMES = { web: 'Web', basic: T('Basis', 'Basic'), plus: 'Plus', pro: 'Pro' };
 const PLAN_INFO = {
-  web: T('1 kanaal · 20 s per keer · chat lezen', '1 channel · 20 s at a time · read chat'),
-  basic: T('3 kanalen · 5 chatberichten per dag · praten zonder internet', '3 channels · 5 chat messages a day · talk without internet'),
+  web: T('1 kanaal · 25 audioberichten per dag · 20 s per keer · chat lezen', '1 channel · 25 voice messages a day · 20 s at a time · read chat'),
+  basic: T('3 kanalen · onbeperkt praten · 5 chatberichten per dag · praten zonder internet', '3 channels · unlimited talking · 5 chat messages a day · talk without internet'),
   plus: T('10 kanalen · 50 chatberichten per dag · webapp op 1 extra apparaat', '10 channels · 50 chat messages a day · web app on 1 extra device'),
   pro: T('25 kanalen · onbeperkt chatten · webapp op 3 extra apparaten', '25 channels · unlimited chat · web app on 3 extra devices'),
 };
@@ -877,6 +904,7 @@ if (NATIVE) window.walkieNative = {
         : planMsg(T('De aankoop kon niet worden gecontroleerd. Probeer later "Aankopen herstellen".', 'The purchase could not be verified. Try "Restore purchases" later.'))))
       .catch(() => planMsg(T('Geen verbinding. Je aankoop wordt gecontroleerd zodra je online bent.', 'No connection. Your purchase is checked when you are online.')));
   },
+  onAttest(token, err) { if (token) attWait?.ok(token); else attWait?.no(new Error(err || 'attest')); },
   onBillingError(m) { planMsg(T('Kopen lukte niet: ', 'Purchase failed: ') + m); },
   onError(e) {
     if (e === 'perm') { nearbyDenied = true; offChan?.nearbyStop(); }
@@ -902,9 +930,11 @@ function render() {
   else if (c.cfg.qr && c.n <= 1) st = T('Direct: verbinding verbroken', 'Direct: connection lost');
   else if (c.offline && c.n <= 1) { st = T('Offline · zoeken in de buurt…', 'Offline · searching nearby…'); l = 'wait'; }
   else if (c.full) st = T('Kanaal vol (max 10)', 'Channel full (max 10)');
+  else if (c.limited) st = T('Niet verbonden: limiet van je versie', 'Not connected: version limit');
   else if (!c.offline && c.ws?.readyState !== 1) st = T('Verbinden…', 'Connecting…');
   else if (c.cfg.test) { st = T('Test: PTT = hoor jezelf', 'Test: PTT = hear yourself'); l = 'on'; }
-  else { st = c.n > 1 ? `${c.n} ${c.offline ? T('in de buurt', 'nearby') : 'online'}` : T('Alleen jij · PTT = oproepen', 'Only you · PTT = call'); l = 'on'; }
+  else { st = c.n > 1 ? `${c.n} ${c.offline ? T('in de buurt', 'nearby') : 'online'}` : T('Alleen jij · PTT = oproepen', 'Only you · PTT = call'); l = 'on';
+    if (isFinite(LIMITS.talksPerDay) && talksLeft() <= 5) st += T(` · nog ${talksLeft()}`, ` · ${talksLeft()} left`); }
   if (muted && c) st = T('Stil · ', 'Muted · ') + st;
   status.textContent = st;
   led.className = 'led ' + l;
@@ -919,6 +949,9 @@ async function pttDown() {
   if (!c || holding) return;
   ctx();
   if (c.n <= 1) return c.offline ? undefined : ring(c);
+  const counted = isFinite(LIMITS.talksPerDay) && !c.cfg.test && !c.offline; // via our server
+  if (counted && !talksLeft()) return upsell(T(`Je ${LIMITS.talksPerDay} audioberichten van vandaag zijn op.`, `You've used today's ${LIMITS.talksPerDay} voice messages.`));
+  if (counted) save('walkie-talkday', { d: today(), n: talksToday() + 1 });
   holding = c;
   render();
   if (!(await ensureMic()) || holding !== c) { if (holding === c) pttUp(); return; }
@@ -1260,6 +1293,19 @@ if (tabs) {
   };
 }
 
+// --- Basic app proof (Play Integrity). Renewed when less than a day is left; channels connect after it.
+async function attest() {
+  try {
+    const { nonce } = await licApi('nonce', {});
+    const token = await new Promise((ok, no) => { attWait = { ok, no }; BILLING.attest(nonce); setTimeout(() => no(new Error('timeout')), 15000); });
+    const r = await licApi('attest', { token, nonce, dev: clientId });
+    if (!r.lic) throw new Error(r.error);
+    att = { lic: r.lic, x: r.x }; save('walkie-att', att); attFailed = false;
+    for (const c of chans.values()) if (c.ws && !c.offline && !c.ws.url.includes(encodeURIComponent(att.lic))) c.ws.close(); // reconnect with it
+  } catch { attFailed = !att || att.x < Date.now(); if (attFailed) att = null; }
+  setTier(); renderTier(); render();
+}
+
 // --- Licence: bought in the app (claim), checked at every start, shared with web devices by link.
 async function licApi(path, body) {
   return (await fetch(ORIGIN + '/api/license/' + path, { method: 'POST', body: JSON.stringify(body) })).json();
@@ -1380,6 +1426,7 @@ addEventListener('hashchange', handleHash);
 handleHash();
 checkLic();
 BILLING?.refresh();
+if (NATIVE && BILLING && !(att?.x - Date.now() > 864e5)) attReady = attest();
 let seenTour = true; try { seenTour = !!localStorage.getItem('walkie-tour'); } catch {}
 nearbyReady = seenTour;
 syncChannels();

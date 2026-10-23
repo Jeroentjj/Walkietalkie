@@ -1,8 +1,11 @@
 import { DurableObject } from 'cloudflare:workers';
-import { license } from './license.js';
+import { license, identify } from './license.js';
+import { TIERS } from './tiers.js';
+export { Quota } from './quota.js';
 
 // Cloudflare Worker: serves the static app from public/, relays channel audio and a Web Push "ring" API.
-//   WS   /api/ch/<room>   join a channel (Durable Object "Channel"); audio is E2E-encrypted by the clients
+//   WS   /api/ch/<room>?name&dev&lic   join a channel (Durable Object "Channel"); audio is E2E-encrypted by the clients.
+//        The version (web/basic/plus/pro) comes from the licence and is enforced here, not in the page.
 // Needs one KV namespace bound as WALKIE. VAPID keys are generated on first use and kept in KV.
 //   GET  /api/vapid      -> { key }            public key for pushManager.subscribe
 //   POST /api/subscribe  { ch, id, sub }       remember this device's push subscription for a channel
@@ -46,7 +49,14 @@ export default {
     const room = url.pathname.match(/^\/api\/ch\/([a-f0-9]{40})$/)?.[1];
     if (room) {
       if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'websocket expected' }, 426);
-      return env.CHANNEL.get(env.CHANNEL.idFromName(room)).fetch(request);
+      const dev = valid(url.searchParams.get('dev')) ? url.searchParams.get('dev') : 'x';
+      const who = await identify(env, url.searchParams.get('lic'), dev, request.headers.get('cf-connecting-ip') || 'x');
+      // Only the Worker sets these; anything a client sends under the same names is replaced.
+      const headers = new Headers(request.headers);
+      for (const k of [...headers.keys()]) if (k.startsWith('x-wlky-')) headers.delete(k);
+      headers.set('x-wlky-tier', who.tier); headers.set('x-wlky-subject', who.subject);
+      headers.set('x-wlky-dev', dev); headers.set('x-wlky-room', room);
+      return env.CHANNEL.get(env.CHANNEL.idFromName(room)).fetch(new Request(request, { headers }));
     }
     return api(request, env, url.pathname.slice(5));
   },
@@ -102,7 +112,6 @@ async function api(request, env, route) {
 }
 
 const PLAY_URL = 'https://play.google.com/store/apps/details?id=app.wlky';
-const MAX_TURN_MS = 60000;
 const MAX_PEOPLE = 10;
 
 // One instance per channel. Holds who may talk (speaker) and who is waiting (queue), and relays
@@ -117,8 +126,15 @@ export class Channel extends DurableObject {
   }
 
   async fetch(request) {
+    const url = new URL(request.url);
+    // Internal (from Quota): how many connections does this subject+device have here?
+    if (url.pathname === '/alive') {
+      const n = this.sockets().filter((w) => { const a = this.info(w); return a.subject === url.searchParams.get('s') && a.dev === url.searchParams.get('d'); }).length;
+      return Response.json({ n });
+    }
+    const h = request.headers, who = { tier: h.get('x-wlky-tier') || 'web', subject: h.get('x-wlky-subject') || 'W:x', dev: h.get('x-wlky-dev') || 'x', room: h.get('x-wlky-room') };
     // The name is encrypted by the clients; we only pass it along.
-    const raw = new URL(request.url).searchParams.get('name') || '';
+    const raw = url.searchParams.get('name') || '';
     const name = /^[A-Za-z0-9_-]{1,200}$/.test(raw) ? raw : 'x';
     const [client, server] = Object.values(new WebSocketPair());
     if (this.sockets().length >= MAX_PEOPLE) {
@@ -127,11 +143,24 @@ export class Channel extends DurableObject {
       server.close(4000, 'full');
       return new Response(null, { status: 101, webSocket: client });
     }
+    if (!(await this.quota(who, '/join')).ok) {
+      server.accept();
+      server.send(JSON.stringify({ t: 'limit', what: 'channels', tier: who.tier }));
+      server.close(4001, 'limit');
+      return new Response(null, { status: 101, webSocket: client });
+    }
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name });
+    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name, ...who });
     this.broadcast();
     return new Response(null, { status: 101, webSocket: client });
   }
+
+  quota(who, path) {
+    return this.env.QUOTA.get(this.env.QUOTA.idFromName(who.subject))
+      .fetch(`https://quota${path}`, { method: 'POST', body: JSON.stringify(who) }).then((r) => r.json());
+  }
+
+  turnMs(id) { const w = this.find(id); return (TIERS[w ? this.info(w).tier : 'web'] || TIERS.web).turnSec * 1000; }
 
   sockets(skip) { return this.ctx.getWebSockets().filter((w) => w !== skip && w.readyState === WebSocket.OPEN); }
   info(ws) { return ws.deserializeAttachment() || {}; }
@@ -170,28 +199,40 @@ export class Channel extends DurableObject {
   }
 
   async webSocketMessage(ws, msg) {
-    const me = this.info(ws).id;
+    const who = this.info(ws), me = who.id, L = TIERS[who.tier] || TIERS.web;
     if (!this.allow(me, typeof msg !== 'string')) return;
     if ((typeof msg === 'string' ? msg.length : msg.byteLength) > 16384) return;
     if (typeof msg !== 'string') {
       if (this.speaker !== me) return;
-      if (Date.now() - this.since > MAX_TURN_MS) return this.leave(me); // nobody hogs the channel
+      if (Date.now() - this.since > this.turnMs(me)) return this.leave(me); // turn over (20 s web, 60 s app)
       for (const w of this.sockets(ws)) try { w.send(msg); } catch {}
       return;
     }
     let m; try { m = JSON.parse(msg); } catch { return; }
     if (m.t === 'req') {
-      if (this.speaker && (!this.find(this.speaker) || Date.now() - this.since > MAX_TURN_MS)) this.speaker = null;
+      (this.want ||= new Map()).set(me, true);
+      const waiting = this.speaker === me || this.queue.includes(me);
+      if (!waiting && L.talksPerDay !== Infinity && !(await this.quota(who, '/talk')).ok) return ws.send(JSON.stringify({ t: 'limit', what: 'talk' }));
+      if (!this.want.get(me) || !this.find(me)) return; // released or gone while we asked the quota
+      if (this.speaker && (!this.find(this.speaker) || Date.now() - this.since > this.turnMs(this.speaker))) this.speaker = null;
       if (!this.speaker) { this.speaker = me; this.since = Date.now(); }
       else if (this.speaker !== me && !this.queue.includes(me)) this.queue.push(me);
       this.broadcast();
-    } else if (m.t === 'rel') this.leave(me);
+    } else if (m.t === 'rel') { this.want?.set(me, false); this.leave(me); }
     else if (m.t === 'chat' && typeof m.d === 'string' && m.d.length < 4000) {
+      if (L.chatPerDay !== Infinity && !(await this.quota(who, '/chat')).ok) return ws.send(JSON.stringify({ t: 'limit', what: 'chat' }));
       // Encrypted chat text; relayed, never stored.
       for (const w of this.sockets(ws)) try { w.send(JSON.stringify({ t: 'chat', d: m.d })); } catch {}
     }
   }
 
-  webSocketClose(ws) { this.leave(this.info(ws).id, ws); }
-  webSocketError(ws) { this.leave(this.info(ws).id, ws); }
+  closed(ws) {
+    const who = this.info(ws);
+    this.want?.delete(who.id);
+    this.leave(who.id, ws);
+    if (who.subject) return this.quota(who, '/leave').catch(() => {});
+  }
+
+  webSocketClose(ws) { return this.closed(ws); }
+  webSocketError(ws) { return this.closed(ws); }
 }

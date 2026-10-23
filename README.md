@@ -39,11 +39,12 @@ Een geluidsframe is ~128 ms, 8-bit µ-law, AES-256-GCM versleuteld: `[0x02][IV 1
 en ~16 kB/s (was ~23/s en ~32 kB/s). Ontvangers negeren andere frameversies, dus alle telefoons moeten de nieuwe versie hebben.
 
 ## Versies
-De webapp is een proefversie; de Android-app (Play Store) is het volledige product. Grenzen staan in `TIERS` in `public/index.html`.
+De webapp is een proefversie; de Android-app (Play Store) is het volledige product. De **server** dwingt de grenzen af (`src/tiers.js`, `src/quota.js`); `TIERS` in `public/index.html` heeft dezelfde getallen alleen om ze uit te leggen.
 
 | | Web | Basis (gratis app) | Plus (€1,99 eenmalig) | Pro (€4,99 eenmalig) |
 |---|---|---|---|---|
 | Kanalen | 1 | 3 | 10 | 25 |
+| Audioberichten per dag | 25 | onbeperkt | onbeperkt | onbeperkt |
 | Per keer praten | 20 s | 60 s | 60 s | 60 s |
 | Chat per dag | alleen lezen | 5 | 50 | onbeperkt |
 | Zonder internet (QR / in de buurt) | nee | ja | ja | ja |
@@ -52,7 +53,10 @@ De webapp is een proefversie; de Android-app (Play Store) is het volledige produ
 Plus en Pro koop je in de app (Google Play, producten `wlky_plus` en `wlky_pro`). De server controleert de aankoop bij Google
 (`src/license.js`) en geeft een ondertekende licentie. Met **Versies → Koppel een apparaat** krijg je een eenmalige link (10 min)
 waarmee de webapp op een laptop of tablet dezelfde versie krijgt; bij te veel apparaten valt het oudste af.
-De grenzen zelf worden in de pagina afgedwongen; de server controleert alleen of een licentie echt en nog geldig is.
+Per verbinding bepaalt de server de versie: zonder geldige licentie = web; de gratis app krijgt Basis alleen met een
+Play Integrity-bewijs (echt uit Google Play, niet aangepast); Plus/Pro via de aankooplicentie. Tellers per apparaat staan in
+de Durable Object `Quota`; voor de webversie geldt daarnaast een gezamenlijk maximum per IP-adres (`WEB_PER_IP`), zodat
+opslag wissen niet helpt. Uitzondering: de QR-koppeling is een directe verbinding zonder server en valt daarbuiten.
 
 "Haal de app"-knoppen gaan naar `https://wlky.app/app`, dat doorstuurt naar de Play Store (`PLAY_URL` in `src/api.js`).
 De manifest-velden `related_applications` en `prefer_related_applications` laten Chrome op Android de Play Store-app aanbieden in plaats van de webapp.
