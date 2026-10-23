@@ -195,8 +195,8 @@ function radioFx() {
   const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 450;
   const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
   const crunch = a.createWaveShaper();
-  // Overdrive plus coarse quantisation for a crackly, lo-fi radio voice.
-  crunch.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.round(Math.tanh(((i / 511.5) - 1) * 3.2) / Math.tanh(3.2) * 64) / 64);
+  // Gentle saturation for a slightly rough radio voice.
+  crunch.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(((i / 511.5) - 1) * 1.5) / Math.tanh(1.5));
   hp.connect(lp).connect(crunch).connect(a.destination);
   const src = a.createBufferSource(); src.buffer = noise; src.loop = true;
   const band = a.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 2200; band.Q.value = 0.6;
