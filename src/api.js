@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { license } from './license.js';
 
 // Cloudflare Worker: serves the static app from public/, relays channel audio and a Web Push "ring" API.
 //   WS   /api/ch/<room>   join a channel (Durable Object "Channel"); audio is E2E-encrypted by the clients
@@ -6,6 +7,7 @@ import { DurableObject } from 'cloudflare:workers';
 //   GET  /api/vapid      -> { key }            public key for pushManager.subscribe
 //   POST /api/subscribe  { ch, id, sub }       remember this device's push subscription for a channel
 //   POST /api/ring       { ch, id }            push a notification to the other device(s) in the channel
+//   POST /api/license/*                        paid versions, see license.js
 // Pushes carry no payload, so no message encryption is needed; the service worker shows a fixed text.
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -62,6 +64,7 @@ async function api(request, env, route) {
   if (route !== 'vapid' && (await limited(env, request))) return json({ error: 'too many requests' }, 429);
 
   if (route === 'vapid' && request.method === 'GET') return json({ key: (await vapidKeys(env)).pub });
+  if (route.startsWith('license/')) return license(request, env, route.slice(8), json);
   if (request.method !== 'POST') return json({ error: 'not found' }, 404);
 
   const body = await request.json().catch(() => ({}));

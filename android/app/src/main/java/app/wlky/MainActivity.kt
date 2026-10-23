@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var web: WebView
     private lateinit var nearby: NearbyBridge
+    private lateinit var billing: BillingBridge
     private var pendingWebPermission: PermissionRequest? = null
     private var nearbyCallback: ((Boolean) -> Unit)? = null
 
@@ -85,6 +86,9 @@ class MainActivity : ComponentActivity() {
 
         nearby = NearbyBridge(this, web)
         web.addJavascriptInterface(nearby, "WalkieNative")
+        billing = BillingBridge(this, web)
+        web.addJavascriptInterface(billing, "WalkieBilling")
+        billing.connect()
 
         val invite = intent?.data
         if (invite?.host == INVITE_HOST) openInvite(invite) else web.loadUrl(START)

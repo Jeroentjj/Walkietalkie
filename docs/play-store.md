@@ -6,7 +6,7 @@
 - **Bestand:** `wlky.aab` uit de release `latest`
 - **Privacyverklaring:** https://wlky.app/privacy.html
 - **Categorie:** Communicatie
-- **Prijs:** Gratis
+- **Prijs:** Gratis, met in-app-aankopen (Plus €1,99 en Pro €4,99, eenmalig)
 - **Bevat advertenties:** Nee
 
 ## Winkelvermelding (NL)
@@ -45,6 +45,7 @@ WLKY turns your phone into a real walkie-talkie. Hold the big PTT button, talk, 
   - *Berichten → overige berichten in de app:* verzonden, versleuteld, niet opgeslagen op server; doel: app-functionaliteit.
   - *Apparaat- of andere ID's:* nee.
   - *Locatie:* nee (Bluetooth-scan wordt niet voor locatie gebruikt).
+  - *Financiële info → aankoopgeschiedenis:* ja, alleen om Plus/Pro te controleren (onherleidbare code van de aankoop); niet gedeeld.
 - **Versleuteld tijdens verzending:** Ja.
 - **Gebruikers kunnen verwijdering aanvragen:** Ja, via privacy@wlky.app.
 - **Gegevens gedeeld met derden:** Nee.
@@ -65,3 +66,16 @@ Communicatie-app met door gebruikers gegenereerde inhoud tussen gebruikers onder
 4. Testen → Gesloten test: upload `wlky.aab`, voeg minimaal 12 testers toe (Google-e-mailadressen) en laat ze 14 dagen meedoen.
 5. Daarna: Productie → Toegang aanvragen → publiceren.
 6. Bij de eerste upload kies je **Play App Signing**: jouw sleutel wordt de uploadsleutel; Google beheert de definitieve sleutel.
+
+## Plus en Pro instellen (eenmalig)
+1. **Producten:** Play Console → je app → *Inkomsten genereren* → *Producten* → *In-app-producten*. Maak er twee en activeer ze:
+   - `wlky_plus`, naam "WLKY Plus", €1,99
+   - `wlky_pro`, naam "WLKY Pro", €4,99
+   (Dit kan pas nadat er een AAB in een testtrack staat.)
+2. **Serviceaccount:** in Google Cloud (console.cloud.google.com) een project kiezen → *Google Play Android Developer API* inschakelen →
+   *IAM → Serviceaccounts* → nieuw account → *Sleutels* → *Sleutel toevoegen* → JSON. Bewaar dit bestand.
+3. **Rechten:** Play Console → *Gebruikers en rechten* → *Nieuwe gebruiker uitnodigen* → het e-mailadres van het serviceaccount →
+   app-rechten *Financiële gegevens bekijken* en *Bestellingen beheren*.
+4. **Cloudflare:** Workers & Pages → `wlky` → *Settings* → *Variables and Secrets* → *Add* → type **Secret**, naam `GOOGLE_SA`,
+   waarde = de volledige inhoud van het JSON-bestand → opslaan (er volgt een nieuwe deploy).
+5. **Testen zonder te betalen:** Play Console → *Instellingen* → *Licentietests* → voeg je eigen Gmail-adres toe.
