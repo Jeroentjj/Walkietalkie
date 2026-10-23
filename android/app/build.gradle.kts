@@ -13,11 +13,21 @@ android {
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
         versionName = "1.0.${System.getenv("GITHUB_RUN_NUMBER") ?: "0"}"
     }
+    // Fixed release key from CI secrets, so every new APK installs as an update over the old one.
+    // Without the secrets (local builds) it falls back to the debug key.
+    val keystore = System.getenv("WALKIE_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystore != null) create("walkie") {
+            storeFile = keystore
+            storePassword = System.getenv("WALKIE_KEYSTORE_PASSWORD")
+            keyAlias = "walkie"
+            keyPassword = System.getenv("WALKIE_KEYSTORE_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Signed with the debug key so the APK installs without a keystore setup.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("walkie") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {

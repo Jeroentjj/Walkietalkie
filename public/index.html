@@ -268,11 +268,11 @@ function beep(freqs) {
   }
 }
 
+// 128 random bits: the code is the encryption key material, so it must not be guessable.
 function genCode() {
-  const words = ['vos', 'uil', 'das', 'reiger', 'otter', 'havik', 'eland', 'lynx', 'raaf', 'wolf'];
-  const r = crypto.getRandomValues(new Uint32Array(3));
-  return `${words[r[0] % words.length]}-${words[r[1] % words.length]}-${(r[2] % 1e6).toString().padStart(6, '0')}`;
+  return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
+const weakCode = (c) => !c.test && !c.qr && c.code.length < 22; // channels from before the 128-bit codes
 
 // --- Radio sound: voice through a narrow band-pass with a little crunch, soft hiss while someone
 // talks, and a burst of static ("kshh") when a transmission starts or ends. Toggle in the menu.
@@ -622,6 +622,7 @@ function render() {
   else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
   else if (holding === c && c.you > 0) { st = `Wacht op je beurt (#${c.you})`; l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
+  else if (weakCode(c.cfg) && !rx) { st = 'Onveilig kanaal: maak opnieuw'; l = 'wait'; }
   else if (c.cfg.qr && c.n <= 1) st = 'Direct: verbinding verbroken';
   else if (c.offline && c.n <= 1) { st = 'Offline · zoeken in de buurt…'; l = 'wait'; }
   else if (c.full) st = 'Kanaal vol (max 10)';
@@ -682,7 +683,9 @@ function renderList() {
       + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" /></svg></button>`)
       + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></svg></button>`;
     li.querySelector('b').textContent = cfg.name;
-    li.querySelector('span').textContent = (i === sel ? '● PTT praat hier' : 'luistert mee') + (cfg.test ? ' · alleen jij' : cfg.qr ? ' · direct' : '');
+    li.querySelector('span').textContent = weakCode(cfg) ? 'Onveilig (oude code): verwijder en maak opnieuw'
+      : (i === sel ? '● PTT praat hier' : 'luistert mee') + (cfg.test ? ' · alleen jij' : cfg.qr ? ' · direct' : '');
+    if (weakCode(cfg)) li.querySelector('span').style.color = '#f88';
     li.onclick = (e) => {
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'share') share(cfg);
@@ -695,7 +698,7 @@ function renderList() {
 }
 
 function addChannel(name, code) {
-  if (code.length < 6) return alert('Code moet minstens 6 tekens zijn');
+  if (code.length < 22) return alert('Deze uitnodiging is van een oude, onveilige versie. Vraag om een nieuwe link.');
   const i = cfgs.findIndex((c) => c.code === code);
   if (i >= 0) sel = i; else { cfgs.push({ name: name || `Kanaal ${cfgs.length + 1}`, code }); sel = cfgs.length - 1; }
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(code));

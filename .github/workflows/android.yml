@@ -21,8 +21,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Restore signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "::error::Secret KEYSTORE_B64 ontbreekt; zie README"; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/walkie.jks"
       - name: Build APK
         working-directory: android
+        env:
+          WALKIE_KEYSTORE: ${{ runner.temp }}/walkie.jks
+          WALKIE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: gradle --no-daemon assembleRelease
       - name: Publish as "latest" release
         env:
