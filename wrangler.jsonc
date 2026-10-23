@@ -1,5 +1,5 @@
 {
-  "name": "walkietalkie",
+  "name": "wlky",
   "main": "src/api.js",
   "compatibility_date": "2025-09-01",
   "routes": [{ "pattern": "wlky.app", "custom_domain": true }],
@@ -8,6 +8,6 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Channel"] }],
   // 30 push-API calls per minute per IP.
   "ratelimits": [{ "name": "LIMITER", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }],
-  // Auto-provisioned on first deploy.
-  "kv_namespaces": [{ "binding": "WALKIE", "id": "6b99de7982ee4ca3a67736b53f331399" }]
+  // No id: created automatically on the first deploy of the new Worker.
+  "kv_namespaces": [{ "binding": "WALKIE" }]
 }
