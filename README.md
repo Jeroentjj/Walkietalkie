@@ -44,7 +44,7 @@ De webapp is een proefversie; de Android-app (Play Store) is het volledige produ
 | | Web | Basis (gratis app) | Plus (€1,99 eenmalig) | Pro (€4,99 eenmalig) |
 |---|---|---|---|---|
 | Kanalen | 1 | 3 | 10 | 25 |
-| Audioberichten per dag | 25 | onbeperkt | onbeperkt | onbeperkt |
+| Audioberichten per dag | 25 | 100 | onbeperkt | onbeperkt |
 | Per keer praten | 20 s | 60 s | 60 s | 60 s |
 | Chat per dag | alleen lezen | 5 | 50 | onbeperkt |
 | Zonder internet (QR / in de buurt) | nee | ja | ja | ja |
@@ -60,3 +60,8 @@ opslag wissen niet helpt. Uitzondering: de QR-koppeling is een directe verbindin
 
 "Haal de app"-knoppen gaan naar `https://wlky.app/app`, dat doorstuurt naar de Play Store (`PLAY_URL` in `src/api.js`).
 De manifest-velden `related_applications` en `prefer_related_applications` laten Chrome op Android de Play Store-app aanbieden in plaats van de webapp.
+
+## Privé-beta
+Een link `https://wlky.app/#beta=<code>` geeft testers alles onbeperkt (Pro-grenzen), ook in de webapp, tot `BETA_UNTIL`
+(`wrangler.jsonc`), voor maximaal `BETA_MAX` apparaten. De code is het Cloudflare-geheim `BETA_CODE`; verwijder dat
+geheim om de beta direct te stoppen. Na de einddatum vallen testers terug op hun normale versie.

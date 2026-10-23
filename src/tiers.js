@@ -2,10 +2,11 @@
 // (public/index.html) only to explain limits before the server refuses; keep both in sync.
 export const TIERS = {
   web: { channels: 1, turnSec: 20, talksPerDay: 25, chatPerDay: 0 },
-  basic: { channels: 3, turnSec: 60, talksPerDay: Infinity, chatPerDay: 5 },
+  basic: { channels: 3, turnSec: 60, talksPerDay: 100, chatPerDay: 5 },
   plus: { channels: 10, turnSec: 60, talksPerDay: Infinity, chatPerDay: 50 },
   pro: { channels: 25, turnSec: 60, talksPerDay: Infinity, chatPerDay: Infinity },
 };
+TIERS.beta = TIERS.pro; // private beta testers (see license.js /beta): everything unlimited until the beta ends
 
 // The free web version has no proof of identity, so a device id alone is not enough: on top of the
 // per-device limits, everything from one IP address together gets at most this many devices' worth.

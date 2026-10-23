@@ -3,6 +3,8 @@
   "main": "src/api.js",
   "compatibility_date": "2025-09-01",
   "routes": [{ "pattern": "wlky.app", "custom_domain": true }],
+  // Private beta: until when invite links work, and for how many devices. The code itself is the secret BETA_CODE.
+  "vars": { "BETA_UNTIL": "2026-10-30T23:59:59Z", "BETA_MAX": "25" },
   "assets": { "directory": "./public", "binding": "ASSETS" },
   "durable_objects": { "bindings": [{ "name": "CHANNEL", "class_name": "Channel" }, { "name": "QUOTA", "class_name": "Quota" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Channel"] }, { "tag": "v2", "new_sqlite_classes": ["Quota"] }],

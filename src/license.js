@@ -5,6 +5,8 @@
 //   POST /api/license/redeem  { code, dev }            web: use a link code -> { lic, tier }
 //   POST /api/license/nonce   {}                       app: one-time nonce for a Play Integrity request
 //   POST /api/license/attest  { token, nonce, dev }    app: Play Integrity proof -> 7-day Basic licence
+//   POST /api/license/beta    { code, dev }            private beta: invite code -> unlimited until BETA_UNTIL
+//        (secret BETA_CODE; vars BETA_UNTIL, BETA_MAX devices. Deleting the secret ends the beta at once.)
 // identify() turns a licence into the version the server enforces (see tiers.js); no valid licence = web.
 // A licence is "<payload>.<HMAC>" signed with a key that is generated once and kept in KV, so nobody can forge one.
 // Records live in KV under lic:<sha256(purchase token)>; the raw purchase token is never stored.
@@ -98,6 +100,7 @@ async function verifyIntegrity(env, token, nonce) {
 // The version for a connection. Shared licences give nothing extra: the quota belongs to the licence + device.
 export async function identify(env, licence, dev, ip) {
   const p = await open(env, licence);
+  if (p?.t === 'beta' && p.d === dev && p.x > Date.now() && env.BETA_CODE) return { tier: 'beta', subject: `T:${dev}` };
   if (p?.b && p.d === dev && p.x > Date.now()) return { tier: 'basic', subject: `B:${dev}` };
   if (p?.r && p.d === dev) {
     const rec = await env.WALKIE.get(`lic:${p.r}`, 'json');
@@ -124,6 +127,20 @@ export async function license(request, env, route, json) {
     return json({ lic: await sign(env, { r: id, d: body.dev, w: 0 }), tier: rec.tier });
   }
 
+  if (route === 'beta') {
+    if (typeof body.code !== 'string' || body.code.length > 100 || !okId(body.dev)) return json({ error: 'bad request' }, 400);
+    const until = Date.parse(env.BETA_UNTIL || '');
+    if (!env.BETA_CODE || !(until > Date.now()) || (await sha(body.code)) !== (await sha(env.BETA_CODE))) return json({ error: 'beta closed' }, 410);
+    // Each device counts once; the invite works for at most BETA_MAX devices.
+    if (!(await env.WALKIE.get(`beta:${body.dev}`))) {
+      const n = Number(await env.WALKIE.get('beta:count')) || 0;
+      if (n >= (Number(env.BETA_MAX) || 25)) return json({ error: 'beta full' }, 409);
+      await env.WALKIE.put('beta:count', String(n + 1));
+      await env.WALKIE.put(`beta:${body.dev}`, '1', { expirationTtl: Math.max(60, Math.ceil((until - Date.now()) / 1000) + 86400) });
+    }
+    return json({ lic: await sign(env, { t: 'beta', d: body.dev, x: until }), tier: 'beta', x: until });
+  }
+
   if (route === 'nonce') {
     const nonce = b64u(crypto.getRandomValues(new Uint8Array(24)));
     await env.WALKIE.put(`nonce:${nonce}`, '1', { expirationTtl: 300 });
@@ -143,6 +160,7 @@ export async function license(request, env, route, json) {
   if (route === 'check') {
     const p = await open(env, body.lic);
     if (p?.b) return json({ tier: p.x > Date.now() ? 'basic' : null });
+    if (p?.t === 'beta') return json({ tier: p.x > Date.now() && env.BETA_CODE ? 'beta' : null, x: p.x });
     const rec = p?.r && (await env.WALKIE.get(`lic:${p.r}`, 'json'));
     if (!rec || (p.w && !rec.web.some((d) => d.id === p.d))) return json({ tier: null });
     return json({ tier: rec.tier });

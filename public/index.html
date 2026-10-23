@@ -337,11 +337,12 @@ const WEB = !NATIVE;
 // The server enforces these (src/tiers.js); the page only uses them to explain a limit before it is hit.
 const TIERS = {
   web: { channels: 1, talkSec: 20, talksPerDay: 25, chatPerDay: 0, offline: false },
-  basic: { channels: 3, talkSec: 60, talksPerDay: Infinity, chatPerDay: 5, offline: true },
+  basic: { channels: 3, talkSec: 60, talksPerDay: 100, chatPerDay: 5, offline: true },
   plus: { channels: 10, talkSec: 60, talksPerDay: Infinity, chatPerDay: 50, offline: true },
   pro: { channels: 25, talkSec: 60, talksPerDay: Infinity, chatPerDay: Infinity, offline: true },
 };
-const RANK = { web: 0, basic: 1, plus: 2, pro: 3 };
+TIERS.beta = TIERS.pro; // private beta (#beta= link), until the date the server gives
+const RANK = { web: 0, basic: 1, plus: 2, pro: 3, beta: 3 };
 // Paid version (Plus/Pro): a licence signed by the server, from a Play purchase or a linked app (src/license.js).
 let lic = null; try { lic = JSON.parse(localStorage.getItem('walkie-lic')); } catch {} // { lic, tier, at }
 // Free app (Basic): a 7-day licence the server gives after Google Play Integrity confirms this is the real app.
@@ -487,6 +488,8 @@ class Chan {
     await Promise.race([attReady, new Promise((r) => setTimeout(r, 10000))]); // the app first proves it is the app
     if (this.closed || this.offline) return;
     const name = await this.seal(myName || T('Iemand', 'Someone'));
+    // Checked after the last await: two overlapping connect() calls must not open two sockets.
+    if (this.closed || this.offline || (this.ws && this.ws.readyState <= 1)) return;
     const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}&dev=${clientId}&lic=${encodeURIComponent(serverLic())}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
@@ -747,12 +750,12 @@ function talkTimer(c) {
 }
 
 // Shows why something needs the app, with a Play Store button. `replace` offers swapping the one web channel.
-const NAMES = { web: 'Web', basic: T('Basis', 'Basic'), plus: 'Plus', pro: 'Pro' };
+const NAMES = { web: 'Web', basic: T('Basis', 'Basic'), plus: 'Plus', pro: 'Pro', beta: 'Beta' };
 const PLAN_INFO = {
   web: T('1 kanaal · 25 audioberichten per dag · 20 s per keer · chat lezen', '1 channel · 25 voice messages a day · 20 s at a time · read chat'),
-  basic: T('3 kanalen · onbeperkt praten · 5 chatberichten per dag · praten zonder internet', '3 channels · unlimited talking · 5 chat messages a day · talk without internet'),
-  plus: T('10 kanalen · 50 chatberichten per dag · webapp op 1 extra apparaat', '10 channels · 50 chat messages a day · web app on 1 extra device'),
-  pro: T('25 kanalen · onbeperkt chatten · webapp op 3 extra apparaten', '25 channels · unlimited chat · web app on 3 extra devices'),
+  basic: T('3 kanalen · 100 audioberichten per dag · 5 chatberichten per dag · praten zonder internet', '3 channels · 100 voice messages a day · 5 chat messages a day · talk without internet'),
+  plus: T('10 kanalen · onbeperkt praten · 50 chatberichten per dag · webapp op 1 extra apparaat', '10 channels · unlimited talking · 50 chat messages a day · web app on 1 extra device'),
+  pro: T('25 kanalen · onbeperkt praten en chatten · webapp op 3 extra apparaten', '25 channels · unlimited talking and chat · web app on 3 extra devices'),
 };
 let prices = { wlky_plus: '€1,99', wlky_pro: '€4,99' }; // replaced by the real Play prices in the app
 
@@ -783,6 +786,7 @@ function planMsg(text) { $('planMsg').textContent = text; $('planMsg').hidden = 
 
 // Shows the versions, with why the user got here. `replace` offers swapping the one web channel.
 function upsell(why, replace) {
+  if (!why && tier === 'beta') why = T(`Je doet mee aan de beta: alles is onbeperkt t/m ${betaUntil()}.`, `You're in the beta: everything is unlimited until ${betaUntil()}.`);
   $('appWhy').textContent = why; $('appWhy').hidden = !why;
   planMsg('');
   renderPlans();
@@ -1075,7 +1079,8 @@ $('planBtn').onclick = () => upsell('');
 function renderTier() {
   $('qrBadge').hidden = LIMITS.offline;
   $('appBar').hidden = !(WEB && ANDROID && tier === 'web');
-  $('planNow').textContent = NAMES[tier] + (WEB && RANK[tier] > 1 ? T(' (gekoppeld)', ' (linked)') : '');
+  $('planNow').textContent = tier === 'beta' ? T(`Beta, alles onbeperkt t/m ${betaUntil()}`, `Beta, everything unlimited until ${betaUntil()}`)
+    : NAMES[tier] + (WEB && RANK[tier] > 1 ? T(' (gekoppeld)', ' (linked)') : '');
   $('planBadge').textContent = RANK[tier] > 1 ? NAMES[tier].toUpperCase() : '';
   $('planBadge').hidden = RANK[tier] < 2;
   if ($('appDlg').open) renderPlans();
@@ -1301,7 +1306,7 @@ async function attest() {
     const r = await licApi('attest', { token, nonce, dev: clientId });
     if (!r.lic) throw new Error(r.error);
     att = { lic: r.lic, x: r.x }; save('walkie-att', att); attFailed = false;
-    for (const c of chans.values()) if (c.ws && !c.offline && !c.ws.url.includes(encodeURIComponent(att.lic))) c.ws.close(); // reconnect with it
+    reconnectAll();
   } catch { attFailed = !att || att.x < Date.now(); if (attFailed) att = null; }
   setTier(); renderTier(); render();
 }
@@ -1311,10 +1316,20 @@ async function licApi(path, body) {
   return (await fetch(ORIGIN + '/api/license/' + path, { method: 'POST', body: JSON.stringify(body) })).json();
 }
 
+// A new licence or proof changes what the server allows: reconnect every channel with it.
+function reconnectAll() {
+  for (const c of chans.values()) {
+    if (c.offline || !c.room || c.cfg.test || c.cfg.qr) continue;
+    c.limited = false; c.limitShown = false;
+    if (c.ws && c.ws.readyState <= 1) c.ws.close(); else c.connect();
+  }
+}
+
 function storeLic(r) {
   if (!r?.lic || (lic && RANK[lic.tier] > RANK[r.tier])) return; // keep Pro when a Plus purchase is restored too
-  lic = { lic: r.lic, tier: r.tier, at: Date.now() };
+  lic = { lic: r.lic, tier: r.tier, at: Date.now(), x: r.x };
   save('walkie-lic', lic); setTier(); renderTier(); render();
+  reconnectAll();
 }
 
 // Still valid (not refunded, device not replaced)? Without a connection the last answer counts for 30 days.
@@ -1323,6 +1338,18 @@ async function checkLic() {
   try { const r = await licApi('check', { lic: lic.lic }); if (r.tier) Object.assign(lic, { tier: r.tier, at: Date.now() }); else lic = null; }
   catch { if (Date.now() - lic.at > 30 * 864e5) lic = null; }
   save('walkie-lic', lic); setTier(); renderTier(); render();
+}
+
+function betaUntil() { return new Date(lic?.x || 0).toLocaleDateString(EN ? 'en-GB' : 'nl-NL', { day: 'numeric', month: 'long' }); }
+
+// Private beta invite (#beta=CODE): everything unlimited until the end date set on the server.
+async function joinBeta(code) {
+  try {
+    const r = await licApi('beta', { code, dev: clientId });
+    if (!r.lic) return upsell(r.error === 'beta full' ? T('De beta zit vol.', 'The beta is full.') : T('Deze beta-link werkt niet (meer).', 'This beta link no longer works.'));
+    lic = null; storeLic(r);
+    upsell(T(`Welkom bij de WLKY-beta! Alles is onbeperkt tot en met ${betaUntil()}.`, `Welcome to the WLKY beta! Everything is unlimited until ${betaUntil()}.`));
+  } catch { upsell(T('Geen verbinding. Open de beta-link opnieuw.', 'No connection. Open the beta link again.')); }
 }
 
 async function redeem(code) {
@@ -1417,10 +1444,12 @@ addEventListener('keydown', (e) => { if (tourStep >= 0 && e.key === 'Escape') en
 // Invite (#join=) and device links (#link=). Also when the app is already open: then only the hash changes.
 function handleHash() {
   const h = location.hash, link = h.match(/^#link=([A-Za-z0-9_-]{16})$/), invite = h.startsWith('#join=') && parseInvite(h);
-  if (!link && !invite) return;
+  const beta = h.match(/^#beta=([A-Za-z0-9_-]{8,64})$/);
+  if (!link && !invite && !beta) return;
   history.replaceState(null, '', location.pathname);
   if (invite) addChannel(invite.name, invite.code);
   if (link && WEB) redeem(link[1]);
+  if (beta) joinBeta(beta[1]);
 }
 addEventListener('hashchange', handleHash);
 handleHash();
