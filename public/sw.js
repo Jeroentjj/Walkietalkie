@@ -1,6 +1,6 @@
 // Minimal offline shell so Android offers "Install app".
-const CACHE = 'walkie-v9';
-const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg', 'badge.png', 'fonts/DSEG7Classic-Bold.woff2', 'fonts/DSEG14Classic-Bold.woff2', 'fonts/nunito-latin-700-normal.woff2', 'vendor/qrcode.js'];
+const CACHE = 'walkie-v10';
+const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg', 'badge.png', 'fonts/DSEG7Classic-Bold.woff2', 'fonts/DSEG14Classic-Bold.woff2', 'fonts/nunito-latin-700-normal.woff2', 'fonts/share-tech-mono-latin-400-normal.woff2', 'vendor/qrcode.js'];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))));
 self.addEventListener('activate', (e) =>
