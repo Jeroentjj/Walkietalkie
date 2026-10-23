@@ -37,3 +37,16 @@ waarde voor `KEYSTORE_B64`. Gebruikt node-forge (BSD).
 ## Geluid
 Een geluidsframe is ~128 ms, 8-bit µ-law, AES-256-GCM versleuteld: `[0x02][IV 12 bytes][ciphertext]`. Dat is ~8 berichten per seconde
 en ~16 kB/s (was ~23/s en ~32 kB/s). Ontvangers negeren andere frameversies, dus alle telefoons moeten de nieuwe versie hebben.
+
+## Versies
+De webapp is een proefversie; de Android-app (Play Store) is het volledige product. Grenzen staan in `LIMITS` in `public/index.html`.
+
+| | Webapp | Android-app |
+|---|---|---|
+| Kanalen | 1 (+ testkanaal) | onbeperkt |
+| Per keer praten | 20 s | 60 s |
+| Chat | alleen lezen | lezen en sturen |
+| Zonder internet (QR / in de buurt) | nee | ja |
+
+"Haal de app"-knoppen gaan naar `https://wlky.app/app`, dat doorstuurt naar de Play Store (`PLAY_URL` in `src/api.js`).
+De manifest-velden `related_applications` en `prefer_related_applications` laten Chrome op Android de Play Store-app aanbieden in plaats van de webapp.

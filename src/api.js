@@ -38,6 +38,8 @@ async function vapidHeader(endpoint, keys) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // One stable link for every "get the app" button; change the target here.
+    if (url.pathname === '/app') return Response.redirect(PLAY_URL, 302);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     const room = url.pathname.match(/^\/api\/ch\/([a-f0-9]{40})$/)?.[1];
     if (room) {
@@ -96,6 +98,7 @@ async function api(request, env, route) {
   return json({ error: 'not found' }, 404);
 }
 
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=app.wlky';
 const MAX_TURN_MS = 60000;
 const MAX_PEOPLE = 10;
 
