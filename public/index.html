@@ -224,6 +224,7 @@
       <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
     <button class="switch" id="planBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Versie</b><small id="planNow"></small></div><span class="badge" id="planBadge"></span></button>
     <button class="switch" id="reportBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Probleem melden</b><small>Iets kapot of een idee? Laat het weten</small></div><svg class="ic" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></button>
+    <button class="switch" id="installBtn" hidden style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Op beginscherm zetten</b><small>WLKY als app, schermvullend</small></div><svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:-4px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></button>
     <button class="switch" id="tourBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Rondleiding</b><small>Bekijk hoe de app werkt</small></div><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg></button>
     <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
       <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
@@ -260,6 +261,16 @@
       <small>Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.</small>
       <div class="row" style="margin-top:8px"><input id="linkCode" autocomplete="off" spellcheck="false" placeholder="of plak de koppellink"><button class="tbtn" id="linkUse">OK</button></div>
     </div>
+  </div>
+</dialog>
+
+<dialog id="installDlg">
+  <div class="sheet-head"><h3>Zet WLKY op je beginscherm</h3><button class="x" id="installClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <small style="margin-top:12px">Dan opent WLKY als een echte app: schermvullend, met een eigen icoon.</small>
+    <div id="installIos" hidden style="margin:14px 0;font-size:15px;line-height:1.7">1. Tik onderin Safari op Delen <svg class="ic sm" viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:-4px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg><br>2. Kies <b>Zet op beginscherm</b><br>3. Tik op <b>Voeg toe</b></div>
+    <button class="tbtn prim" id="installGo" style="width:100%;margin-top:14px">Installeren</button>
+    <button class="tbtn" id="installLater" style="width:100%;margin-top:8px">Niet nu</button>
   </div>
 </dialog>
 
@@ -320,7 +331,7 @@ addEventListener('unhandledrejection', (e) => errLog.push(`${new Date().toISOStr
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+const STATIC_EN = {"Zet WLKY op je beginscherm": "Add WLKY to your home screen", "Dan opent WLKY als een echte app: schermvullend, met een eigen icoon.": "Then WLKY opens like a real app: full screen, with its own icon.", "Installeren": "Install", "Niet nu": "Not now", "Op beginscherm zetten": "Add to home screen", "WLKY als app, schermvullend": "WLKY as an app, full screen", "1. Tik onderin Safari op Delen": "1. In Safari, tap Share", "2. Kies": "2. Choose", "Zet op beginscherm": "Add to Home Screen", "3. Tik op": "3. Tap", "Voeg toe": "Add", "Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -1439,6 +1450,36 @@ $('linkClose').onclick = () => $('linkDlg').close();
 $('linkCopy').onclick = () => navigator.clipboard?.writeText($('linkUrl').value).then(() => ($('linkCopy').textContent = T('Gekopieerd', 'Copied')));
 $('linkShare').onclick = () => (navigator.share ? navigator.share({ url: $('linkUrl').value }).catch(() => {}) : $('linkCopy').click());
 
+// --- Install the web app: Chrome/Android via its own prompt, iPhone with instructions (Safari has no prompt).
+// Shown once per week at most, only when nothing else is on screen.
+let installEvent = null, installShown = false;
+const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && 'ontouchend' in document);
+const installed = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone;
+const canInstall = () => WEB && !installed() && (installEvent || IOS);
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; $('installBtn').hidden = false; setTimeout(maybeInstall, 1500); });
+addEventListener('appinstalled', () => { installEvent = null; $('installBtn').hidden = true; });
+
+function showInstall() {
+  $('installIos').hidden = !IOS || !!installEvent;
+  $('installGo').hidden = !installEvent;
+  $('installDlg').showModal();
+}
+
+function maybeInstall() {
+  let last = 0; try { last = Number(localStorage.getItem('walkie-install')) || 0; } catch {}
+  if (installShown || !canInstall() || Date.now() - last < 7 * 864e5 || tourStep >= 0 || tourStarting || document.querySelector('dialog[open]')) return;
+  installShown = true;
+  try { localStorage.setItem('walkie-install', String(Date.now())); } catch {}
+  showInstall();
+}
+
+$('installGo').onclick = async () => { $('installDlg').close(); if (installEvent) { installEvent.prompt(); await installEvent.userChoice.catch(() => {}); installEvent = null; } };
+$('installLater').onclick = $('installClose').onclick = () => $('installDlg').close();
+$('installBtn').onclick = () => { dlg.close(); showInstall(); };
+$('installBtn').hidden = !(WEB && IOS && !installed());
+// After the tour, the welcome or the menu closes, it's a good moment.
+for (const d of ['dlg', 'appDlg']) $(d).addEventListener('close', () => setTimeout(maybeInstall, 800));
+
 // --- Guided tour: dims the screen, cuts a hole around the real controls and explains them one by one.
 const TOUR = [
   { t: T('Welkom bij WLKY', 'Welcome to WLKY'), p: T('Een walkietalkie op je telefoon. Een rondleiding van een halve minuut.', 'A walkie-talkie on your phone. A quick half-minute tour.') },
@@ -1495,6 +1536,7 @@ function endTour() {
   nearbyReady = true; render();
   if (deferredUpsell) { const [why, replace] = deferredUpsell; deferredUpsell = null; upsell(why, replace); }
   else if (!myName || !cfgs.length) $('menuBtn').click();
+  else setTimeout(maybeInstall, 800);
 }
 
 $('tourNext').onclick = () => (TOUR[tourStep].last ? endTour() : showTour(tourStep + 1));
@@ -1527,6 +1569,7 @@ syncChannels();
 if (!seenTour) { tourStarting = true; setTimeout(startTour, 500); }
 // First the message from a link (beta, gift, invite), if any; the menu follows when it is closed.
 else if (!myName || !cfgs.length) setTimeout(() => !$('appDlg').open && !linkBusy && $('menuBtn').click(), 300);
+else setTimeout(maybeInstall, 2500);
 
 if (!NATIVE && location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
