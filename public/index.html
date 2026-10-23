@@ -191,6 +191,8 @@
     <div class="sec-title">Instellingen</div>
     <div class="switch" style="display:block;cursor:auto"><b>Jouw naam</b><small>Zien anderen als je praat</small>
       <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
+    <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
+      <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
     <label class="switch"><div><b>Walkie-talkie ruis</b><small>Radioklank, gekraak en "kssh"</small></div><input type="checkbox" id="fxBox"></label>
     <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
 
@@ -224,6 +226,20 @@
 // decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
 // channel code, so the server only ever sees a hash of the code and ciphertext.
 const $ = (id) => document.getElementById(id);
+// --- Language: Dutch or English (auto from the phone, can be changed in the menu).
+const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
+const EN = LANG === 'en';
+const T = (nl, en) => (EN ? en : nl);
+const STATIC_EN = {"Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+if (EN) {
+  document.documentElement.lang = 'en';
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) { const k = n.nodeValue.trim(); if (STATIC_EN[k]) n.nodeValue = n.nodeValue.replace(k, STATIC_EN[k]); }
+  document.querySelectorAll('[placeholder],[aria-label]').forEach((el) => {
+    for (const a of ['placeholder', 'aria-label']) if (STATIC_EN[el.getAttribute(a)]) el.setAttribute(a, STATIC_EN[el.getAttribute(a)]);
+  });
+}
+
 const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
 const RATE = 16000;
 // Inside the Android app the page is served from bundled assets; the server lives at walkie.dopimo.app.
@@ -237,7 +253,7 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 
 let cfgs = load('walkie-chs', []);
 const legacy = localStorage.getItem('walkie-ch');
-if (legacy && !cfgs.length) { cfgs = [{ name: 'Kanaal 1', code: legacy }]; localStorage.removeItem('walkie-ch'); save('walkie-chs', cfgs); }
+if (legacy && !cfgs.length) { cfgs = [{ name: T('Kanaal 1', 'Channel 1'), code: legacy }]; localStorage.removeItem('walkie-ch'); save('walkie-chs', cfgs); }
 let sel = Math.min(load('walkie-sel', 0), Math.max(cfgs.length - 1, 0));
 let myName = localStorage.getItem('walkie-name') || '';
 const chans = new Map(); // code -> Chan
@@ -341,12 +357,12 @@ class Chan {
     try {
       const b = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
       return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, this.key, b.slice(12)));
-    } catch { return 'Iemand'; }
+    } catch { return T('Iemand', 'Someone'); }
   }
 
   async connect() {
     if (this.closed || this.offline) return;
-    const name = await this.seal(myName || 'Iemand');
+    const name = await this.seal(myName || T('Iemand', 'Someone'));
     const url = `${NATIVE || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOST}/api/ch/${this.room}?name=${name}`;
     const ws = (this.ws = new WebSocket(url));
     ws.binaryType = 'arraybuffer';
@@ -399,7 +415,7 @@ class Chan {
   async offGrant() {
     this.wantTalk = false; this.you = 'tx';
     beep([900, 1300]); navigator.vibrate?.(80); render();
-    this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'talk', name: await this.seal(myName || 'Iemand') })));
+    this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'talk', name: await this.seal(myName || T('Iemand', 'Someone')) })));
   }
 
   async offMessage(m) {
@@ -488,7 +504,7 @@ function addMsg(c, m) {
 }
 
 Chan.prototype.sendChat = async function (text) {
-  const d = await this.seal(JSON.stringify({ n: myName || 'Iemand', x: text }));
+  const d = await this.seal(JSON.stringify({ n: myName || T('Iemand', 'Someone'), x: text }));
   if (this.offline) this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'chat', d })));
   else this.send({ t: 'chat', d });
   addMsg(this, { me: true, text, t: Date.now() });
@@ -506,13 +522,13 @@ function renderChat() {
   if (!c) return;
   $('chatTitle').textContent = c.cfg.name;
   const list = loadMsgs(c);
-  box.innerHTML = list.length ? '' : '<div class="chat-empty">Nog geen berichten.<br>Werkt ook zonder internet in offline- of QR-modus.</div>';
+  box.innerHTML = list.length ? '' : T('<div class="chat-empty">Nog geen berichten.<br>Werkt ook zonder internet in offline- of QR-modus.</div>', '<div class="chat-empty">No messages yet.<br>Also works without internet in offline or QR mode.</div>');
   for (const m of list) {
     const el = document.createElement('div');
     el.className = 'msg' + (m.me ? ' me' : '');
     if (!m.me) el.appendChild(Object.assign(document.createElement('b'), { textContent: m.from }));
     el.appendChild(document.createTextNode(m.text));
-    el.appendChild(Object.assign(document.createElement('time'), { textContent: new Date(m.t).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) }));
+    el.appendChild(Object.assign(document.createElement('time'), { textContent: new Date(m.t).toLocaleTimeString(EN ? 'en-GB' : 'nl-NL', { hour: '2-digit', minute: '2-digit' }) }));
     box.appendChild(el);
   }
   box.scrollTop = box.scrollHeight;
@@ -557,7 +573,7 @@ async function ensureMic() {
   if (mic) return true;
   try {
     mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-  } catch { status.textContent = 'Microfoon geweigerd'; return false; }
+  } catch { status.textContent = T('Microfoon geweigerd', 'Microphone denied'); return false; }
   const a = ctx(), src = a.createMediaStreamSource(mic);
   micNode = a.createScriptProcessor(2048, 1, 1);
   micNode.onaudioprocess = (e) => {
@@ -605,7 +621,7 @@ if (NATIVE) window.walkieNative = {
     const c = offChan; if (!c) return;
     c.offReceive(Uint8Array.from(atob(b64), (x) => x.charCodeAt(0)));
   },
-  onError(e) { status.textContent = e === 'perm' ? 'Geen toegang tot Bluetooth/wifi' : 'Offline fout: ' + e; },
+  onError(e) { status.textContent = e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e; },
 };
 
 function render() {
@@ -618,18 +634,18 @@ function render() {
   // Someone talking on any channel?
   const rx = [...chans.values()].find((x) => x.speaker);
   let st, l = '';
-  if (!c) st = 'Tik hier om een kanaal toe te voegen';
-  else if (holding === c && c.you === 'tx') { st = '▶ Zenden…'; l = 'tx'; }
-  else if (holding === c && c.you > 0) { st = `Wacht op je beurt (#${c.you})`; l = 'wait'; }
+  if (!c) st = T('Tik hier om een kanaal toe te voegen', 'Tap MENU to add a channel');
+  else if (holding === c && c.you === 'tx') { st = T('▶ Zenden…', '▶ Sending…'); l = 'tx'; }
+  else if (holding === c && c.you > 0) { st = T(`Wacht op je beurt (#${c.you})`, `Waiting for your turn (#${c.you})`); l = 'wait'; }
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
-  else if (weakCode(c.cfg) && !rx) { st = 'Onveilig kanaal: maak opnieuw'; l = 'wait'; }
-  else if (c.cfg.qr && c.n <= 1) st = 'Direct: verbinding verbroken';
-  else if (c.offline && c.n <= 1) { st = 'Offline · zoeken in de buurt…'; l = 'wait'; }
-  else if (c.full) st = 'Kanaal vol (max 10)';
-  else if (!c.offline && c.ws?.readyState !== 1) st = 'Verbinden…';
-  else if (c.cfg.test) { st = 'Test: PTT = hoor jezelf'; l = 'on'; }
-  else { st = c.n > 1 ? `${c.n} ${c.offline ? 'in de buurt' : 'online'}` : 'Alleen jij · PTT = oproepen'; l = 'on'; }
-  if (muted && c) st = 'Stil · ' + st;
+  else if (weakCode(c.cfg) && !rx) { st = T('Onveilig kanaal: maak opnieuw', 'Insecure channel: recreate it'); l = 'wait'; }
+  else if (c.cfg.qr && c.n <= 1) st = T('Direct: verbinding verbroken', 'Direct: connection lost');
+  else if (c.offline && c.n <= 1) { st = T('Offline · zoeken in de buurt…', 'Offline · searching nearby…'); l = 'wait'; }
+  else if (c.full) st = T('Kanaal vol (max 10)', 'Channel full (max 10)');
+  else if (!c.offline && c.ws?.readyState !== 1) st = T('Verbinden…', 'Connecting…');
+  else if (c.cfg.test) { st = T('Test: PTT = hoor jezelf', 'Test: PTT = hear yourself'); l = 'on'; }
+  else { st = c.n > 1 ? `${c.n} ${c.offline ? T('in de buurt', 'nearby') : 'online'}` : T('Alleen jij · PTT = oproepen', 'Only you · PTT = call'); l = 'on'; }
+  if (muted && c) st = T('Stil · ', 'Muted · ') + st;
   status.textContent = st;
   led.className = 'led ' + l;
   hiss();
@@ -675,7 +691,7 @@ $('nextBtn').onclick = () => { if (cfgs.length && !holding) { sel = (sel + 1) % 
 // --- Menu
 function renderList() {
   const ul = $('chList');
-  ul.innerHTML = cfgs.length ? '' : '<li class="empty">Nog geen kanalen. Voeg er hieronder een toe.</li>';
+  ul.innerHTML = cfgs.length ? '' : T('<li class="empty">Nog geen kanalen. Voeg er hieronder een toe.</li>', '<li class="empty">No channels yet. Add one below.</li>');
   cfgs.forEach((cfg, i) => {
     const li = document.createElement('li');
     li.className = i === sel ? 'sel' : '';
@@ -683,14 +699,14 @@ function renderList() {
       + (cfg.test || cfg.qr ? '' : `<button class="ib" data-a="share" aria-label="Delen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" /></svg></button>`)
       + `<button class="ib del" data-a="del" aria-label="Verwijderen"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></svg></button>`;
     li.querySelector('b').textContent = cfg.name;
-    li.querySelector('span').textContent = weakCode(cfg) ? 'Onveilig (oude code): verwijder en maak opnieuw'
-      : (i === sel ? '● PTT praat hier' : 'luistert mee') + (cfg.test ? ' · alleen jij' : cfg.qr ? ' · direct' : '');
+    li.querySelector('span').textContent = weakCode(cfg) ? T('Onveilig (oude code): verwijder en maak opnieuw', 'Insecure (old code): delete and recreate')
+      : (i === sel ? T('● PTT praat hier', '● PTT talks here') : T('luistert mee', 'listening')) + (cfg.test ? T(' · alleen jij', ' · only you') : cfg.qr ? ' · direct' : '');
     if (weakCode(cfg)) li.querySelector('span').style.color = '#f88';
     li.onclick = (e) => {
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'share') share(cfg);
       else if (a === 'del') {
-        if (confirm(`Kanaal "${cfg.name}" verwijderen?`)) { cfgs.splice(i, 1); syncChannels(); renderList(); }
+        if (confirm(T(`Kanaal "${cfg.name}" verwijderen?`, `Delete channel "${cfg.name}"?`))) { cfgs.splice(i, 1); syncChannels(); renderList(); }
       } else { sel = i; syncChannels(); renderList(); }
     };
     ul.appendChild(li);
@@ -698,9 +714,9 @@ function renderList() {
 }
 
 function addChannel(name, code) {
-  if (code.length < 22) return alert('Deze uitnodiging is van een oude, onveilige versie. Vraag om een nieuwe link.');
+  if (code.length < 22) return alert(T('Deze uitnodiging is van een oude, onveilige versie. Vraag om een nieuwe link.', 'This invite is from an old, insecure version. Ask for a new link.'));
   const i = cfgs.findIndex((c) => c.code === code);
-  if (i >= 0) sel = i; else { cfgs.push({ name: name || `Kanaal ${cfgs.length + 1}`, code }); sel = cfgs.length - 1; }
+  if (i >= 0) sel = i; else { cfgs.push({ name: name || T(`Kanaal ${cfgs.length + 1}`, `Channel ${cfgs.length + 1}`), code }); sel = cfgs.length - 1; }
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => setupPush(code));
   syncChannels();
 }
@@ -708,9 +724,9 @@ function addChannel(name, code) {
 const inviteLink = (cfg) => `${ORIGIN}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
 
 function share(cfg) {
-  const url = inviteLink(cfg), text = `Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`;
+  const url = inviteLink(cfg), text = T(`Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`, `Talk to me on Walkie, channel "${cfg.name}". Tap the link to join:`);
   if (navigator.share) navigator.share({ text, url }).catch(() => {});
-  else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert('Link gekopieerd'));
+  else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert(T('Link gekopieerd', 'Link copied')));
 }
 
 // Accepts a full invite link, just the "#join=..." part, or a bare code.
@@ -734,8 +750,8 @@ $('chatForm').onsubmit = (e) => {
 function renderMute() {
   const speaker = '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>';
   $('muteBtn').innerHTML = muted
-    ? `<svg viewBox="0 0 24 24">${speaker}<path d="M16 9.5l5 5M21 9.5l-5 5"/></svg><small>STIL</small>`
-    : `<svg viewBox="0 0 24 24">${speaker}<path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><small>GELUID</small>`;
+    ? `<svg viewBox="0 0 24 24">${speaker}<path d="M16 9.5l5 5M21 9.5l-5 5"/></svg><small>${T('STIL', 'MUTED')}</small>`
+    : `<svg viewBox="0 0 24 24">${speaker}<path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><small>${T('GELUID', 'SOUND')}</small>`;
   $('muteBtn').classList.toggle('on', muted);
 }
 $('muteBtn').onclick = () => { muted = !muted; localStorage.setItem('walkie-muted', muted ? '1' : ''); renderMute(); render(); };
@@ -772,6 +788,8 @@ $('joinBtn').onclick = () => {
 $('offRow').hidden = !NATIVE;
 $('offBox').checked = offline;
 $('offBox').onchange = () => { offline = $('offBox').checked; localStorage.setItem('walkie-offline', offline ? '1' : '0'); render(); };
+$('langSel').value = LANG;
+$('langSel').onchange = () => { localStorage.setItem('walkie-lang', $('langSel').value); location.reload(); };
 $('fxBox').checked = fxOn;
 $('fxBox').onchange = () => { fxOn = $('fxBox').checked; localStorage.setItem('walkie-fx', fxOn ? '1' : '0'); hiss(); };
 $('myName').onchange = () => {
@@ -807,7 +825,7 @@ async function packSdp(type, sdp, code) {
 
 async function unpackSdp(s) {
   s = s.trim();
-  if (!s.startsWith('W1')) throw new Error('geen walkie-code');
+  if (!s.startsWith('W1')) throw new Error(T('geen walkie-code', 'not a walkie code'));
   const [t, code, ...lines] = new TextDecoder().decode(await squeeze(unb64u(s.slice(2)), 'out')).split('\n');
   const type = t === 'O' ? 'offer' : 'answer';
   const sdp = ['v=0', 'o=- 1 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=group:BUNDLE 0', 'a=msid-semantic: WMS',
@@ -838,7 +856,7 @@ function showQr(text) {
   $('qrBox').innerHTML = q.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
   $('qrBox').querySelector('svg').style.cssText = 'width:100%;max-width:320px;height:auto';
   $('qrText').value = '';
-  $('qrText').placeholder = 'of plak de code van de ander';
+  $('qrText').placeholder = T("of plak de code van de ander", "or paste the other person's code");
   $('qrBox').dataset.code = text;
 }
 
@@ -855,10 +873,10 @@ function readCode() {
 }
 
 async function scanCamera() {
-  if (!('BarcodeDetector' in window)) return alert('Scannen wordt hier niet ondersteund. Plak de code in het tekstveld.');
+  if (!('BarcodeDetector' in window)) return alert(T('Scannen wordt hier niet ondersteund. Plak de code in het tekstveld.', 'Scanning is not supported here. Paste the code in the text field.'));
   const video = $('qrCam');
   try { qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
-  catch { return alert('Geen toegang tot de camera'); }
+  catch { return alert(T('Geen toegang tot de camera', 'No camera access')); }
   video.srcObject = qrStream; video.hidden = false; $('qrBox').hidden = true;
   await video.play();
   const det = new BarcodeDetector({ formats: ['qr_code'] });
@@ -877,17 +895,17 @@ function stopCamera() {
 async function qrStart() {
   await ensureMic(); releaseMicSoon(); // with mic access Chrome offers real LAN addresses instead of mDNS names
   const code = genCode(), pc = newPeer(code);
-  qrScreen('Toon QR-code', 'Bezig…');
+  qrScreen(T('Toon QR-code', 'Show QR code'), T('Bezig…', 'Working…'));
   await pc.setLocalDescription(await pc.createOffer());
   const offer = await packSdp('offer', await gathered(pc), code);
-  qrScreen('Stap 1 van 2', 'Laat de ander deze code scannen met "Scan QR-code". Tik daarna op "Scan code" en scan hun code.', { qr: offer, scan: true });
-  try { await pc.setRemoteDescription(await unpackSdp(await readCode())); qrScreen('Verbinden…', 'Even geduld.'); }
-  catch (e) { qrScreen('Dat ging mis', String(e.message || e)); }
+  qrScreen(T('Stap 1 van 2', 'Step 1 of 2'), T('Laat de ander deze code scannen met "Scan code". Tik daarna op "Scan code" en scan hun code.', 'Let the other person scan this code with "Scan code". Then tap "Scan code" and scan theirs.'), { qr: offer, scan: true });
+  try { await pc.setRemoteDescription(await unpackSdp(await readCode())); qrScreen(T('Verbinden…', 'Connecting…'), T('Even geduld.', 'One moment.')); }
+  catch (e) { qrScreen(T('Dat ging mis', 'Something went wrong'), String(e.message || e)); }
 }
 
 async function qrJoin() {
   await ensureMic(); releaseMicSoon();
-  qrScreen('Scan QR-code', 'Scan de code op het scherm van de ander.', { scan: true });
+  qrScreen(T('Scan QR-code', 'Scan QR code'), T("Scan de code op het scherm van de ander.", "Scan the code on the other person's screen."), { scan: true });
   scanCamera();
   try {
     const { sdp, code } = await unpackSdp(await readCode());
@@ -895,8 +913,8 @@ async function qrJoin() {
     await pc.setRemoteDescription({ type: 'offer', sdp });
     await pc.setLocalDescription(await pc.createAnswer());
     const answer = await packSdp('answer', await gathered(pc), code);
-    qrScreen('Stap 2 van 2', 'Laat de ander nu deze code scannen. Jullie worden daarna automatisch verbonden.', { qr: answer });
-  } catch (e) { qrScreen('Dat ging mis', String(e.message || e)); }
+    qrScreen(T('Stap 2 van 2', 'Step 2 of 2'), T('Laat de ander nu deze code scannen. Jullie worden daarna automatisch verbonden.', 'Now let the other person scan this code. You will connect automatically.'), { qr: answer });
+  } catch (e) { qrScreen(T('Dat ging mis', 'Something went wrong'), String(e.message || e)); }
 }
 
 function attachDirect(dc, code) {
@@ -919,7 +937,7 @@ $('qrScanBtn').onclick = () => scanCamera();
 $('qrUseBtn').onclick = () => { const v = $('qrText').value.trim(); if (v) { stopCamera(); qrResolve?.(v); } };
 $('qrClose').onclick = () => { stopCamera(); qrDlg.close(); };
 // Tapping the QR copies its text, for pairing a phone with a laptop that has no camera.
-$('qrBox').onclick = () => navigator.clipboard?.writeText($('qrBox').dataset.code || '').then(() => ($('qrHelp').textContent = 'Code gekopieerd'));
+$('qrBox').onclick = () => navigator.clipboard?.writeText($('qrBox').dataset.code || '').then(() => ($('qrHelp').textContent = T('Code gekopieerd', 'Code copied')));
 
 // --- Push "ring": notify channel members whose app is closed.
 const clientId = localStorage.getItem('walkie-id') || crypto.randomUUID().replace(/-/g, '');
@@ -942,12 +960,12 @@ async function ring(c) {
   if (Date.now() - lastRing < 15000) return;
   lastRing = Date.now();
   navigator.vibrate?.(60);
-  status.textContent = 'Oproepen…';
+  status.textContent = T('Oproepen…', 'Calling…');
   try {
     const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
     const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
-    status.textContent = sent ? `${sent} opgeroepen` : 'Niemand heeft meldingen aan';
-  } catch { status.textContent = 'Oproepen niet beschikbaar'; }
+    status.textContent = sent ? T(`${sent} opgeroepen`, `${sent} called`) : T('Niemand heeft meldingen aan', 'Nobody has notifications on');
+  } catch { status.textContent = T('Oproepen niet beschikbaar', 'Calling not available'); }
   setTimeout(render, 3000);
 }
 
@@ -959,7 +977,7 @@ if (tabs) {
     if (e.data !== 'takeover') return;
     for (const c of chans.values()) c.close();
     chans.clear(); cfgs = []; render();
-    status.textContent = 'Actief in ander venster';
+    status.textContent = T('Actief in ander venster', 'Active in another window');
   };
 }
 
