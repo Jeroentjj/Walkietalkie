@@ -292,7 +292,7 @@
       <button class="tbtn" id="restoreBtn" style="flex:1">Aankopen herstellen</button>
     </div>
     <div id="linkBox" hidden style="margin-top:14px">
-      <small>Heb je een beta-link of cadeaulink, of Plus of Pro in de app (Versies → Koppel een apparaat)? Plak de link hier.</small>
+      <small id="linkBoxT">Heb je een beta-link of cadeaulink, of Plus of Pro in de app (Versies → Koppel een apparaat)? Plak de link hier.</small>
       <div class="row" style="margin-top:8px"><input id="linkCode" autocomplete="off" spellcheck="false" placeholder="Plak je link"><button class="tbtn" id="linkUse">OK</button></div>
     </div>
   </div>
@@ -879,7 +879,9 @@ function renderPlans() {
   $('appGet').href = APP_URL;
   $('appGet').hidden = !(WEB && ANDROID && tier === 'web');
   $('appNoAndroid').hidden = !(WEB && !ANDROID && tier === 'web');
-  $('linkBox').hidden = !WEB || tier === 'beta';
+  // The web version also takes a device link from the app; the app itself only takes beta and gift links (e.g. an APK from outside Play).
+  $('linkBox').hidden = tier === 'beta' || (NATIVE && RANK[tier] >= 2);
+  if (NATIVE) $('linkBoxT').textContent = T('Heb je een beta-link of cadeaulink? Kopieer hem en plak hem hier.', 'Have a beta link or gift link? Copy it and paste it here.');
   $('appActions').hidden = !NATIVE; $('linkBtn').hidden = RANK[tier] < 2 || tier === 'beta' || !!lic?.gift;
 }
 
@@ -1604,7 +1606,7 @@ function applyLink(text) {
   if (beta) joinBeta(beta[1]); else if (gift) joinGift(gift[1]); else if (link && WEB) redeem(link[1]); else { linkBusy = false; return false; }
   return true;
 }
-$('linkUse').onclick = () => applyLink($('linkCode').value);
+$('linkUse').onclick = () => { if (!applyLink($('linkCode').value)) planMsg(T('Deze link herken ik niet. Kopieer de hele link opnieuw.', "I don't recognise this link. Copy the whole link again.")); };
 $('restoreBtn').onclick = () => { planMsg(T('Bezig met herstellen…', 'Restoring…')); BILLING?.refresh(); };
 $('linkBtn').onclick = async () => {
   try {
