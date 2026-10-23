@@ -19,7 +19,7 @@ Wlky maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedr
 • Privé-kanalen: maak een kanaal en deel de link. Wie erop tikt, zit erin.
 • Om de beurt praten: tot 10 personen per kanaal, met wachtrij.
 • Luister naar meerdere kanalen tegelijk.
-• Offline: praat via Bluetooth/wifi met telefoons in de buurt, of koppel direct via QR-code. Geen internet nodig.
+• Automatisch offline: staan er telefoons in de buurt op hetzelfde kanaal, dan praat Wlky direct via Bluetooth/wifi, zonder internet. Anders gebruikt het internet. Of koppel direct via QR-code.
 • Chat: stuur ook tekstberichten, online en offline.
 • Versleuteld: geluid, berichten en namen worden op je telefoon versleuteld. Onze server kan niet meeluisteren.
 • Geen account, geen advertenties, geen tracking.
@@ -34,7 +34,7 @@ Wlky turns your phone into a real walkie-talkie. Hold the big PTT button, talk, 
 • Private channels: create a channel and share the link. Anyone who taps it joins.
 • Take turns: up to 10 people per channel, with a queue.
 • Listen to several channels at once.
-• Offline: talk over Bluetooth/wifi with nearby phones, or pair directly with a QR code. No internet needed.
+• Automatically offline: if phones on the same channel are nearby, Wlky talks directly over Bluetooth/wifi, no internet needed. Otherwise it uses the internet. Or pair directly with a QR code.
 • Chat: send text messages too, online and offline.
 • Encrypted: voice, messages and names are encrypted on your phone. Our server cannot listen in.
 • No account, no ads, no tracking.
@@ -52,7 +52,7 @@ Wlky turns your phone into a real walkie-talkie. Hold the big PTT button, talk, 
 ## Machtigingen uitleggen
 - **RECORD_AUDIO:** spraak verzenden terwijl de gebruiker PTT ingedrukt houdt.
 - **CAMERA:** QR-code scannen om twee telefoons zonder internet te koppelen.
-- **BLUETOOTH_* / NEARBY_WIFI_DEVICES:** offline modus, telefoons in de buurt vinden (Nearby Connections). Niet voor locatie.
+- **BLUETOOTH_* / NEARBY_WIFI_DEVICES:** telefoons in de buurt vinden zodat ze direct, zonder internet, kunnen praten (Nearby Connections; standaard in de modus Auto, uit te zetten in het menu). Niet voor locatie.
 - **ACCESS_FINE_LOCATION (alleen Android 12 en ouder):** door Android vereist voor Bluetooth-scan op oude versies; niet gebruikt voor locatie.
 
 ## Contentclassificatie

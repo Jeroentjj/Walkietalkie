@@ -208,7 +208,8 @@
     <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
       <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
     <label class="switch"><div><b>Walkie-talkie ruis</b><small>Radioklank, gekraak en "kssh"</small></div><input type="checkbox" id="fxBox"></label>
-    <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
+    <label class="switch" id="offRow" hidden><div><b>Verbinding</b><small>Auto: eerst telefoons in de buurt, anders internet</small></div>
+      <select id="connSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="auto">Auto</option><option value="internet">Internet</option><option value="offline">Offline</option></select></label>
 
     <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
     <small style="margin-top:8px"><a href="https://wlky.app/privacy.html" target="_blank" style="color:#d9a34a">Privacy</a></small>
@@ -252,7 +253,7 @@ const $ = (id) => document.getElementById(id);
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+const STATIC_EN = {"Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -264,11 +265,27 @@ if (EN) {
 
 const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
 const RATE = 16000;
+// Wire format v2 of an audio frame: [0x02][12-byte IV][AES-GCM( 8-bit mu-law samples )]. A frame is ~128 ms,
+// so ~8 messages/s instead of ~23, and half the bytes of 16-bit PCM. Receivers ignore other versions.
+const FRAME = 2048, FRAME_V = 2;
+function mulawEnc(s) {
+  let sign = (s >> 8) & 0x80; if (sign) s = -s; if (s > 32635) s = 32635; s += 0x84;
+  let exp = 7; for (let m = 0x4000; (s & m) === 0 && exp > 0; m >>= 1) exp--;
+  return ~(sign | (exp << 4) | ((s >> (exp + 3)) & 0x0f)) & 0xff;
+}
+const ULAW = Int16Array.from({ length: 256 }, (_, u) => {
+  u = ~u & 0xff; const s = (((u & 0x0f) << 3) + 0x84) << ((u >> 4) & 7);
+  return u & 0x80 ? 0x84 - s : s - 0x84;
+});
 // Inside the Android app the page is served from bundled assets; the server lives at wlky.app.
 const NATIVE = window.WalkieNative;
 const HOST = NATIVE ? 'wlky.app' : location.host;
 const ORIGIN = NATIVE ? 'https://wlky.app' : location.origin;
-let offline = !!NATIVE && localStorage.getItem('walkie-offline') === '1';
+// Connection (Android app only): 'auto' = phones nearby first (Bluetooth/wifi), internet as fallback;
+// 'internet' = server only; 'offline' = nearby only.
+let connMode = !NATIVE ? 'internet' : localStorage.getItem('walkie-conn') || (localStorage.getItem('walkie-offline') === '1' ? 'offline' : 'auto');
+let nearbyReady = false, nearbyDenied = false; // ready: not while the tour or first menu is on screen
+const dayIdx = () => Math.floor((Date.now() - 4 * 3600e3) / 864e5); // rotates at 04:00 UTC, when nobody is talking
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -390,6 +407,7 @@ class Chan {
     ws.binaryType = 'arraybuffer';
     ws.onmessage = (e) => (typeof e.data === 'string' ? this.onState(JSON.parse(e.data)) : this.onAudio(e.data));
     ws.onclose = () => {
+      if (this.ws !== ws) return; // an old socket we replaced
       clearInterval(this.ping);
       if (this.offline) return;
       this.n = 0; this.you = 0; this.speaker = null; render();
@@ -406,15 +424,36 @@ class Chan {
     if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m));
   }
 
-  // --- Offline (Android app): nearby phones over Bluetooth/wifi via WalkieNative. There is no server
-  // to decide turns, so peers announce 'talk'/'over' and wait for the channel to be free.
-  setOffline(on) {
+  // --- Nearby (Android app): phones close by over Bluetooth/wifi via WalkieNative, no internet needed.
+  // Without a server nobody decides turns, so peers announce 'talk'/'over' and wait for a free channel.
+  // The tag broadcast over Bluetooth is a daily-rotating hash, so the channel can't be tracked across days.
+  nearbyStart() {
+    if (this.nearbyOn) return;
+    this.nearbyOn = true; this.localPeers = 0; this.nearbyDay = dayIdx(); offChan = this;
+    sha256(this.room + ':' + this.nearbyDay).then((tag) => this.nearbyOn && offChan === this && NATIVE.join(tag));
+  }
+
+  nearbyStop() {
+    if (!this.nearbyOn) return;
+    this.nearbyOn = false; this.localPeers = 0;
+    clearTimeout(this.fallback); this.fallback = null;
+    if (offChan === this) { NATIVE.leave(); offChan = null; }
+    this.useLocal(false);
+  }
+
+  // Pick the transport: with someone nearby use the local link (and leave the server alone);
+  // when they are gone for 4 s, go back to the internet. 'offline' mode never falls back.
+  evalTransport() {
+    if (connMode === 'offline') return this.useLocal(true);
+    if (this.localPeers > 0) { clearTimeout(this.fallback); this.fallback = null; return this.useLocal(true); }
+    if (this.offline && !this.fallback) this.fallback = setTimeout(() => { this.fallback = null; if (!this.localPeers) { this.useLocal(false); render(); } }, 4000);
+  }
+
+  useLocal(on) {
     if (on === !!this.offline) return;
     this.offline = on;
     this.n = 0; this.you = 0; this.speaker = null; this.wantTalk = false;
-    // The tag broadcast over Bluetooth changes daily, so the channel can't be tracked across days.
-    if (on) { this.ws?.close(); offChan = this; sha256(this.room + ':' + new Date().toISOString().slice(0, 10)).then((tag) => offChan === this && NATIVE.join(tag)); }
-    else { NATIVE.leave(); offChan = null; this.connect(); }
+    if (on) this.ws?.close(); else this.connect();
   }
 
   offSend(type, bytes) {
@@ -471,34 +510,64 @@ class Chan {
     render();
   }
 
-  async onAudio(buf) {
+  onAudio(buf) {
+    // Decode in arrival order, so two frames that arrive together cannot swap places.
+    this.rx = (this.rx || Promise.resolve()).then(() => this.playFrame(buf)).catch(() => {});
+  }
+
+  async playFrame(buf) {
     if (holding || muted || !audioCtx || audioCtx.state !== 'running') return; // half-duplex, or audio not unlocked yet
-    let pcm;
-    try { pcm = new Int16Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, this.key, new Uint8Array(buf, 12))); }
+    const u = new Uint8Array(buf);
+    if (u[0] !== FRAME_V) return; // other (older) frame format
+    let ulaw;
+    try { ulaw = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(1, 13) }, this.key, u.subarray(13))); }
     catch { return; }
-    const b = audioCtx.createBuffer(1, pcm.length, RATE), d = b.getChannelData(0);
-    for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768;
+    const b = audioCtx.createBuffer(1, ulaw.length, RATE), d = b.getChannelData(0);
+    for (let i = 0; i < ulaw.length; i++) d[i] = ULAW[ulaw[i]] / 32768;
     const src = audioCtx.createBufferSource();
     src.buffer = b; src.connect(radioIn());
     const now = audioCtx.currentTime;
-    if (this.next < now) this.next = now + 0.15; // small jitter buffer
+    if (this.next < now) this.next = now + 0.2; // jitter buffer, a bit more than one frame
     src.start(this.next);
     this.next += b.duration;
   }
 
-  async sendAudio(f32, inRate) {
-    const ratio = inRate / RATE, out = new Int16Array(Math.floor(f32.length / ratio));
-    for (let i = 0; i < out.length; i++) {
+  // Called with every mic block (~43 ms): resample to 16 kHz, collect, and ship full ~128 ms frames.
+  sendAudio(f32, inRate) {
+    const ratio = inRate / RATE, n = Math.floor(f32.length / ratio), out = new Int16Array(n);
+    for (let i = 0; i < n; i++) {
       let s = 0, a = Math.floor(i * ratio), z = Math.floor((i + 1) * ratio);
       for (let j = a; j < z; j++) s += f32[j];
       out[i] = Math.max(-1, Math.min(1, s / (z - a))) * 32767;
     }
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, out.buffer);
-    const msg = new Uint8Array(12 + ct.byteLength);
-    msg.set(iv); msg.set(new Uint8Array(ct), 12);
-    if (this.offline) this.offSend(0, msg);
-    else if (this.ws?.readyState === 1) this.ws.send(msg);
+    (this.buf ||= []).push(out); this.bufLen = (this.bufLen || 0) + n;
+    while (this.bufLen >= FRAME) this.ship(FRAME);
+  }
+
+  // Take n samples from the buffer, encode, encrypt and send. Sends run strictly in order.
+  ship(n) {
+    const pcm = new Uint8Array(n);
+    for (let k = 0; k < n;) {
+      const head = this.buf[0], take = Math.min(head.length, n - k);
+      for (let i = 0; i < take; i++) pcm[k + i] = mulawEnc(head[i]);
+      k += take; this.bufLen -= take;
+      if (take === head.length) this.buf.shift(); else this.buf[0] = head.subarray(take);
+    }
+    this.chain = (this.chain || Promise.resolve()).then(async () => {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.key, pcm));
+      const msg = new Uint8Array(13 + ct.length);
+      msg[0] = FRAME_V; msg.set(iv, 1); msg.set(ct, 13);
+      if (this.offline) this.offSend(0, msg);
+      else if (this.ws?.readyState === 1) this.ws.send(msg);
+    });
+  }
+
+  // Send what is left when PTT is released, and wait until it is out before the floor is given up.
+  async flush() {
+    if (this.bufLen > 0) this.ship(this.bufLen);
+    this.buf = []; this.bufLen = 0;
+    await this.chain;
   }
 
   // Frame from a nearby/direct peer: type byte 0 = encrypted audio, 1 = JSON floor message.
@@ -507,7 +576,7 @@ class Chan {
     else try { this.offMessage(JSON.parse(new TextDecoder().decode(b.slice(1)))); } catch {}
   }
 
-  close() { this.closed = true; if (this.cfg.qr) { this.dc?.close(); qrPc?.close(); } else this.setOffline(false); this.ws?.close(); }
+  close() { this.closed = true; if (this.cfg.qr) { this.dc?.close(); qrPc?.close(); } else this.nearbyStop(); this.ws?.close(); }
 }
 
 // Local echo channel: records while PTT is held, then plays it back through the radio effect.
@@ -631,25 +700,36 @@ const current = () => cfgs[sel] && chans.get(cfgs[sel].code);
 
 let offChan = null;
 
-// Offline mode drives only the selected channel; the others keep using the internet when available.
+// Nearby (Bluetooth/wifi) serves only the selected channel; the others stay on the internet.
 function applyMode() {
-  if (!NATIVE) return;
+  if (!NATIVE || !nearbyReady) return;
   const c = current();
-  for (const x of chans.values()) if (x.room && !x.cfg.test && !x.cfg.qr) x.setOffline(offline && x === c);
+  for (const x of chans.values()) {
+    if (!x.room || x.cfg.test || x.cfg.qr) continue;
+    if (connMode !== 'internet' && x === c && !nearbyDenied) { x.nearbyStart(); x.evalTransport(); }
+    else x.nearbyStop();
+  }
 }
+
+// If the day tag rolls over while the app stays open, rejoin with the new tag.
+if (NATIVE) setInterval(() => { const c = offChan; if (c?.nearbyOn && c.nearbyDay !== dayIdx()) { c.nearbyStop(); render(); } }, 60000);
 
 if (NATIVE) window.walkieNative = {
   onPeers(n) {
     const c = offChan; if (!c) return;
-    c.n = n + 1;
-    if (!n) c.speaker = null;
+    c.localPeers = n;
+    c.evalTransport();
+    if (c.offline) { c.n = n + 1; if (!n) c.speaker = null; }
     render();
   },
   onData(b64) {
-    const c = offChan; if (!c) return;
+    const c = offChan; if (!c || !c.offline) return;
     c.offReceive(Uint8Array.from(atob(b64), (x) => x.charCodeAt(0)));
   },
-  onError(e) { status.textContent = e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e; },
+  onError(e) {
+    if (e === 'perm') { nearbyDenied = true; offChan?.nearbyStop(); }
+    status.textContent = e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e;
+  },
 };
 
 function render() {
@@ -697,12 +777,13 @@ async function pttDown() {
 function pttUp() {
   const c = holding;
   if (!c) return;
-  holding = null;
-  c.send({ t: 'rel' });
-  if (c.you === 'tx') beep([1500]);
-  c.you = 0;
+  holding = null; // stops the microphone feed
+  const wasTx = c.you === 'tx';
   ptt.classList.remove('down');
+  if (wasTx) beep([1500]);
   releaseMicSoon();
+  // The tail of the audio must be out before the floor is released, or the relay drops it.
+  Promise.resolve(c.flush?.()).catch(() => {}).then(() => { c.send({ t: 'rel' }); c.you = 0; render(); });
   render();
 }
 
@@ -814,8 +895,8 @@ $('joinBtn').onclick = () => {
   closePanels(); renderList();
 };
 $('offRow').hidden = !NATIVE;
-$('offBox').checked = offline;
-$('offBox').onchange = () => { offline = $('offBox').checked; localStorage.setItem('walkie-offline', offline ? '1' : '0'); render(); };
+$('connSel').value = connMode;
+$('connSel').onchange = () => { connMode = $('connSel').value; localStorage.setItem('walkie-conn', connMode); nearbyDenied = false; render(); };
 $('langSel').value = LANG;
 $('langSel').onchange = () => { localStorage.setItem('walkie-lang', $('langSel').value); location.reload(); };
 $('fxBox').checked = fxOn;
@@ -1061,6 +1142,7 @@ function endTour() {
   tourStep = -1;
   $('tour').classList.remove('on');
   try { localStorage.setItem('walkie-tour', '1'); } catch {}
+  nearbyReady = true; render();
   if (!myName || !cfgs.length) $('menuBtn').click();
 }
 
@@ -1070,8 +1152,9 @@ $('tourBtn').onclick = () => { dlg.close(); startTour(); };
 addEventListener('resize', () => tourStep >= 0 && showTour(tourStep));
 addEventListener('keydown', (e) => { if (tourStep >= 0 && e.key === 'Escape') endTour(); });
 
-syncChannels();
 let seenTour = true; try { seenTour = !!localStorage.getItem('walkie-tour'); } catch {}
+nearbyReady = seenTour;
+syncChannels();
 if (!seenTour) setTimeout(startTour, 500);
 else if (!myName || !cfgs.length) setTimeout(() => $('menuBtn').click(), 300);
 

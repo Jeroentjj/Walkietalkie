@@ -16,7 +16,7 @@ Workers & Pages → Import repository → deze repo, deploy command `npx wrangle
 
 ## Android-app (APK)
 `android/` is een kleine Kotlin-app die de webapp (`public/`) meelevert in een WebView. Extra: **offline modus**
-(menu → "Offline: via Bluetooth/wifi in de buurt") via Google Nearby Connections, zonder internet.
+(menu → Verbinding: **Auto** zoekt telefoons in de buurt en valt terug op internet, **Internet** of **Offline**) via Google Nearby Connections, zonder internet.
 GitHub Actions bouwt bij elke push de APK en zet hem in de release `latest`:
 https://github.com/Jeroentjj/Walkietalkie/releases/latest/download/wlky.apk
 
@@ -33,3 +33,7 @@ De sleutel staat **niet** in de repo maar in de GitHub-secrets `KEYSTORE_B64` (b
 
 `tools/sleutelmaker.html` maakt zo'n sleutel offline in je browser (PKCS#12, alias `walkie`) en geeft direct de
 waarde voor `KEYSTORE_B64`. Gebruikt node-forge (BSD).
+
+## Geluid
+Een geluidsframe is ~128 ms, 8-bit µ-law, AES-256-GCM versleuteld: `[0x02][IV 12 bytes][ciphertext]`. Dat is ~8 berichten per seconde
+en ~16 kB/s (was ~23/s en ~32 kB/s). Ontvangers negeren andere frameversies, dus alle telefoons moeten de nieuwe versie hebben.
