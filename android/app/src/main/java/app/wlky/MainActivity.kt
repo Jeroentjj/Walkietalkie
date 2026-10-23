@@ -1,4 +1,4 @@
-package app.dopimo.walkie
+package app.wlky
 
 import android.Manifest
 import android.content.Intent
@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
         intent.data?.takeIf { it.host == INVITE_HOST }?.let(::openInvite)
     }
 
-    /** Invite links look like https://walkie.dopimo.app/#join=...; the web UI reads the fragment. */
+    /** Invite links look like https://wlky.app/#join=...; the web UI reads the fragment. */
     private fun openInvite(url: Uri) {
         web.loadUrl(START + (url.fragment?.let { "#$it" } ?: ""))
     }
@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ASSET_HOST = "appassets.androidplatform.net"
-        const val INVITE_HOST = "walkie.dopimo.app"
+        const val INVITE_HOST = "wlky.app"
         const val START = "https://$ASSET_HOST/assets/www/index.html"
     }
 }

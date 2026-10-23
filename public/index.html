@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="theme-color" content="#f6a21a">
-<title>Walkie</title>
+<title>Wlky</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
 <style>
@@ -70,7 +70,7 @@
     box-shadow:inset 0 3px 6px #0003, inset 0 -2px 3px #fff5, 0 1px 0 #fff6, 0 -1px 0 #0002; }
   .spk::after { content:''; position:absolute; inset:12px; background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2227.71%22%20viewBox%3D%220%200%2016%2027.71%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22g%22%20cx%3D%2250%25%22%20cy%3D%2260%25%22%20r%3D%2260%25%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23000%22/%3E%3Cstop%20offset%3D%22.7%22%20stop-color%3D%22%230b0602%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%232a1703%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle%20cx%3D%228%22%20cy%3D%227.83%22%20r%3D%223.5%22%20fill%3D%22%23ffd894%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%226.43%22%20r%3D%223.5%22%20fill%3D%22%237a4606%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%226.93%22%20r%3D%223.1%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%220%22%20cy%3D%2221.68%22%20r%3D%223.5%22%20fill%3D%22%23ffd894%22/%3E%3Ccircle%20cx%3D%220%22%20cy%3D%2220.28%22%20r%3D%223.5%22%20fill%3D%22%237a4606%22/%3E%3Ccircle%20cx%3D%220%22%20cy%3D%2220.78%22%20r%3D%223.1%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2221.68%22%20r%3D%223.5%22%20fill%3D%22%23ffd894%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2220.28%22%20r%3D%223.5%22%20fill%3D%22%237a4606%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2220.78%22%20r%3D%223.1%22%20fill%3D%22url%28%23g%29%22/%3E%3C/svg%3E") center/16px 27.71px;
     -webkit-mask:radial-gradient(closest-side, #000 82%, transparent 96%); mask:radial-gradient(closest-side, #000 82%, transparent 96%); }
-  .brand { text-align:center; font:900 20px system-ui; letter-spacing:3px; color:#141414; margin-top:10px; flex:none;
+  .brand { text-align:center; font:900 30px system-ui; letter-spacing:12px; text-indent:12px; color:#141414; margin-top:6px; flex:none;
     text-shadow:0 1px 0 #ffd99a, 0 -1px 0 #0004; } /* debossed into the shell */
   dialog { border:0; border-radius:20px; background:#1d1f21; color:#eee; width:min(94vw,420px); max-height:88dvh; padding:0; font-family:system-ui,sans-serif; }
   dialog::backdrop { background:#000c; }
@@ -132,6 +132,19 @@
   .switch input[type=checkbox]::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:.2s; }
   .switch input[type=checkbox]:checked { background:var(--or); } .switch input:checked::after { left:21px; }
   .switch input[type=checkbox]:focus { outline:none; }
+  /* Guided tour */
+  #tour { position:fixed; inset:0; z-index:100; display:none; }
+  #tour.on { display:block; }
+  #tour .dim { position:absolute; inset:0; width:100%; height:100%; }
+  .tour-card { position:absolute; left:0; right:0; margin:0 auto; width:min(calc(100% - 32px), 380px); background:#1d1f21; color:#eee; border-radius:18px; padding:16px; border:1px solid #34373b; box-shadow:0 12px 40px #000c; font-family:system-ui,sans-serif; }
+  .tour-card h4 { margin:0 0 6px; font-size:18px; }
+  .tour-card p { margin:0 0 14px; color:#c4c7cb; font-size:15px; line-height:1.45; }
+  .tour-nav { display:flex; align-items:center; gap:8px; }
+  .tour-dots { flex:1; display:flex; gap:6px; }
+  .tour-dots i { width:7px; height:7px; border-radius:50%; background:#44484d; }
+  .tour-dots i.on { background:var(--or); }
+  .tbtn { padding:10px 14px; border:0; border-radius:12px; font:700 15px system-ui,sans-serif; cursor:pointer; background:#33363a; color:#eee; }
+  .tbtn.prim { background:var(--or); color:#111; }
 </style>
 </head>
 <body>
@@ -146,7 +159,7 @@
     <div class="st" id="status">Tik hier voor kanalen</div>
     
   </div></div>
-  <div class="brand">WALKIE TALKIE</div>
+  <div class="brand">WLKY</div>
   <div class="grille"><div class="spk"></div></div>
   <div class="keys">
     <button class="k" id="prevBtn" aria-label="Vorig kanaal"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><small>KANAAL</small></button>
@@ -191,13 +204,14 @@
     <div class="sec-title">Instellingen</div>
     <div class="switch" style="display:block;cursor:auto"><b>Jouw naam</b><small>Zien anderen als je praat</small>
       <input id="myName" maxlength="24" placeholder="bijv. Jeroen" style="margin-top:10px"></div>
+    <button class="switch" id="tourBtn" style="width:100%;text-align:left;border:0;color:#eee;font:inherit"><div><b>Rondleiding</b><small>Bekijk hoe de app werkt</small></div><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg></button>
     <label class="switch"><div><b>Taal</b><small>Nederlands / English</small></div>
       <select id="langSel" style="background:#121314;color:#fff;border:1px solid #3a3d40;border-radius:10px;padding:8px;font-size:15px"><option value="nl">Nederlands</option><option value="en">English</option></select></label>
     <label class="switch"><div><b>Walkie-talkie ruis</b><small>Radioklank, gekraak en "kssh"</small></div><input type="checkbox" id="fxBox"></label>
     <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
 
     <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
-    <small style="margin-top:8px"><a href="https://walkie.dopimo.app/privacy.html" target="_blank" style="color:#d9a34a">Privacy</a></small>
+    <small style="margin-top:8px"><a href="https://wlky.app/privacy.html" target="_blank" style="color:#d9a34a">Privacy</a></small>
   </div>
 </dialog>
 
@@ -221,9 +235,16 @@
   </div>
 </dialog>
 
+<div id="tour" role="dialog" aria-modal="true">
+  <svg class="dim"><defs><mask id="tourMask"><rect width="100%" height="100%" fill="#fff"/><g id="tourHoles"></g></mask></defs>
+    <rect width="100%" height="100%" fill="#000" fill-opacity=".82" mask="url(#tourMask)"/><g id="tourRings" fill="none" stroke="#f6a21a" stroke-width="2.5"></g></svg>
+  <div class="tour-card" id="tourCard"><h4 id="tourT"></h4><p id="tourP"></p>
+    <div class="tour-nav"><div class="tour-dots" id="tourDots"></div><button class="tbtn" id="tourSkip"></button><button class="tbtn prim" id="tourNext"></button></div></div>
+</div>
+
 <script src="vendor/qrcode.js"></script>
 <script>
-// Walkie: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
+// Wlky: multi-channel push-to-talk. Each channel is a WebSocket to a Cloudflare Durable Object that
 // decides whose turn it is and relays audio. Audio is AES-GCM encrypted with a key derived from the
 // channel code, so the server only ever sees a hash of the code and ciphertext.
 const $ = (id) => document.getElementById(id);
@@ -231,7 +252,7 @@ const $ = (id) => document.getElementById(id);
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
+const STATIC_EN = {"Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -243,10 +264,10 @@ if (EN) {
 
 const led = $('led'), status = $('status'), ptt = $('ptt'), dlg = $('dlg');
 const RATE = 16000;
-// Inside the Android app the page is served from bundled assets; the server lives at walkie.dopimo.app.
+// Inside the Android app the page is served from bundled assets; the server lives at wlky.app.
 const NATIVE = window.WalkieNative;
-const HOST = NATIVE ? 'walkie.dopimo.app' : location.host;
-const ORIGIN = NATIVE ? 'https://walkie.dopimo.app' : location.origin;
+const HOST = NATIVE ? 'wlky.app' : location.host;
+const ORIGIN = NATIVE ? 'https://wlky.app' : location.origin;
 let offline = !!NATIVE && localStorage.getItem('walkie-offline') === '1';
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -731,7 +752,7 @@ function addChannel(name, code) {
 const inviteLink = (cfg) => `${ORIGIN}/#join=${encodeURIComponent(cfg.name)}|${encodeURIComponent(cfg.code)}`;
 
 function share(cfg) {
-  const url = inviteLink(cfg), text = T(`Praat met me via Walkie op kanaal "${cfg.name}". Tik op de link om mee te doen:`, `Talk to me on Walkie, channel "${cfg.name}". Tap the link to join:`);
+  const url = inviteLink(cfg), text = T(`Praat met me via Wlky op kanaal "${cfg.name}". Tik op de link om mee te doen:`, `Talk to me on Wlky, channel "${cfg.name}". Tap the link to join:`);
   if (navigator.share) navigator.share({ text, url }).catch(() => {});
   else navigator.clipboard.writeText(`${text} ${url}`).then(() => alert(T('Link gekopieerd', 'Link copied')));
 }
@@ -988,8 +1009,71 @@ if (tabs) {
   };
 }
 
+// --- Guided tour: dims the screen, cuts a hole around the real controls and explains them one by one.
+const TOUR = [
+  { t: T('Welkom bij Wlky', 'Welcome to Wlky'), p: T('Een walkietalkie op je telefoon. Een rondleiding van een halve minuut.', 'A walkie-talkie on your phone. A quick half-minute tour.') },
+  { sel: ['#scr'], t: T('Het scherm', 'The display'), p: T('Hier zie je je kanaal, wie er praat en de status. Tik erop om te chatten.', 'Shows your channel, who is talking and the status. Tap it to chat.') },
+  { sel: ['#ptt'], t: 'PTT', p: T('Houd ingedrukt om te praten, laat los om te luisteren. Praat er al iemand? Blijf ingedrukt houden: je bent zo aan de beurt.', 'Hold to talk, release to listen. Someone already talking? Keep holding: your turn comes next.') },
+  { sel: ['#prevBtn', '#nextBtn'], t: T('Van kanaal wisselen', 'Switch channel'), p: T('Met de pijlen kies je het kanaal waarop je praat. Je luistert altijd naar al je kanalen tegelijk.', 'The arrows pick the channel you talk on. You always listen to all your channels at once.') },
+  { sel: ['#menuBtn'], t: 'Menu', p: T('Maak een kanaal en deel de link, doe mee met een link of QR-code (ook zonder internet) en stel je naam in.', 'Create a channel and share the link, join with a link or QR code (works without internet) and set your name.') },
+  { sel: ['#muteBtn'], t: T('Geluid', 'Sound'), p: T('Zet het geluid even stil zonder het kanaal te verlaten.', 'Mute the sound without leaving the channel.') },
+  { t: T('Klaar om te beginnen', 'Ready to go'), p: T('Maak je eerste kanaal in het menu en stuur de link naar een vriend. Deze rondleiding start je altijd opnieuw via Menu, onder Instellingen.', 'Create your first channel in the menu and send the link to a friend. You can replay this tour any time via Menu, under Settings.'), last: true },
+];
+let tourStep = -1;
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function showTour(i) {
+  tourStep = i;
+  const s = TOUR[i], card = $('tourCard');
+  $('tourT').textContent = s.t; $('tourP').textContent = s.p;
+  $('tourDots').innerHTML = TOUR.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+  $('tourSkip').textContent = T('Overslaan', 'Skip'); $('tourSkip').hidden = !!s.last;
+  $('tourNext').textContent = s.last ? T('Naar het menu', 'Open menu') : T('Volgende', 'Next');
+  const holes = $('tourHoles'), rings = $('tourRings');
+  holes.innerHTML = ''; rings.innerHTML = '';
+  let top = Infinity, bottom = -Infinity;
+  for (const q of s.sel || []) {
+    const r = document.querySelector(q).getBoundingClientRect(), pad = 6;
+    for (const [g, extra] of [[holes, { fill: '#000' }], [rings, {}]]) {
+      const el = document.createElementNS(SVGNS, 'rect');
+      el.setAttribute('x', r.left - pad); el.setAttribute('y', r.top - pad);
+      el.setAttribute('width', r.width + pad * 2); el.setAttribute('height', r.height + pad * 2); el.setAttribute('rx', 20);
+      for (const [k, v] of Object.entries(extra)) el.setAttribute(k, v);
+      g.appendChild(el);
+    }
+    top = Math.min(top, r.top - pad); bottom = Math.max(bottom, r.bottom + pad);
+  }
+  // Put the card on whichever side of the highlighted control has room.
+  const H = card.offsetHeight, vh = innerHeight;
+  let y = (vh - H) / 2;
+  if (s.sel) y = bottom + 16 + H < vh - 8 ? bottom + 16 : Math.max(8, top - 16 - H);
+  card.style.top = y + 'px';
+  $('tourNext').focus();
+}
+
+function startTour() {
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  $('tour').classList.add('on');
+  showTour(0);
+}
+
+function endTour() {
+  tourStep = -1;
+  $('tour').classList.remove('on');
+  try { localStorage.setItem('walkie-tour', '1'); } catch {}
+  if (!myName || !cfgs.length) $('menuBtn').click();
+}
+
+$('tourNext').onclick = () => (TOUR[tourStep].last ? endTour() : showTour(tourStep + 1));
+$('tourSkip').onclick = endTour;
+$('tourBtn').onclick = () => { dlg.close(); startTour(); };
+addEventListener('resize', () => tourStep >= 0 && showTour(tourStep));
+addEventListener('keydown', (e) => { if (tourStep >= 0 && e.key === 'Escape') endTour(); });
+
 syncChannels();
-if (!myName || !cfgs.length) setTimeout(() => $('scr').click(), 300);
+let seenTour = true; try { seenTour = !!localStorage.getItem('walkie-tour'); } catch {}
+if (!seenTour) setTimeout(startTour, 500);
+else if (!myName || !cfgs.length) setTimeout(() => $('menuBtn').click(), 300);
 
 if (!NATIVE && location.protocol === 'https:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

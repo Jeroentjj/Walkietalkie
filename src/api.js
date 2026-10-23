@@ -28,7 +28,7 @@ async function vapidHeader(endpoint, keys) {
   const unsigned = `${enc({ typ: 'JWT', alg: 'ES256' })}.${enc({
     aud: new URL(endpoint).origin,
     exp: Math.floor(Date.now() / 1000) + 12 * 3600,
-    sub: 'mailto:walkie@dopimo.app',
+    sub: 'mailto:privacy@wlky.app',
   })}`;
   const key = await crypto.subtle.importKey('jwk', keys.jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
@@ -38,6 +38,8 @@ async function vapidHeader(endpoint, keys) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // Old and www addresses keep working but forward to the canonical domain (the #fragment survives).
+    if (REDIRECT_HOSTS.has(url.hostname)) return Response.redirect(`https://${HOME}${url.pathname}${url.search}`, 301);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     const room = url.pathname.match(/^\/api\/ch\/([a-f0-9]{40})$/)?.[1];
     if (room) {
@@ -96,6 +98,8 @@ async function api(request, env, route) {
   return json({ error: 'not found' }, 404);
 }
 
+const HOME = 'wlky.app';
+const REDIRECT_HOSTS = new Set(['www.wlky.app', 'walkie.dopimo.app']);
 const MAX_TURN_MS = 60000;
 const MAX_PEOPLE = 10;
 

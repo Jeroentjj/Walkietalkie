@@ -1,4 +1,4 @@
-# Walkie
+# Wlky
 
 Installeerbare webapp (PWA): walkietalkie met meerdere kanalen en meerdere mensen per kanaal.
 
@@ -18,7 +18,7 @@ Workers & Pages → Import repository → deze repo, deploy command `npx wrangle
 `android/` is een kleine Kotlin-app die de webapp (`public/`) meelevert in een WebView. Extra: **offline modus**
 (menu → "Offline: via Bluetooth/wifi in de buurt") via Google Nearby Connections, zonder internet.
 GitHub Actions bouwt bij elke push de APK en zet hem in de release `latest`:
-https://github.com/Jeroentjj/Walkietalkie/releases/latest/download/walkie.apk
+https://github.com/Jeroentjj/Walkietalkie/releases/latest/download/wlky.apk
 
 ### Signeersleutel
 De APK wordt altijd met dezelfde sleutel gesigneerd, zodat updates over de vorige versie heen installeren.

@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
     <application
-        android:label="Walkie"
+        android:label="Wlky"
         android:icon="@drawable/ic_launcher"
         android:roundIcon="@drawable/ic_launcher"
         android:theme="@style/Theme.Walkie">
@@ -39,7 +39,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="walkie.dopimo.app" />
+                <data android:scheme="https" android:host="wlky.app" />
             </intent-filter>
         </activity>
     </application>

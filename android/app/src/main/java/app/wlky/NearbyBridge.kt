@@ -1,4 +1,4 @@
-package app.dopimo.walkie
+package app.wlky
 
 import android.util.Base64
 import android.webkit.JavascriptInterface
@@ -113,6 +113,6 @@ class NearbyBridge(private val activity: MainActivity, private val web: WebView)
     }
 
     companion object {
-        const val SERVICE_ID = "app.dopimo.walkie"
+        const val SERVICE_ID = "app.wlky"
     }
 }

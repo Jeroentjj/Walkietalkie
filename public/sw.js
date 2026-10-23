@@ -13,7 +13,7 @@ self.addEventListener('fetch', (e) => {
 
 // Ring from the partner (payload-less push, see functions/api).
 self.addEventListener('push', (e) =>
-  e.waitUntil(self.registration.showNotification('Walkie Talkie', {
+  e.waitUntil(self.registration.showNotification('Wlky', {
     body: 'Je wordt opgeroepen op je walkie!',
     icon: 'icon.svg',
     tag: 'walkie-ring',

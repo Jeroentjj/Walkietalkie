@@ -1,10 +1,10 @@
 # Google Play: invulhulp
 
 ## Basis
-- **App-naam:** Walkie
-- **Pakketnaam:** app.dopimo.walkie
-- **Bestand:** `walkie.aab` uit de release `latest`
-- **Privacyverklaring:** https://walkie.dopimo.app/privacy.html
+- **App-naam:** Wlky
+- **Pakketnaam:** app.wlky
+- **Bestand:** `wlky.aab` uit de release `latest`
+- **Privacyverklaring:** https://wlky.app/privacy.html
 - **Categorie:** Communicatie
 - **Prijs:** Gratis
 - **Bevat advertenties:** Nee
@@ -14,7 +14,7 @@
 Walkietalkie op je telefoon: druk, praat, laat los. Ook offline en versleuteld.
 
 **Volledige beschrijving:**
-Walkie maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedrukt, praat, en iedereen op je kanaal hoort je, met echte radioklank en piepje.
+Wlky maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop ingedrukt, praat, en iedereen op je kanaal hoort je, met echte radioklank en piepje.
 
 • Privé-kanalen: maak een kanaal en deel de link. Wie erop tikt, zit erin.
 • Om de beurt praten: tot 10 personen per kanaal, met wachtrij.
@@ -29,7 +29,7 @@ Walkie maakt van je telefoon een echte walkietalkie. Houd de grote PTT-knop inge
 A real walkie-talkie on your phone: push, talk, release. Works offline, encrypted.
 
 **Full description:**
-Walkie turns your phone into a real walkie-talkie. Hold the big PTT button, talk, and everyone on your channel hears you, with real radio sound and roger beep.
+Wlky turns your phone into a real walkie-talkie. Hold the big PTT button, talk, and everyone on your channel hears you, with real radio sound and roger beep.
 
 • Private channels: create a channel and share the link. Anyone who taps it joins.
 • Take turns: up to 10 people per channel, with a queue.
@@ -46,7 +46,7 @@ Walkie turns your phone into a real walkie-talkie. Hold the big PTT button, talk
   - *Apparaat- of andere ID's:* nee.
   - *Locatie:* nee (Bluetooth-scan wordt niet voor locatie gebruikt).
 - **Versleuteld tijdens verzending:** Ja.
-- **Gebruikers kunnen verwijdering aanvragen:** Ja, via privacy@dopimo.app.
+- **Gebruikers kunnen verwijdering aanvragen:** Ja, via privacy@wlky.app.
 - **Gegevens gedeeld met derden:** Nee.
 
 ## Machtigingen uitleggen
@@ -60,8 +60,8 @@ Communicatie-app met door gebruikers gegenereerde inhoud tussen gebruikers onder
 
 ## Stappen
 1. Maak een ontwikkelaarsaccount op https://play.google.com/console (25 dollar eenmalig).
-2. App maken → naam "Walkie", standaardtaal Nederlands, App, Gratis.
+2. App maken → naam "Wlky", standaardtaal Nederlands, App, Gratis.
 3. Vul alles hierboven in (Beleid → App-content, en Groeien → Winkelvermelding).
-4. Testen → Gesloten test: upload `walkie.aab`, voeg minimaal 12 testers toe (Google-e-mailadressen) en laat ze 14 dagen meedoen.
+4. Testen → Gesloten test: upload `wlky.aab`, voeg minimaal 12 testers toe (Google-e-mailadressen) en laat ze 14 dagen meedoen.
 5. Daarna: Productie → Toegang aanvragen → publiceren.
 6. Bij de eerste upload kies je **Play App Signing**: jouw sleutel wordt de uploadsleutel; Google beheert de definitieve sleutel.

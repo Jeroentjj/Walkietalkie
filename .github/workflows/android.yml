@@ -37,8 +37,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk walkie.apk
-          cp android/app/build/outputs/bundle/release/app-release.aab walkie.aab
+          cp android/app/build/outputs/apk/release/app-release.apk wlky.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab wlky.aab
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest walkie.apk walkie.aab --title "Walkie Talkie (Android)" \
-            --notes "Automatisch gebouwd vanaf ${GITHUB_SHA::7}. walkie.apk = direct installeren, walkie.aab = uploaden naar Google Play."
+          gh release create latest wlky.apk wlky.aab --title "Wlky (Android)" \
+            --notes "Automatisch gebouwd vanaf ${GITHUB_SHA::7}. wlky.apk = direct installeren, wlky.aab = uploaden naar Google Play."
