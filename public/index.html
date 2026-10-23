@@ -818,9 +818,9 @@ function planMsg(text) { $('planMsg').textContent = text; $('planMsg').hidden = 
 // Shows the versions, with why the user got here. `replace` offers swapping the one web channel.
 let tourStarting = false, deferredUpsell = null;
 function upsell(why, replace) {
-  // During (or just before) the first-run tour, keep the message for when the tour ends.
   linkBusy = false;
-  if (tourStarting || tourStep >= 0) { deferredUpsell = [why, replace]; return; }
+  // While the tour is running, keep the message for when it ends.
+  if (tourStep >= 0) { deferredUpsell = [why, replace]; return; }
   if (!why && tier === 'beta') why = T(`Je doet mee aan de beta: alles is onbeperkt t/m ${betaUntil()}.`, `You're in the beta: everything is unlimited until ${betaUntil()}.`);
   $('appWhy').textContent = why; $('appWhy').hidden = !why;
   planMsg('');
@@ -831,7 +831,7 @@ function upsell(why, replace) {
   if (!$('appDlg').open) $('appDlg').showModal();
 }
 // No channels yet (e.g. a new beta tester): continue to the menu to make one.
-$('appClose').onclick = () => { $('appDlg').close(); if (!cfgs.filter((c) => !c.test).length) $('menuBtn').click(); };
+$('appClose').onclick = () => { $('appDlg').close(); if (!tourStarting && !cfgs.filter((c) => !c.test).length) $('menuBtn').click(); };
 
 function renderChatQuota() {
   const c = current(), test = c?.cfg.test, left = test ? Infinity : chatLeft();
@@ -1566,7 +1566,14 @@ if (NATIVE && BILLING && !(att?.x - Date.now() > 864e5)) attReady = attest();
 let seenTour = true; try { seenTour = !!localStorage.getItem('walkie-tour'); } catch {}
 nearbyReady = seenTour;
 syncChannels();
-if (!seenTour) { tourStarting = true; setTimeout(startTour, 500); }
+// First run: a message from a link (e.g. the beta welcome) comes first, the tour starts when it is closed.
+let tourWait = 0;
+function startTourWhenFree() {
+  if (!tourStarting) return;
+  if (($('appDlg').open || linkBusy) && tourWait++ < 200) return setTimeout(startTourWhenFree, 300);
+  startTour();
+}
+if (!seenTour) { tourStarting = true; setTimeout(startTourWhenFree, 500); }
 // First the message from a link (beta, gift, invite), if any; the menu follows when it is closed.
 else if (!myName || !cfgs.length) setTimeout(() => !$('appDlg').open && !linkBusy && $('menuBtn').click(), 300);
 else setTimeout(maybeInstall, 2500);
