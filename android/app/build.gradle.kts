@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "app.dopimo.walkie"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig {
         applicationId = "app.dopimo.walkie"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
         versionName = "1.0.${System.getenv("GITHUB_RUN_NUMBER") ?: "0"}"
     }

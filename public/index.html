@@ -197,6 +197,7 @@
     <label class="switch" id="offRow" hidden><div><b>Offline modus</b><small>Bluetooth/wifi met telefoons in de buurt</small></div><input type="checkbox" id="offBox"></label>
 
     <small style="margin-top:14px"><svg class="ic sm" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.</small>
+    <small style="margin-top:8px"><a href="https://walkie.dopimo.app/privacy.html" target="_blank" style="color:#d9a34a">Privacy</a></small>
   </div>
 </dialog>
 
@@ -390,7 +391,8 @@ class Chan {
     if (on === !!this.offline) return;
     this.offline = on;
     this.n = 0; this.you = 0; this.speaker = null; this.wantTalk = false;
-    if (on) { this.ws?.close(); NATIVE.join(this.room); offChan = this; }
+    // The tag broadcast over Bluetooth changes daily, so the channel can't be tracked across days.
+    if (on) { this.ws?.close(); offChan = this; sha256(this.room + ':' + new Date().toISOString().slice(0, 10)).then((tag) => offChan === this && NATIVE.join(tag)); }
     else { NATIVE.leave(); offChan = null; this.connect(); }
   }
 
@@ -504,7 +506,7 @@ function addMsg(c, m) {
 }
 
 Chan.prototype.sendChat = async function (text) {
-  const d = await this.seal(JSON.stringify({ n: myName || T('Iemand', 'Someone'), x: text }));
+  const d = await this.seal(JSON.stringify({ n: myName || T('Iemand', 'Someone'), x: text, t: Date.now(), r: genCode().slice(0, 8) }));
   if (this.offline) this.offSend(1, new TextEncoder().encode(JSON.stringify({ t: 'chat', d })));
   else this.send({ t: 'chat', d });
   addMsg(this, { me: true, text, t: Date.now() });
@@ -512,6 +514,11 @@ Chan.prototype.sendChat = async function (text) {
 
 Chan.prototype.onChat = async function (d) {
   let m; try { m = JSON.parse(await this.open(d)); } catch { return; }
+  // Drop replays: the timestamp and nonce are inside the encryption, so nobody can forge them.
+  if (typeof m.t !== 'number' || Math.abs(Date.now() - m.t) > 10 * 60e3) return;
+  const seen = (this.seen ||= new Set());
+  if (seen.has(m.r)) return;
+  seen.add(m.r); if (seen.size > 500) seen.delete(seen.values().next().value);
   addMsg(this, { from: String(m.n).slice(0, 24), text: String(m.x).slice(0, 500), t: Date.now() });
   if (!muted) beep([1600, 1600]);
   navigator.vibrate?.([30, 60, 30]);

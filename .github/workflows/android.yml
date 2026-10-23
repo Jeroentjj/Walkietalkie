@@ -20,7 +20,7 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.9"
+          gradle-version: "8.11.1"
       - name: Restore signing key
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
@@ -32,12 +32,13 @@ jobs:
         env:
           WALKIE_KEYSTORE: ${{ runner.temp }}/walkie.jks
           WALKIE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle --no-daemon assembleRelease
+        run: gradle --no-daemon assembleRelease bundleRelease
       - name: Publish as "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk walkie.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab walkie.aab
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest walkie.apk --title "Walkie Talkie (Android)" \
-            --notes "Automatisch gebouwd vanaf ${GITHUB_SHA::7}. Download walkie.apk en installeer op Android."
+          gh release create latest walkie.apk walkie.aab --title "Walkie Talkie (Android)" \
+            --notes "Automatisch gebouwd vanaf ${GITHUB_SHA::7}. walkie.apk = direct installeren, walkie.aab = uploaden naar Google Play."

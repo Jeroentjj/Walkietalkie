@@ -50,6 +50,9 @@ class MainActivity : ComponentActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
+            // Only bundled assets are loaded; no file or content URLs.
+            allowFileAccess = false
+            allowContentAccess = false
         }
         web.webViewClient = object : WebViewClientCompat() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =

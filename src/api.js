@@ -48,8 +48,16 @@ export default {
   },
 };
 
+// Per-IP limit on the push API (Workers Rate Limiting binding; skipped when not configured).
+async function limited(env, request) {
+  if (!env.LIMITER) return false;
+  const { success } = await env.LIMITER.limit({ key: request.headers.get('cf-connecting-ip') || 'x' });
+  return !success;
+}
+
 async function api(request, env, route) {
   if (!env.WALKIE) return json({ error: 'KV binding WALKIE missing' }, 500);
+  if (route !== 'vapid' && (await limited(env, request))) return json({ error: 'too many requests' }, 429);
 
   if (route === 'vapid' && request.method === 'GET') return json({ key: (await vapidKeys(env)).pub });
   if (request.method !== 'POST') return json({ error: 'not found' }, 404);
@@ -60,7 +68,10 @@ async function api(request, env, route) {
   const subs = (await env.WALKIE.get(kvKey, 'json')) || {};
 
   if (route === 'subscribe') {
-    if (!body.sub?.endpoint?.startsWith('https://')) return json({ error: 'bad subscription' }, 400);
+    if (!body.sub?.endpoint?.startsWith('https://') || body.sub.endpoint.length > 1000) return json({ error: 'bad subscription' }, 400);
+    // Skip the KV write (daily quota) when nothing changed recently.
+    const old = subs[body.id];
+    if (old?.endpoint === body.sub.endpoint && Date.now() - old.t < 7 * 864e5) return json({ ok: true });
     subs[body.id] = { endpoint: body.sub.endpoint, t: Date.now() };
     const trimmed = Object.fromEntries(Object.entries(subs).sort((a, b) => b[1].t - a[1].t).slice(0, 30));
     await env.WALKIE.put(kvKey, JSON.stringify(trimmed), { expirationTtl: 60 * 60 * 24 * 90 });
@@ -142,8 +153,20 @@ export class Channel extends DurableObject {
     if (this.speaker === id) this.nextTurn(skip); else this.broadcast(skip);
   }
 
+  // Token bucket per connection: plenty for ~25 audio frames/s, stops floods. Kept in memory only.
+  allow(id, binary) {
+    const now = Date.now(), b = (this.buckets ||= new Map()).get(id) || { tokens: 60, t: now };
+    b.tokens = Math.min(60, b.tokens + ((now - b.t) / 1000) * 40); b.t = now;
+    const cost = binary ? 1 : 4;
+    if (b.tokens < cost) return false;
+    b.tokens -= cost; this.buckets.set(id, b);
+    return true;
+  }
+
   async webSocketMessage(ws, msg) {
     const me = this.info(ws).id;
+    if (!this.allow(me, typeof msg !== 'string')) return;
+    if ((typeof msg === 'string' ? msg.length : msg.byteLength) > 16384) return;
     if (typeof msg !== 'string') {
       if (this.speaker !== me) return;
       if (Date.now() - this.since > MAX_TURN_MS) return this.leave(me); // nobody hogs the channel
