@@ -192,10 +192,11 @@ function radioFx() {
   const a = ctx();
   const noise = a.createBuffer(1, a.sampleRate * 2, a.sampleRate), d = noise.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350;
-  const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
+  const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 450;
+  const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
   const crunch = a.createWaveShaper();
-  crunch.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(((i / 511.5) - 1) * 2.2) / Math.tanh(2.2));
+  // Overdrive plus coarse quantisation for a crackly, lo-fi radio voice.
+  crunch.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.round(Math.tanh(((i / 511.5) - 1) * 5) / Math.tanh(5) * 24) / 24);
   hp.connect(lp).connect(crunch).connect(a.destination);
   const src = a.createBufferSource(); src.buffer = noise; src.loop = true;
   const band = a.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 2200; band.Q.value = 0.6;
@@ -220,7 +221,7 @@ function squelch(dur, at = 0) {
 function hiss() {
   if (!fx) { if (!fxOn) return; if (!audioCtx || audioCtx.state !== 'running') return; }
   const on = fxOn && !muted && !holding && [...chans.values()].some((c) => c.speaker);
-  radioFx().hissGain.gain.setTargetAtTime(on ? 0.025 : 0, audioCtx.currentTime, 0.05);
+  radioFx().hissGain.gain.setTargetAtTime(on ? 0.01 : 0, audioCtx.currentTime, 0.05);
 }
 
 class Chan {
