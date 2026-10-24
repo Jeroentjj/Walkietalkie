@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -26,6 +27,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private lateinit var nearby: NearbyBridge
     private lateinit var billing: BillingBridge
+    private lateinit var keys: KeyBridge
     private var pendingWebPermission: PermissionRequest? = null
     private var nearbyCallback: ((Boolean) -> Unit)? = null
 
@@ -94,6 +96,8 @@ class MainActivity : ComponentActivity() {
         web.addJavascriptInterface(billing, "WalkieBilling")
         billing.connect()
         web.addJavascriptInterface(UpdateBridge(this, web), "WalkieUpdate")
+        keys = KeyBridge(this, web)
+        web.addJavascriptInterface(keys, "WalkieKeys")
 
         val invite = intent?.data
         if (invite?.host == INVITE_HOST) openInvite(invite) else web.loadUrl(START)
@@ -107,6 +111,13 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
+
+    // A hardware side button (e.g. AGM H6) as push-to-talk.
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean = keys.onKey(event) || super.dispatchKeyEvent(event)
+
+    override fun onStart() { super.onStart(); keys.register() }
+
+    override fun onStop() { keys.unregister(); super.onStop() }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
