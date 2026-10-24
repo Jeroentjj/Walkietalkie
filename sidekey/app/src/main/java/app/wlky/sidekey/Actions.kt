@@ -157,3 +157,30 @@ class SmartAct : Act() {
         finish()
     }
 }
+
+/**
+ * The launcher entry of every Zijknop app. The side key starts it and it runs this app's action (BuildConfig.ACTION).
+ * Tapping the icon in the home screen / app drawer opens the settings instead: told apart by who started us.
+ */
+class ActionActivity : Act() {
+    override fun go() {
+        val target: Class<*> = if (fromHome()) MainActivity::class.java else when (BuildConfig.ACTION) {
+            "torch" -> TorchAct::class.java
+            "sound" -> SoundAct::class.java
+            "camera" -> CameraAct::class.java
+            "location" -> LocationAct::class.java
+            "call" -> CallAct::class.java
+            "assist" -> AssistAct::class.java
+            "smart" -> SmartAct::class.java
+            else -> MainActivity::class.java
+        }
+        startActivity(Intent(this, target))
+        finish()
+    }
+
+    private fun fromHome(): Boolean {
+        val caller = referrer?.host ?: return false
+        val homes = packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0).map { it.activityInfo.packageName }
+        return caller in homes
+    }
+}

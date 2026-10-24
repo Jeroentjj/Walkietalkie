@@ -13,24 +13,21 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
         <provider android:authorities="app.wlky.state" />
     </queries>
 
     <application
         android:label="@string/app_name"
-        android:icon="@drawable/ic_main"
-        android:roundIcon="@drawable/ic_main"
+        android:icon="${icon}"
+        android:roundIcon="${icon}"
         android:theme="@style/Theme.Settings">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- The only launcher entry: the side key starts it and it runs this app's action; tapping the icon in the launcher opens the settings. -->
         <activity
-            android:name=".TorchAct"
-            android:label="@string/act_torch"
-            android:icon="@drawable/ic_torch"
+            android:name=".ActionActivity"
             android:theme="@style/Theme.Action"
             android:exported="true"
             android:excludeFromRecents="true"
@@ -40,83 +37,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SoundAct"
-            android:label="@string/act_sound"
-            android:icon="@drawable/ic_sound"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".CameraAct"
-            android:label="@string/act_camera"
-            android:icon="@drawable/ic_camera"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".LocationAct"
-            android:label="@string/act_location"
-            android:icon="@drawable/ic_location"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".CallAct"
-            android:label="@string/act_call"
-            android:icon="@drawable/ic_call"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".AssistAct"
-            android:label="@string/act_assist"
-            android:icon="@drawable/ic_assist"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".SmartAct"
-            android:label="@string/act_smart"
-            android:icon="@drawable/ic_smart"
-            android:theme="@style/Theme.Action"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".TorchAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".SoundAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".CameraAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".LocationAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".CallAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".AssistAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
+        <activity android:name=".SmartAct" android:theme="@style/Theme.Action" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="" />
     </application>
 </manifest>

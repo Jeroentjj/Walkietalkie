@@ -37,7 +37,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp sidekey/app/build/outputs/apk/release/app-release.apk wlky-zijknop.apk
+          for f in torch sound camera location call assist smart; do
+            cp "sidekey/app/build/outputs/apk/$f/release/app-$f-release.apk" "zijknop-$f.apk"
+          done
           gh release delete zijknop --yes --cleanup-tag || true
-          gh release create zijknop wlky-zijknop.apk --title "WLKY Zijknop (Android)" \
-            --notes "Extra acties voor de programmeerbare zijknop (zaklamp, geluid, camera, locatie delen, bel favoriet, assistent, slim). Automatisch gebouwd vanaf ${GITHUB_SHA::7}."
+          gh release create zijknop zijknop-*.apk --title "WLKY Zijknop (Android)" \
+            --notes "Acties voor de programmeerbare zijknop, elk een eigen kleine app (installeer alleen wat je wilt): zijknop-torch (zaklamp), -sound (geluid wisselen), -camera, -location (locatie delen), -call (bel favoriet), -assist (spraakassistent), -smart (slim: niets in WLKY, anders een app naar keuze). Gebouwd vanaf ${GITHUB_SHA::7}."

@@ -1,7 +1,6 @@
 <resources>
-    <string name="app_name">WLKY Zijknop</string>
-    <string name="intro">Extra acties voor de programmeerbare zijknop van je telefoon. Elke actie staat apart in de lijst “Open de app” van je knop-instellingen.</string>
-    <string name="how">Zo gebruik je het: ga naar de knop-instellingen van je telefoon (bijv. Eén klik, Lang indrukken of Dubbel klikken), kies “Open de app” en zoek hieronder een van de acties.</string>
+    <string name="how">Zo gebruik je het: kies in de knop-instellingen van je telefoon (bijv. Eén klik, Lang indrukken of Dubbel klikken) “Open de app” en dan deze app. Tik je zelf op het icoon, dan kom je hier.</string>
+    <string name="more">Meer acties (elk een eigen app): https://github.com/Jeroentjj/Walkietalkie/releases/tag/zijknop</string>
     <string name="number_title">Favoriet nummer</string>
     <string name="number_hint">Bijv. 0612345678</string>
     <string name="smart_title">Slim: app als WLKY dicht is</string>

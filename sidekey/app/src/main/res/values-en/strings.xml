@@ -1,7 +1,6 @@
 <resources>
-    <string name="app_name">WLKY Side Key</string>
-    <string name="intro">Extra actions for the programmable side key of your phone. Each action is listed separately under “Open the app” in your key settings.</string>
-    <string name="how">How to use it: open the key settings of your phone (e.g. One Click, Long Press or Double Click), choose “Open the app” and pick one of the actions below.</string>
+    <string name="how">How to use it: in your phone’s key settings (e.g. One Click, Long Press or Double Click) choose “Open the app” and then this app. If you tap the icon yourself you land here.</string>
+    <string name="more">More actions (each its own app): https://github.com/Jeroentjj/Walkietalkie/releases/tag/zijknop</string>
     <string name="number_title">Favourite number</string>
     <string name="number_hint">E.g. 0612345678</string>
     <string name="smart_title">Smart: app when WLKY is closed</string>

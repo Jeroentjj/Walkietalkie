@@ -34,6 +34,60 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    // One small app per action: the key's app list shows every app once, so each action gets its own app.
+    flavorDimensions += "act"
+    buildFeatures { buildConfig = true; resValues = true }
+    productFlavors {
+        create("torch") {
+            dimension = "act"
+            applicationIdSuffix = ".torch"
+            buildConfigField("String", "ACTION", "\"torch\"")
+            resValue("string", "app_name", "Zijknop Zaklamp")
+            manifestPlaceholders["icon"] = "@drawable/ic_torch"
+        }
+        create("sound") {
+            dimension = "act"
+            applicationIdSuffix = ".sound"
+            buildConfigField("String", "ACTION", "\"sound\"")
+            resValue("string", "app_name", "Zijknop Geluid")
+            manifestPlaceholders["icon"] = "@drawable/ic_sound"
+        }
+        create("camera") {
+            dimension = "act"
+            applicationIdSuffix = ".camera"
+            buildConfigField("String", "ACTION", "\"camera\"")
+            resValue("string", "app_name", "Zijknop Camera")
+            manifestPlaceholders["icon"] = "@drawable/ic_camera"
+        }
+        create("location") {
+            dimension = "act"
+            applicationIdSuffix = ".location"
+            buildConfigField("String", "ACTION", "\"location\"")
+            resValue("string", "app_name", "Zijknop Locatie")
+            manifestPlaceholders["icon"] = "@drawable/ic_location"
+        }
+        create("call") {
+            dimension = "act"
+            applicationIdSuffix = ".call"
+            buildConfigField("String", "ACTION", "\"call\"")
+            resValue("string", "app_name", "Zijknop Bel favoriet")
+            manifestPlaceholders["icon"] = "@drawable/ic_call"
+        }
+        create("assist") {
+            dimension = "act"
+            applicationIdSuffix = ".assist"
+            buildConfigField("String", "ACTION", "\"assist\"")
+            resValue("string", "app_name", "Zijknop Assistent")
+            manifestPlaceholders["icon"] = "@drawable/ic_assist"
+        }
+        create("smart") {
+            dimension = "act"
+            applicationIdSuffix = ".smart"
+            buildConfigField("String", "ACTION", "\"smart\"")
+            resValue("string", "app_name", "Zijknop Slim")
+            manifestPlaceholders["icon"] = "@drawable/ic_smart"
+        }
+    }
 }
 
 dependencies {
