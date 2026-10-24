@@ -4,3 +4,7 @@ android/build/
 android/app/build/
 android/local.properties
 .dev.vars
+sidekey/.gradle/
+sidekey/build/
+sidekey/app/build/
+sidekey/local.properties

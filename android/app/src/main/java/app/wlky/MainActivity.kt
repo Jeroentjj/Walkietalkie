@@ -115,9 +115,9 @@ class MainActivity : ComponentActivity() {
     // A hardware side button (e.g. AGM H6) as push-to-talk.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean = keys.onKey(event) || super.dispatchKeyEvent(event)
 
-    override fun onStart() { super.onStart(); keys.register() }
+    override fun onStart() { super.onStart(); Foreground.started = true; keys.register() }
 
-    override fun onStop() { keys.unregister(); super.onStop() }
+    override fun onStop() { Foreground.started = false; keys.unregister(); super.onStop() }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)

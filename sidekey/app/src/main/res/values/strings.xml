@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">WLKY Zijknop</string>
+    <string name="intro">Extra acties voor de programmeerbare zijknop van je telefoon. Elke actie staat apart in de lijst “Open de app” van je knop-instellingen.</string>
+    <string name="how">Zo gebruik je het: ga naar de knop-instellingen van je telefoon (bijv. Eén klik, Lang indrukken of Dubbel klikken), kies “Open de app” en zoek hieronder een van de acties.</string>
+    <string name="number_title">Favoriet nummer</string>
+    <string name="number_hint">Bijv. 0612345678</string>
+    <string name="smart_title">Slim: app als WLKY dicht is</string>
+    <string name="smart_none">(niets doen)</string>
+    <string name="save">Opslaan</string>
+    <string name="saved">Opgeslagen</string>
+    <string name="actions_title">Beschikbare acties</string>
+    <string name="no_torch">Geen zaklamp gevonden</string>
+    <string name="sound_normal">Geluid aan</string>
+    <string name="sound_vibrate">Trillen</string>
+    <string name="sound_fail">Kan het geluid niet wisselen</string>
+    <string name="need_location">Zonder toegang tot je locatie kan ik hem niet delen</string>
+    <string name="locating">Locatie zoeken…</string>
+    <string name="no_location">Geen locatie gevonden. Staat locatie aan?</string>
+    <string name="my_location">Mijn locatie: %1$s</string>
+    <string name="set_number">Vul eerst een favoriet nummer in</string>
+    <string name="no_assistant">Geen spraakassistent gevonden</string>
+    <string name="act_torch">Zaklamp</string>
+    <string name="desc_torch">Zaklamp aan of uit.</string>
+    <string name="act_sound">Geluid wisselen</string>
+    <string name="desc_sound">Wisselt tussen beltoon en trillen.</string>
+    <string name="act_camera">Camera</string>
+    <string name="desc_camera">Opent de camera, klaar om een foto te maken.</string>
+    <string name="act_location">Locatie delen</string>
+    <string name="desc_location">Stuurt je huidige locatie als kaartlink via een app naar keuze (bijv. WhatsApp).</string>
+    <string name="act_call">Bel favoriet</string>
+    <string name="desc_call">Belt direct het nummer dat je hieronder invult.</string>
+    <string name="act_assist">Spraakassistent</string>
+    <string name="desc_assist">Start de spraakassistent (bijv. Google Assistent).</string>
+    <string name="act_smart">Slim (niet in WLKY)</string>
+    <string name="desc_smart">Doet niets als WLKY open is, anders start de app die je hieronder kiest. Handig voor “lang indrukken”: dan blijft PTT ingedrukt houden gewoon PTT.</string>
+</resources>

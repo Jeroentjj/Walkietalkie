@@ -1,0 +1,11 @@
+<resources>
+    <!-- Actions run without any screen: a see-through activity that does its job and closes. -->
+    <style name="Theme.Action" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+    <style name="Theme.Settings" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#151617</item>
+        <item name="android:statusBarColor">#151617</item>
+        <item name="android:navigationBarColor">#151617</item>
+    </style>
+</resources>

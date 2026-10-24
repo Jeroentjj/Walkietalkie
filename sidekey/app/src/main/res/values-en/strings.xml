@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">WLKY Side Key</string>
+    <string name="intro">Extra actions for the programmable side key of your phone. Each action is listed separately under “Open the app” in your key settings.</string>
+    <string name="how">How to use it: open the key settings of your phone (e.g. One Click, Long Press or Double Click), choose “Open the app” and pick one of the actions below.</string>
+    <string name="number_title">Favourite number</string>
+    <string name="number_hint">E.g. 0612345678</string>
+    <string name="smart_title">Smart: app when WLKY is closed</string>
+    <string name="smart_none">(do nothing)</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="actions_title">Available actions</string>
+    <string name="no_torch">No flashlight found</string>
+    <string name="sound_normal">Sound on</string>
+    <string name="sound_vibrate">Vibrate</string>
+    <string name="sound_fail">Cannot switch the sound</string>
+    <string name="need_location">I cannot share your location without access to it</string>
+    <string name="locating">Finding location…</string>
+    <string name="no_location">No location found. Is location on?</string>
+    <string name="my_location">My location: %1$s</string>
+    <string name="set_number">Enter a favourite number first</string>
+    <string name="no_assistant">No voice assistant found</string>
+    <string name="act_torch">Flashlight</string>
+    <string name="desc_torch">Flashlight on or off.</string>
+    <string name="act_sound">Sound toggle</string>
+    <string name="desc_sound">Switches between ringing and vibrate.</string>
+    <string name="act_camera">Camera</string>
+    <string name="desc_camera">Opens the camera, ready for a photo.</string>
+    <string name="act_location">Share location</string>
+    <string name="desc_location">Sends your current location as a map link through an app of your choice (e.g. WhatsApp).</string>
+    <string name="act_call">Call favourite</string>
+    <string name="desc_call">Calls the number you enter below straight away.</string>
+    <string name="act_assist">Voice assistant</string>
+    <string name="desc_assist">Starts the voice assistant (e.g. Google Assistant).</string>
+    <string name="act_smart">Smart (not in WLKY)</string>
+    <string name="desc_smart">Does nothing while WLKY is open, otherwise starts the app you pick below. Handy for “long press”, so holding PTT stays just PTT.</string>
+</resources>

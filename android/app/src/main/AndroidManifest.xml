@@ -43,5 +43,10 @@
                 <data android:scheme="https" android:host="wlky.app" />
             </intent-filter>
         </activity>
+        <!-- Lets the WLKY Zijknop app ask whether WLKY is on screen (see StateProvider). -->
+        <provider
+            android:name=".StateProvider"
+            android:authorities="app.wlky.state"
+            android:exported="true" />
     </application>
 </manifest>
