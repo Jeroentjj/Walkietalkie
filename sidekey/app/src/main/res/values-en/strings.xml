@@ -19,18 +19,18 @@
     <string name="my_location">My location: %1$s</string>
     <string name="set_number">Enter a favourite number first</string>
     <string name="no_assistant">No voice assistant found</string>
-    <string name="act_torch">Flashlight</string>
+    <string name="act_torch">Side key Flashlight</string>
     <string name="desc_torch">Flashlight on or off.</string>
-    <string name="act_sound">Sound toggle</string>
+    <string name="act_sound">Side key Sound</string>
     <string name="desc_sound">Switches between ringing and vibrate.</string>
-    <string name="act_camera">Camera</string>
+    <string name="act_camera">Side key Camera</string>
     <string name="desc_camera">Opens the camera, ready for a photo.</string>
-    <string name="act_location">Share location</string>
+    <string name="act_location">Side key Location</string>
     <string name="desc_location">Sends your current location as a map link through an app of your choice (e.g. WhatsApp).</string>
-    <string name="act_call">Call favourite</string>
+    <string name="act_call">Side key Call favourite</string>
     <string name="desc_call">Calls the number you enter below straight away.</string>
-    <string name="act_assist">Voice assistant</string>
+    <string name="act_assist">Side key Assistant</string>
     <string name="desc_assist">Starts the voice assistant (e.g. Google Assistant).</string>
-    <string name="act_smart">Smart (not in WLKY)</string>
+    <string name="act_smart">Side key Smart</string>
     <string name="desc_smart">Does nothing while WLKY is open, otherwise starts the app you pick below. Handy for “long press”, so holding PTT stays just PTT.</string>
 </resources>

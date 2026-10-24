@@ -19,18 +19,18 @@
     <string name="my_location">Mijn locatie: %1$s</string>
     <string name="set_number">Vul eerst een favoriet nummer in</string>
     <string name="no_assistant">Geen spraakassistent gevonden</string>
-    <string name="act_torch">Zaklamp</string>
+    <string name="act_torch">Zijknop Zaklamp</string>
     <string name="desc_torch">Zaklamp aan of uit.</string>
-    <string name="act_sound">Geluid wisselen</string>
+    <string name="act_sound">Zijknop Geluid</string>
     <string name="desc_sound">Wisselt tussen beltoon en trillen.</string>
-    <string name="act_camera">Camera</string>
+    <string name="act_camera">Zijknop Camera</string>
     <string name="desc_camera">Opent de camera, klaar om een foto te maken.</string>
-    <string name="act_location">Locatie delen</string>
+    <string name="act_location">Zijknop Locatie</string>
     <string name="desc_location">Stuurt je huidige locatie als kaartlink via een app naar keuze (bijv. WhatsApp).</string>
-    <string name="act_call">Bel favoriet</string>
+    <string name="act_call">Zijknop Bel favoriet</string>
     <string name="desc_call">Belt direct het nummer dat je hieronder invult.</string>
-    <string name="act_assist">Spraakassistent</string>
+    <string name="act_assist">Zijknop Assistent</string>
     <string name="desc_assist">Start de spraakassistent (bijv. Google Assistent).</string>
-    <string name="act_smart">Slim (niet in WLKY)</string>
+    <string name="act_smart">Zijknop Slim</string>
     <string name="desc_smart">Doet niets als WLKY open is, anders start de app die je hieronder kiest. Handig voor “lang indrukken”: dan blijft PTT ingedrukt houden gewoon PTT.</string>
 </resources>
