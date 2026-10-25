@@ -454,7 +454,7 @@ const ORIGIN = NATIVE ? 'https://wlky.app' : location.origin;
 // Connection (Android app only): 'auto' = phones nearby first (Bluetooth/wifi), internet as fallback;
 // 'internet' = server only; 'offline' = nearby only.
 let connMode = !NATIVE ? 'internet' : localStorage.getItem('walkie-conn') || (localStorage.getItem('walkie-offline') === '1' ? 'offline' : 'auto');
-let nearbyReady = false, nearbyDenied = false; // ready: not while the tour or first menu is on screen
+let nearbyReady = false, nearbyDenied = false, nearbyErr = ''; // ready: not while the tour or first menu is on screen
 const dayIdx = () => Math.floor((Date.now() - 4 * 3600e3) / 864e5); // rotates at 04:00 UTC, when nobody is talking
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -1010,7 +1010,7 @@ if (NATIVE) setInterval(() => { const c = offChan; if (c?.nearbyOn && c.nearbyDa
 if (NATIVE) window.walkieNative = {
   onPeers(n) {
     const c = offChan; if (!c) return;
-    c.localPeers = n;
+    c.localPeers = n; if (n) nearbyErr = '';
     c.evalTransport();
     if (c.offline) { c.n = n + 1; if (!n) c.speaker = null; }
     render();
@@ -1034,7 +1034,15 @@ if (NATIVE) window.walkieNative = {
   onBillingError(m) { planMsg(T('Kopen lukte niet: ', 'Purchase failed: ') + m); },
   onError(e) {
     if (e === 'perm') { nearbyDenied = true; offChan?.nearbyStop(); }
-    showNotice(e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access') : T('Offline fout: ', 'Offline error: ') + e);
+    // 'what:code' from Nearby; 8007 = Bluetooth is off, 8008 = wifi is off.
+    const [what, code] = String(e).split(':');
+    nearbyErr = e === 'perm' ? T('Geen toegang tot Bluetooth/wifi', 'No Bluetooth/wifi access')
+      : e === 'gms' ? T('Offline heeft Google Play-services nodig', 'Offline needs Google Play services')
+      : e === 'location' ? T('Zet Locatie aan voor offline zoeken', 'Turn on Location for offline search')
+      : code === '8007' ? T('Zet Bluetooth aan', 'Turn on Bluetooth')
+      : code === '8008' ? T('Zet wifi aan', 'Turn on wifi')
+      : T(`Offline fout: ${what} (${code})`, `Offline error: ${what} (${code})`);
+    showNotice(nearbyErr, 8000); render();
   },
 };
 
@@ -1056,7 +1064,7 @@ function render() {
   else if (rx) { st = `◀ ${rx.speaker}` + (rx !== c ? ` · CH${String(cfgs.indexOf(rx.cfg) + 1).padStart(2, '0')}` : ''); l = 'rx'; }
   else if (weakCode(c.cfg) && !rx) { st = T('Onveilig kanaal: maak opnieuw', 'Insecure channel: recreate it'); l = 'wait'; }
   else if (c.cfg.qr && c.n <= 1) st = T('Direct: verbinding verbroken', 'Direct: connection lost');
-  else if (c.offline && c.n <= 1) { st = T('Offline · zoeken in de buurt…', 'Offline · searching nearby…'); l = 'wait'; }
+  else if (c.offline && c.n <= 1) { st = nearbyErr || T('Offline · zoeken in de buurt…', 'Offline · searching nearby…'); l = 'wait'; }
   else if (c.full) st = T('Kanaal vol (max 10)', 'Channel full (max 10)');
   else if (c.limited) st = T('Niet verbonden: limiet van je versie', 'Not connected: version limit');
   else if (!c.offline && c.ws?.readyState !== 1) st = T('Verbinden…', 'Connecting…');
