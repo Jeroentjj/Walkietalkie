@@ -1,6 +1,8 @@
 package app.wlky
 
 import android.os.Build
+import java.net.HttpURLConnection
+import java.net.URL
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.android.play.core.appupdate.AppUpdateInfo
@@ -34,6 +36,28 @@ class UpdateBridge(private val activity: MainActivity, private val web: WebView)
         return JSONObject().put("code", code).put("name", pi.versionName ?: "").put("play", installer() == "com.android.vending").toString()
     }
 
+    /**
+     * Asks GitHub itself (no server of ours in between) which build is the newest: the workflow puts its number in
+     * version.txt of the "latest" release. Answer: walkieNative.onUpdateInfo(build, apkUrl); build -1 = no connection.
+     */
+    @JavascriptInterface
+    fun checkGithub() {
+        Thread {
+            var build = -1
+            var apk = ""
+            try {
+                val c = URL(RELEASE + "version.txt").openConnection() as HttpURLConnection
+                c.connectTimeout = 8000; c.readTimeout = 8000; c.instanceFollowRedirects = true
+                if (c.responseCode == 200) {
+                    build = c.inputStream.bufferedReader().readText().trim().toIntOrNull() ?: 0
+                    apk = RELEASE + "wlky.apk"
+                }
+                c.disconnect()
+            } catch (e: Exception) { build = -1 }
+            activity.runOnUiThread { web.evaluateJavascript("window.walkieNative && walkieNative.onUpdateInfo($build, '$apk')", null) }
+        }.start()
+    }
+
     @JavascriptInterface
     fun playCheck() = activity.runOnUiThread {
         manager.appUpdateInfo
@@ -50,6 +74,8 @@ class UpdateBridge(private val activity: MainActivity, private val web: WebView)
         val info = available ?: return@runOnUiThread
         manager.startUpdateFlowForResult(info, activity.updateLauncher, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build())
     }
+
+    private companion object { const val RELEASE = "https://github.com/Jeroentjj/Walkietalkie/releases/download/latest/" }
 
     private fun emit(ok: Boolean) = activity.runOnUiThread {
         web.evaluateJavascript("window.walkieNative && walkieNative.onUpdatePlay($ok)", null)
