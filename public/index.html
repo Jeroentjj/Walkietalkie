@@ -272,6 +272,8 @@
   <div class="sheet-body">
     <div class="sec-title" id="memCount"></div>
     <ul class="mems" id="memList"></ul>
+    <div class="sec-title" id="memPastT" hidden>Eerder in dit kanaal</div>
+    <ul class="mems" id="memPast"></ul>
     <small id="memNote" style="margin-top:10px"></small>
     <button class="tbtn prim ibtn" id="memRing" style="width:100%;margin-top:14px"><svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Bel iedereen</span></button>
   </div>
@@ -371,7 +373,7 @@ addEventListener('unhandledrejection', (e) => errLog.push(`${new Date().toISOStr
 const LANG = localStorage.getItem('walkie-lang') || (/^nl\b/i.test(navigator.language) ? 'nl' : 'en');
 const EN = LANG === 'en';
 const T = (nl, en) => (EN ? en : nl);
-const STATIC_EN = {"Zet WLKY op je beginscherm": "Add WLKY to your home screen", "Dan opent WLKY als een echte app: schermvullend, met een eigen icoon. Heb je een beta- of cadeaulink? Een geïnstalleerde app begint opnieuw: plak de link dan één keer bij Menu → Versie.": "Then WLKY opens like a real app: full screen, with its own icon. Have a beta or gift link? An installed app starts fresh: paste the link once under Menu → Version.", "Heb je een beta-link of cadeaulink, of Plus of Pro in de app (Versies → Koppel een apparaat)? Plak de link hier.": "Have a beta link or gift link, or Plus or Pro in the app (Versions → Link a device)? Paste the link here.", "Plak je link": "Paste your link", "Installeren": "Install", "Niet nu": "Not now", "Op beginscherm zetten": "Add to home screen", "WLKY als app, schermvullend": "WLKY as an app, full screen", "1. Tik onderin Safari op Delen": "1. In Safari, tap Share", "2. Kies": "2. Choose", "Zet op beginscherm": "Add to Home Screen", "3. Tik op": "3. Tap", "Voeg toe": "Add", "Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off", "Opslaan": "Save", "Wie zit erin": "Who is in", "Bel iedereen": "Call everyone", "Tik om te chatten": "Tap to chat", "Update beschikbaar": "Update available", "Zijknop als PTT": "Side button as PTT", "Meldingen": "Notifications", "Batterij: onbeperkt": "Battery: unrestricted", "Anders kan je telefoon WLKY na een tijd in slaap zetten": "Otherwise your phone may put WLKY to sleep after a while", "Opent lang indrukken ook een andere app? Zet dat in de knop-instellingen van je telefoon op “Geen actie”, of gebruik de gratis app": "Does a long press also open another app? Set it to “No operation” in your phone's key settings, or use the free apps", "Toets leren": "Learn key", "Wissen": "Clear", "Tik om bij te werken": "Tap to update"};
+const STATIC_EN = {"Zet WLKY op je beginscherm": "Add WLKY to your home screen", "Dan opent WLKY als een echte app: schermvullend, met een eigen icoon. Heb je een beta- of cadeaulink? Een geïnstalleerde app begint opnieuw: plak de link dan één keer bij Menu → Versie.": "Then WLKY opens like a real app: full screen, with its own icon. Have a beta or gift link? An installed app starts fresh: paste the link once under Menu → Version.", "Heb je een beta-link of cadeaulink, of Plus of Pro in de app (Versies → Koppel een apparaat)? Plak de link hier.": "Have a beta link or gift link, or Plus or Pro in the app (Versions → Link a device)? Paste the link here.", "Plak je link": "Paste your link", "Installeren": "Install", "Niet nu": "Not now", "Op beginscherm zetten": "Add to home screen", "WLKY als app, schermvullend": "WLKY as an app, full screen", "1. Tik onderin Safari op Delen": "1. In Safari, tap Share", "2. Kies": "2. Choose", "Zet op beginscherm": "Add to Home Screen", "3. Tik op": "3. Tap", "Voeg toe": "Add", "Technische info meesturen": "Include technical info", "Toestel, browser, verbinding en foutmeldingen. Nooit gesprekken.": "Device, browser, connection and errors. Never conversations.", "Probleem melden": "Report a problem", "Iets kapot of een idee? Laat het weten": "Something broken or an idea? Let us know", "Wat ging er mis, of wat kan beter? Je bericht gaat alleen naar de maker van WLKY.": "What went wrong, or what could be better? Your message only goes to the maker of WLKY.", "Bijv. bij 3 kanalen hoor ik niets meer…": "E.g. with 3 channels I don't hear anything…", "Technische info meesturen (toestel, browser, verbinding, foutmeldingen; geen gesprekken)": "Include technical info (device, browser, connection, errors; no conversations)", "Versturen": "Send", "Versies": "Versions", "Koppel een apparaat": "Link a device", "Aankopen herstellen": "Restore purchases", "Heb je Plus of Pro in de app? Kies daar Versies → Koppel een apparaat en open de link op dit apparaat.": "Have Plus or Pro in the app? Choose Versions → Link a device there and open the link on this device.", "of plak de koppellink": "or paste the link", "Scan deze code of open de link op je laptop of tablet. Daar krijg je dan dezelfde versie in de webapp.": "Scan this code or open the link on your laptop or tablet to get the same version in the web app.", "Kopieer": "Copy", "Versie": "Version", "Berichten sturen kan in de app.": "Sending messages works in the app.", "App": "App", "WLKY voor Android": "WLKY for Android", "De app kan meer dan deze webversie:": "The app can do more than this web version:", "Onbeperkt kanalen, allemaal tegelijk beluisteren": "Unlimited channels, listen to all at once", "Chatberichten sturen": "Send chat messages", "Praten zonder internet, via Bluetooth/wifi of QR-code": "Talk without internet, over Bluetooth/wifi or QR code", "Tot 60 seconden per keer praten": "Talk up to 60 seconds at a time", "Download in Google Play": "Get it on Google Play", "Vervang mijn kanaal": "Replace my channel", "De app is er voor Android. Op deze telefoon gebruik je de webversie.": "The app is for Android. On this phone, use the web version.", "Haal de WLKY-app": "Get the WLKY app", "Meer kanalen, chat en praten zonder internet": "More channels, chat and talking without internet", "Gratis": "Free", "Verbinding": "Connection", "Auto: eerst telefoons in de buurt, anders internet": "Auto: phones nearby first, otherwise internet", "Rondleiding": "Tour", "Bekijk hoe de app werkt": "See how the app works", "Mijn kanalen": "My channels", "Je luistert naar alle kanalen tegelijk. Tik op een kanaal om er met PTT op te praten.": "You listen to all channels at once. Tap a channel to talk on it with PTT.", "Kanaal toevoegen": "Add channel", "Nieuw kanaal": "New channel", "maak en deel een link": "create and share a link", "Link ontvangen": "Got a link", "plak een uitnodiging": "paste an invite", "Via QR-code": "Via QR code", "zonder internet": "no internet", "Testkanaal": "Test channel", "hoor jezelf terug": "hear yourself", "Maak kanaal & deel link": "Create channel & share link", "Wie op de link tikt, zit direct in het kanaal. Deel hem alleen met wie mag meepraten.": "Anyone who taps the link joins the channel. Only share it with people you trust.", "Doe mee": "Join", "Mijn code": "My code", "Scan code": "Scan code", "Direct met één persoon naast je, op dezelfde wifi of hotspot. Geen server nodig.": "Directly with one person next to you, on the same wifi or hotspot. No server needed.", "Instellingen": "Settings", "Jouw naam": "Your name", "Zien anderen als je praat": "Shown to others when you talk", "Walkie-talkie ruis": "Walkie-talkie noise", "Radioklank, gekraak en \"kssh\"": "Radio sound, crackle and \"kssh\"", "Offline modus": "Offline mode", "Bluetooth/wifi met telefoons in de buurt": "Bluetooth/wifi with phones nearby", "Taal": "Language", "Geluid en namen zijn versleuteld met de kanaallink; de server kan niet meeluisteren. Max. 10 personen per kanaal.": "Voice and names are encrypted with the channel link; the server cannot listen in. Max. 10 people per channel.", "Kanalen": "Channels", "Chat": "Chat", "KANAAL": "CHANNEL", "GELUID": "SOUND", "Sluiten": "Close", "OK": "OK", "Naam, bijv. Familie": "Name, e.g. Family", "Plak hier de link": "Paste the link here", "bijv. Jeroen": "e.g. Alex", "Bericht": "Message", "of plak de code": "or paste the code", "Vorig kanaal": "Previous channel", "Volgend kanaal": "Next channel", "Versturen": "Send", "Delen": "Share", "Verwijderen": "Delete", "Geluid aan/uit": "Sound on/off", "Opslaan": "Save", "Wie zit erin": "Who is in", "Bel iedereen": "Call everyone", "Tik om te chatten": "Tap to chat", "Update beschikbaar": "Update available", "Zijknop als PTT": "Side button as PTT", "Eerder in dit kanaal": "Earlier in this channel", "Meldingen": "Notifications", "Batterij: onbeperkt": "Battery: unrestricted", "Anders kan je telefoon WLKY na een tijd in slaap zetten": "Otherwise your phone may put WLKY to sleep after a while", "Opent lang indrukken ook een andere app? Zet dat in de knop-instellingen van je telefoon op “Geen actie”, of gebruik de gratis app": "Does a long press also open another app? Set it to “No operation” in your phone's key settings, or use the free apps", "Toets leren": "Learn key", "Wissen": "Clear", "Tik om bij te werken": "Tap to update"};
 if (EN) {
   document.documentElement.lang = 'en';
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -701,11 +703,12 @@ class Chan {
     const names = (this.names ||= new Map()); // encrypted name -> name
     const members = await Promise.all((m.members || []).map(async (x) => {
       if (!names.has(x.name)) { names.set(x.name, await this.open(x.name)); if (names.size > 200) names.delete(names.keys().next().value); }
-      return { id: x.id, o: !!x.o, name: names.get(x.name) };
+      return { id: x.id, o: !!x.o, d: x.d || '', name: names.get(x.name) };
     }));
     if (seq !== this.seq) return; // a newer state arrived while decrypting
     const wasTx = this.you === 'tx', wasSpeaker = this.speaker;
     Object.assign(this, { n: m.n, you: m.you, speaker: m.speaker, sid: m.sid, members, meId: m.me, isOwner: !!m.own });
+    rememberPeople(this);
     if (!wasTx && m.you === 'tx') { beep([900, 1300]); navigator.vibrate?.(80); talkTimer(this); } // your turn
     if (wasSpeaker && !m.speaker && m.you !== 'tx') { squelch(0.3, this.next); beep([1200, 900]); } // squelch tail + roger beep
     if (!wasSpeaker && m.speaker) { this.next = 0; squelch(0.12); }
@@ -1428,17 +1431,43 @@ async function setupPush(code) {
   } catch { /* no push support */ }
 }
 
-async function ring(c) {
-  if (Date.now() - lastRing < 15000) return;
-  lastRing = Date.now();
+// Call everyone in the channel, or only the people in `who` ([{ d, name }], d = their nickname from the server).
+const lastRings = new Map();
+async function ring(c, who) {
+  const key = c.cfg.code + ':' + (who ? who.map((x) => x.d).sort().join() : '*');
+  if (Date.now() - (lastRings.get(key) || 0) < 15000) return false;
+  lastRings.set(key, Date.now());
   navigator.vibrate?.(60);
-  showNotice(T('Oproepen…', 'Calling…'), 10000);
-  c.send({ t: 'ring' }); // everyone online hears a ringtone at once
+  const label = who ? who.map((x) => x.name).join(', ') : '';
+  showNotice(who ? T(`${label} oproepen…`, `Calling ${label}…`) : T('Oproepen…', 'Calling…'), 10000);
+  const online = new Set((c.members || []).map((m) => m.d));
+  const live = who ? who.filter((x) => online.has(x.d)) : [], offline = who ? who.filter((x) => !online.has(x.d)) : [];
+  // Online people hear it over the open channel; the others get a push notification (if they turned notifications on).
+  if (!who) c.send({ t: 'ring' }); else if (live.length) c.send({ t: 'ring', to: live.map((x) => x.d) });
+  if (who && !offline.length) { showNotice(T(`${label} opgeroepen`, `${label} called`), 3000); return true; }
   try {
     const ch = (await sha256(c.cfg.code + ':push')).slice(0, 40);
-    const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId }) })).json();
-    showNotice(sent || c.n > 1 ? T(`${sent + Math.max(c.n - 1, 0)} opgeroepen`, `${sent + Math.max(c.n - 1, 0)} called`) : T('Niemand heeft meldingen aan', 'Nobody has notifications on'), 3000);
-  } catch { showNotice(c.n > 1 ? T('Opgeroepen', 'Called') : T('Oproepen niet beschikbaar', 'Calling not available'), 3000); }
+    const { sent } = await (await fetch(ORIGIN + '/api/ring', { method: 'POST', body: JSON.stringify({ ch, id: clientId, ...(who && { to: offline.map((x) => x.d) }) }) })).json();
+    const total = (who ? live.length : Math.max(c.n - 1, 0)) + sent;
+    showNotice(total ? (who ? T(`${label} opgeroepen`, `${label} called`) : T(`${total} opgeroepen`, `${total} called`)) : who ? T(`${label} heeft meldingen niet aan`, `${label} has notifications off`) : T('Niemand heeft meldingen aan', 'Nobody has notifications on'), 3000);
+  } catch { showNotice(live.length || (!who && c.n > 1) ? T('Opgeroepen', 'Called') : T('Oproepen niet beschikbaar', 'Calling not available'), 3000); }
+  return true;
+}
+
+// People seen in a channel are remembered on this phone (nickname + name), so they can be called when they are offline.
+const rosterKey = (c) => 'walkie-people-' + c.cfg.code;
+const loadRoster = (c) => load(rosterKey(c), {});
+function rememberPeople(c) {
+  if (!c.members || c.cfg.qr || c.cfg.test) return;
+  const r = loadRoster(c);
+  let changed = false;
+  for (const m of c.members) {
+    if (m.id === c.meId || !m.d) continue;
+    if (r[m.d]?.name !== m.name) { r[m.d] = { name: m.name, t: Date.now() }; changed = true; }
+  }
+  if (!changed) return;
+  const keep = Object.entries(r).sort((a, b) => b[1].t - a[1].t).slice(0, 40);
+  save(rosterKey(c), Object.fromEntries(keep));
 }
 
 // Incoming call: ringtone (when the app is open and sound is on), vibration and a line on the display.
@@ -1470,6 +1499,7 @@ function openMembers(c) {
   $('memRing').hidden = !can; $('memRing').disabled = false; $('memRing').lastElementChild.textContent = T('Bel iedereen', 'Call everyone');
   renderMembers(); $('memDlg').showModal();
 }
+const BELL = '<svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const XUSER = '<svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg>';
 function renderMembers() {
   const c = memChan, ul = $('memList');
@@ -1486,6 +1516,7 @@ function renderMembers() {
     const tag = (txt, cls) => li.appendChild(Object.assign(document.createElement('span'), { className: 'tag ' + (cls || ''), textContent: txt }));
     if (m.o) tag(T('OPRICHTER', 'FOUNDER'));
     if (m.id === c.sid || (m.id === c.meId && c.you === 'tx')) tag(T('PRAAT', 'TALKING'), 'talk');
+    if (m.id !== c.meId && m.d) li.appendChild(callButton(c, [{ d: m.d, name: m.name }]));
     if (c.isOwner && m.id !== c.meId) {
       const b = document.createElement('button');
       b.className = 'ib del'; b.setAttribute('aria-label', T('Verwijderen', 'Remove')); b.innerHTML = XUSER;
@@ -1494,7 +1525,25 @@ function renderMembers() {
     }
     ul.appendChild(li);
   }
-  $('memNote').textContent = c.isOwner ? T('Jij hebt dit kanaal gemaakt en kunt mensen verwijderen.', 'You created this channel and can remove people.') : '';
+  // People seen here before who are not online now: they get a push notification if they turned notifications on.
+  const here = new Set(list.map((m) => m.d)), past = Object.entries(loadRoster(c)).filter(([d]) => !here.has(d)).sort((a, b) => b[1].t - a[1].t);
+  $('memPastT').hidden = !past.length; $('memPastT').textContent = T('Eerder in dit kanaal', 'Earlier in this channel');
+  $('memPast').innerHTML = '';
+  for (const [d, p] of past) {
+    const li = document.createElement('li'), nm = document.createElement('span');
+    nm.className = 'nm'; nm.textContent = p.name; nm.style.opacity = '.7';
+    li.append(nm, Object.assign(document.createElement('span'), { className: 'tag', textContent: 'OFFLINE', style: 'background:#44484d;color:#ddd' }), callButton(c, [{ d, name: p.name }]));
+    $('memPast').appendChild(li);
+  }
+  $('memNote').textContent = (c.isOwner ? T('Jij hebt dit kanaal gemaakt en kunt mensen verwijderen. ', 'You created this channel and can remove people. ') : '')
+    + (past.length ? T('Wie offline is, hoort de oproep alleen met Meldingen aan.', 'Someone offline only hears the call with Notifications on.') : '');
+}
+// A bell next to a person: calls just them.
+function callButton(c, who) {
+  const b = document.createElement('button');
+  b.className = 'ib'; b.setAttribute('aria-label', T('Oproepen', 'Call')); b.innerHTML = BELL;
+  b.onclick = async () => { if (await ring(c, who)) { b.disabled = true; b.style.opacity = '.4'; setTimeout(() => { b.disabled = false; b.style.opacity = ''; }, 15000); } };
+  return b;
 }
 $('memClose').onclick = () => $('memDlg').close();
 $('memDlg').addEventListener('close', () => (memChan = null));

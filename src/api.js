@@ -10,7 +10,7 @@ export { Quota } from './quota.js';
 // Needs one KV namespace bound as WALKIE. VAPID keys are generated on first use and kept in KV.
 //   GET  /api/vapid      -> { key }            public key for pushManager.subscribe
 //   POST /api/subscribe  { ch, id, sub }       remember this device's push subscription for a channel
-//   POST /api/ring       { ch, id }            push a notification to the other device(s) in the channel
+//   POST /api/ring       { ch, id, to? }       push a notification to the other device(s) in the channel (or only to the nicknames in `to`)
 //   POST /api/license/*                        paid versions, see license.js
 //   POST /api/admin/*                          gift links for specific people, see admin.js (secret ADMIN_KEY)
 //   POST /api/report                           problem report from a beta tester, see admin.js
@@ -109,8 +109,11 @@ async function api(request, env, route) {
   if (route === 'ring') {
     const keys = await vapidKeys(env);
     let sent = 0, changed = false;
+    // body.to (optional): nicknames of the people to call; without it everyone with notifications on is called.
+    const to = Array.isArray(body.to) ? body.to.filter((x) => typeof x === 'string' && /^[a-f0-9]{12}$/.test(x)).slice(0, 10) : null;
     for (const [id, s] of Object.entries(subs)) {
       if (id === body.id) continue;
+      if (to && !to.includes((await sha('d:' + id)).slice(0, 12))) continue;
       const res = await fetch(s.endpoint, {
         method: 'POST',
         headers: { Authorization: await vapidHeader(s.endpoint, keys), TTL: '60', Urgency: 'high' },
@@ -158,6 +161,7 @@ export class Channel extends DurableObject {
       if (!saved) await this.ctx.storage.put('owner', h);
       owner = !saved || saved === h;
     }
+    const dh = who.dev === 'x' ? '' : (await sha('d:' + who.dev)).slice(0, 12); // public nickname of this phone, used to call one person
     const [client, server] = Object.values(new WebSocketPair());
     if (!owner && who.dev !== 'x' && ((await this.ctx.storage.get('banned')) || []).includes(who.dev)) {
       server.accept();
@@ -178,7 +182,7 @@ export class Channel extends DurableObject {
       return new Response(null, { status: 101, webSocket: client });
     }
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name, owner, ...who });
+    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name, owner, dh, ...who });
     this.broadcast();
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -197,7 +201,7 @@ export class Channel extends DurableObject {
   broadcast(skip) {
     const all = this.sockets(skip);
     const sp = this.speaker && this.find(this.speaker);
-    const members = all.map((w) => { const a = this.info(w); return { id: a.id, name: a.name, o: a.owner ? 1 : 0 }; });
+    const members = all.map((w) => { const a = this.info(w); return { id: a.id, name: a.name, o: a.owner ? 1 : 0, d: a.dh || '' }; });
     for (const w of all) {
       const a = this.info(w), me = a.id;
       const you = this.speaker === me ? 'tx' : this.queue.indexOf(me) + 1;
@@ -257,11 +261,13 @@ export class Channel extends DurableObject {
       try { target.send(JSON.stringify({ t: 'kicked' })); } catch {}
       try { target.close(4002, 'kicked'); } catch {}
     } else if (m.t === 'ring') {
-      // A call to everyone online in this channel; at most once per 10 s per person.
-      const now = Date.now(), last = (this.rang ||= new Map()).get(me) || 0;
+      // A call to everyone online in this channel, or to the people in m.to (their nicknames); at most once per 10 s per target.
+      const to = Array.isArray(m.to) ? m.to.filter((x) => typeof x === 'string' && /^[a-f0-9]{12}$/.test(x)).slice(0, MAX_PEOPLE) : null;
+      const now = Date.now(), key = me + ':' + (to ? to.slice().sort().join() : '*'), last = (this.rang ||= new Map()).get(key) || 0;
       if (now - last < 10000) return;
-      this.rang.set(me, now);
-      for (const w of this.sockets(ws)) try { w.send(JSON.stringify({ t: 'ring', from: who.name })); } catch {}
+      this.rang.set(key, now);
+      if (this.rang.size > 200) this.rang.delete(this.rang.keys().next().value);
+      for (const w of this.sockets(ws)) if (!to || to.includes(this.info(w).dh)) try { w.send(JSON.stringify({ t: 'ring', from: who.name })); } catch {}
     }
     else if (m.t === 'chat' && typeof m.d === 'string' && m.d.length < 4000) {
       if (L.chatPerDay !== Infinity && !(await this.quota(who, '/chat')).ok) return ws.send(JSON.stringify({ t: 'limit', what: 'chat' }));
