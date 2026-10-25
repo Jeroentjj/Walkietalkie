@@ -19,6 +19,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <!-- Meldingen: calls and messages with the screen off (ListenService keeps the app running) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="WLKY"
@@ -43,6 +48,14 @@
                 <data android:scheme="https" android:host="wlky.app" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".ListenService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the walkie-talkie connected so calls and messages arrive with the screen off" />
+        </service>
         <!-- Lets the WLKY Zijknop app ask whether WLKY is on screen (see StateProvider). -->
         <provider
             android:name=".StateProvider"

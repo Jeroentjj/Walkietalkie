@@ -28,6 +28,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var nearby: NearbyBridge
     private lateinit var billing: BillingBridge
     private lateinit var keys: KeyBridge
+    private lateinit var notify: NotifyBridge
+    private var notifyCallback: ((Boolean) -> Unit)? = null
+    private val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        notifyCallback?.invoke(ok)
+        notifyCallback = null
+    }
     private var pendingWebPermission: PermissionRequest? = null
     private var nearbyCallback: ((Boolean) -> Unit)? = null
 
@@ -96,6 +102,9 @@ class MainActivity : ComponentActivity() {
         web.addJavascriptInterface(billing, "WalkieBilling")
         billing.connect()
         web.addJavascriptInterface(UpdateBridge(this, web), "WalkieUpdate")
+        notify = NotifyBridge(this, web)
+        web.addJavascriptInterface(notify, "WalkieNotify")
+        notify.resume()
         keys = KeyBridge(this, web)
         web.addJavascriptInterface(keys, "WalkieKeys")
 
@@ -115,7 +124,17 @@ class MainActivity : ComponentActivity() {
     // A hardware side button (e.g. AGM H6) as push-to-talk.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean = keys.onKey(event) || super.dispatchKeyEvent(event)
 
-    override fun onStart() { super.onStart(); Foreground.started = true; keys.register() }
+    override fun onStart() {
+        super.onStart()
+        Foreground.started = true
+        keys.register()
+        getSystemService(android.app.NotificationManager::class.java).apply { cancel(Notif.ID_CALL); cancel(Notif.ID_MSG) }
+    }
+
+    fun askNotifyPermission(done: (Boolean) -> Unit) {
+        notifyCallback = done
+        notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     override fun onStop() { Foreground.started = false; keys.unregister(); super.onStop() }
 

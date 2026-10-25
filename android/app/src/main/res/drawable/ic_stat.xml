@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon: white walkie-talkie silhouette (same shape as public/badge.png). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="96" android:viewportHeight="96">
+    <path android:fillColor="#FFFFFF" android:pathData="M60,6a4,4 0 0 1 4,4v14h-8V10a4,4 0 0 1 4,-4z" />
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M30,22h36a10,10 0 0 1 10,10v50a10,10 0 0 1 -10,10H30a10,10 0 0 1 -10,-10V32a10,10 0 0 1 10,-10ZM32,32h32v14H32ZM34,58h28a3,3 0 0 1 0,6H34a3,3 0 0 1 0,-6ZM34,70h28a3,3 0 0 1 0,6H34a3,3 0 0 1 0,-6Z" />
+</vector>
