@@ -28,6 +28,7 @@ CAPS.forEach(c=>{const d=document.createElement('div');d.className='cap';
   d.innerHTML=c.w.map(w=>{const em=w[0]==='*';const tx=w.replace(/\*/g,'');return `<span class="w">${em?'<em>'+tx+'</em>':tx}</span>`}).join(' ');
   c.el=d;c.ws=[...d.querySelectorAll('.w')];capsEl.appendChild(d);});
 [['right',-6,220,110],['left',-6,190,70],['left',-6,285,70]].forEach(([sd,o,top,h])=>{const d=document.createElement('div');d.className='side';d.style[sd]=o+'px';d.style.top=top+'px';d.style.height=h+'px';$('rw').appendChild(d);});
+const bp=document.createElement('div');bp.className='back';bp.innerHTML='<div class="cam"><i></i><i></i><i></i></div><svg class="logo" viewBox="0 0 100 100"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a52"/><stop offset=".35" stop-color="#101012"/><stop offset=".7" stop-color="#000"/><stop offset="1" stop-color="#16161a"/></linearGradient><linearGradient id="gh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".45" stop-color="#fff" stop-opacity=".1"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".62" stop-color="#fff" stop-opacity=".4"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/></linearGradient><clipPath id="dc"><path d="M20 40A30 30 0 0 1 80 40Z"/><rect x="20" y="44" width="60" height="32" rx="7"/><rect x="8" y="44" width="9" height="26" rx="4.5"/><rect x="83" y="44" width="9" height="26" rx="4.5"/><rect x="34" y="70" width="10" height="20" rx="5"/><rect x="56" y="70" width="10" height="20" rx="5"/></clipPath></defs><g fill="url(#gg)"><path d="M20 40A30 30 0 0 1 80 40Z"/><rect x="20" y="44" width="60" height="32" rx="7"/><rect x="8" y="44" width="9" height="26" rx="4.5"/><rect x="83" y="44" width="9" height="26" rx="4.5"/><rect x="34" y="70" width="10" height="20" rx="5"/><rect x="56" y="70" width="10" height="20" rx="5"/></g><g stroke="#0c0c0e" stroke-width="2.8" stroke-linecap="round"><path d="M32 12L26 3M68 12L74 3"/></g><rect x="0" y="0" width="100" height="100" fill="url(#gh)" clip-path="url(#dc)"/><circle cx="38" cy="27" r="3" fill="#2a2a2d"/><circle cx="62" cy="27" r="3" fill="#2a2a2d"/></svg>';$('rw').appendChild(bp);
 const scr=$('scr'),mini=$('mini');
 const wave=document.createElement('div');wave.className='wave';
 for(let i=0;i<21;i++)wave.appendChild(document.createElement('i'));
@@ -49,10 +50,22 @@ function setText(el,v){if(el.dataset.v!==v){el.dataset.v=v;el.innerHTML=v;}}
 function render(t){
   const bump=Math.exp(-7*((t/BEAT)%1));
   $('glow').style.opacity=(.55+.45*bump).toFixed(3);
-  $('glow').style.transform=`scale(${1+.04*bump})`;
+  $('glow').style.transform=`translateX(${window.__gx||0}px) scale(${1+.04*bump})`;
   const x0=clamp(t/.6);let y=500*(1-back(x0)),op=clamp(t/.15),rot=0,sc=1+.01*bump;
   if(t>=17.5){const x=easeIn((t-17.5)/.55);y+=1300*x;rot=14*x;}
-  $('rw').style.opacity=op;$('rw').style.transform=`translateY(${y}px) rotate(${rot}deg) scale(${sc})`;
+  const P=[[0,[110,-16,3,1]],[3,[-130,14,-2,1.02]],[6,[130,-14,2,1.02]],[9.5,[-130,15,-3,1.03]],[12.5,[60,-9,2,1]],[15.5,[-130,14,-2,1.02]]];
+  const eIO=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;};
+  let pose=P[0][1].slice();
+  for(let i=1;i<P.length;i++){const k=eIO((t-(P[i][0]-.25))/.7);pose=pose.map((v,n)=>v+(P[i][1][n]-v)*k);}
+  let [px,ry,rx,ps]=pose;
+  ry+=-40*(1-ease(t/.9));
+  ry+=360*eIO((t-12)/1.0);
+  px+=0;
+  const fl=Math.sin(t*1.7)*9, tz=Math.sin(t*1.1)*1.4, tx=Math.sin(t*1.3)*1.6;
+  if(t>=17.5){px*=1-easeIn((t-17.5)/.55)*0;}
+  $('rw').style.opacity=op;
+  $('rw').style.transform=`perspective(2200px) translateX(${px}px) translateY(${y+fl}px) rotateY(${ry}deg) rotateX(${rx+tx}deg) rotateZ(${rot+tz}deg) scale(${sc*ps*0.9})`;
+  $('rings').style.transform=`translateX(${px}px)`;
   let led='on',num='01',sub=CH[0],status='HOLD PTT TO TALK',ptt=false,next=false,amp=0,ring=null,msgs=null;
   const chNum=t<10?0:t<11?1:2;
   if(t>=10&&t<12.5){num='0'+(chNum+1);sub=CH[chNum];}
@@ -88,8 +101,8 @@ function render(t){
     c.ws.forEach((w,i)=>{const e=ease((t-c.s-i*.12)/.28);w.style.opacity=(e*(1-out)).toFixed(3);
       w.style.transform=`translateY(${(1-e)*26+out*-10}px)`;});
     c.el.style.display=(t>=c.s&&t<c.e)?'block':'none';});
-  const sv=clamp((t-12.5)/.4)*clamp((16-t)/.3);
-  chip.style.opacity=sv;chip.style.transform=`translateY(${(1-ease((t-12.5)/.5))*30}px)`;
+  const sv=clamp((t-12.9)/.4)*clamp((16-t)/.3);
+  chip.style.opacity=sv;chip.style.transform=`translateY(${(1-ease((t-12.9)/.5))*30}px)`;
   tagL.style.opacity=sv;tagL.style.display=sv>0?'block':'none';
   if(sv>0){const f=Math.floor(t*14);const X='xxxxxxxxxxxxxxxxxxxxx';
     $('sv').innerHTML=`<div>channel&nbsp; 9f3a41c7...e10b</div><div>audio&nbsp;&nbsp;&nbsp; ${scramble(X,f,null,t)}</div><div>names&nbsp;&nbsp;&nbsp; ${scramble(X,f+3,null,t)}</div><div>chat&nbsp;&nbsp;&nbsp;&nbsp; ${scramble(X,f+9,null,t)}</div>`;}

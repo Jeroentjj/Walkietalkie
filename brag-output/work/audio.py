@@ -88,6 +88,12 @@ chirp(11.5)                              # Mia on ch 01
 beep(12.5,.06)                           # message lands
 for k,tt in enumerate((13.5,14.0)): tick(tt,.07)  # decrypt lands
 tick(15.5,.10)                           # offline
+# 360 spin: whoosh 12.0-13.0 and landing thud
+n=int(1.0*SR); nz=rng.standard_normal(n); sp=np.zeros(n)
+for i,fc in enumerate(np.concatenate([np.linspace(500,4200,5),np.linspace(4200,500,5)])):
+    seg=slice(i*n//10,(i+1)*n//10); sp[seg]=hp(nz,fc)[seg]
+sp*=np.sin(np.linspace(0,np.pi,n))**2; both(12.0,sp,.09)
+both(13.0,tone(mtof(45),.5,a=.003,d=.14,harm=(1,.3)),.22)
 # mix
 mix=np.stack([L,R],1)
 # gentle glue: lowpass-free soft clip + fades
