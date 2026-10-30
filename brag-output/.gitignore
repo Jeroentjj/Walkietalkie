@@ -1,5 +1,7 @@
-work/frames/
-work/still-*.png
-work/sheet.jpg
-work/audio.wav
+work/frames*/
+work/still*.png
+work/s2*.png
+work/sheet*.jpg
+work/audio*.wav
 work/fonts/
+work/*.bak
