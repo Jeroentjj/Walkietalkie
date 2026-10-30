@@ -27,6 +27,7 @@ CAPS.forEach(c=>{const d=document.createElement('div');d.className='cap';
   d.style.top=c.top+'px';d.style.left=(c.side==='L'?110:1290)+'px';d.style.width='520px';
   d.innerHTML=c.w.map(w=>{const em=w[0]==='*';const tx=w.replace(/\*/g,'');return `<span class="w">${em?'<em>'+tx+'</em>':tx}</span>`}).join(' ');
   c.el=d;c.ws=[...d.querySelectorAll('.w')];capsEl.appendChild(d);});
+[['right',-6,220,110],['left',-6,190,70],['left',-6,285,70]].forEach(([sd,o,top,h])=>{const d=document.createElement('div');d.className='side';d.style[sd]=o+'px';d.style.top=top+'px';d.style.height=h+'px';$('rw').appendChild(d);});
 const scr=$('scr'),mini=$('mini');
 const wave=document.createElement('div');wave.className='wave';
 for(let i=0;i<21;i++)wave.appendChild(document.createElement('i'));

@@ -181,8 +181,13 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#101010
 body{display:block;position:relative;}
 #bg{position:absolute;inset:0;background:radial-gradient(60% 70% at 50% 50%,#2a1a06 0%,#101010 70%);}
 #glow{position:absolute;left:50%;top:50%;width:1100px;height:1100px;margin:-550px 0 0 -550px;border-radius:50%;background:radial-gradient(closest-side,#f6a21a55,#f6a21a00);}
-#rw{position:absolute;left:50%;top:50%;width:440px;height:940px;margin:-470px 0 0 -220px;}
-#rw .radio{width:440px;height:940px;}
+#rw{position:absolute;left:50%;top:50%;width:470px;height:970px;margin:-485px 0 0 -235px;box-sizing:border-box;padding:15px;border-radius:66px;
+  background:linear-gradient(145deg,#2c2c2e,#0b0b0c 40%,#1b1b1d);
+  box-shadow:0 0 0 2px #3a3a3d,0 0 0 4px #0a0a0a,inset 0 0 0 2px #000,inset 0 2px 3px #ffffff30,0 50px 90px #000c,0 0 120px #f6a21a22;}
+#rw::before{content:'';position:absolute;left:50%;top:27px;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2a3550,#05070c 60%);box-shadow:0 0 0 2px #000,0 0 0 3px #1a1a1c;z-index:6;}
+#rw::after{content:'';position:absolute;inset:15px;border-radius:51px;pointer-events:none;z-index:5;background:linear-gradient(115deg,#ffffff26 0%,#ffffff0a 22%,#fff0 40%);}
+.side{position:absolute;width:5px;border-radius:3px;background:linear-gradient(90deg,#1a1a1c,#3a3a3d);}
+#rw .radio{width:440px;height:940px;border-radius:51px;}
 #rw .lcd{flex:0 1 330px;}
 .ring{position:absolute;left:50%;top:50%;border-radius:50%;border:4px solid #f6a21a;pointer-events:none;}
 .cap{position:absolute;width:560px;font:700 64px/1.08 Round,sans-serif;color:#fff;letter-spacing:-.5px;}
