@@ -1,0 +1,1 @@
+Your phone is now a walkie-talkie: hold PTT, everyone in the channel hears you. Encrypted on-device, so the server hears nothing, and it works with no internet. WLKY is free on Android: wlky.app
