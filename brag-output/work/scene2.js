@@ -34,7 +34,7 @@ function mk(){
 }
 const PH={A:mk(),B:mk()};
 // packets, chip, link, offline icon
-const pool=[];for(let i=0;i<16;i++){const d=document.createElement('div');d.className='pk';if(V)d.style.fontSize='15px';world.appendChild(d);pool.push(d);}
+const pool=[];for(let i=0;i<12;i++){const d=document.createElement('div');d.className='wv';d.style.cssText=`position:absolute;left:0;top:0;width:${V?40:56}px;height:${V?130:180}px;border:7px solid #f6a21a;border-left:0;border-radius:0 100% 100% 0 / 0 50% 50% 0;box-shadow:0 0 18px #f6a21a99;display:none;`;world.appendChild(d);pool.push(d);}
 const chip=document.createElement('div');chip.className='chip';chip.style.cssText=`left:${LAY.chipX}px;top:${LAY.chipY}px;width:${LAY.chipW}px;box-sizing:border-box;font-size:19px;padding:16px 20px;`;
 chip.innerHTML='<h4>What the server sees</h4><div id="sv"></div>';world.appendChild(chip);
 const link=document.createElement('div');link.id='link';const lx0=LAY.A.x+LAY.A.s*235*.8,lx1=LAY.B.x-LAY.A.s*235*.8;link.style.cssText=`left:${lx0}px;top:${LAY.pathY-3}px;width:${lx1-lx0}px;`;world.appendChild(link);
@@ -97,14 +97,14 @@ function render(t){
     rings[who].forEach((r,k)=>{const p=((t*1.0+k/3)%1),d=(260+p*820)*L.s/.76*(V?.9:1);
       r.style.borderColor='#f6a21a';r.style.width=r.style.height=d+'px';r.style.left=(L.x-d/2)+'px';r.style.top=(L.y-d/2)+'px';r.style.opacity=((1-p)*.5*env).toFixed(3);});
   });
-  // packets
-  let n=0;const off0=235*LAY.A.s*.8;
-  SEG.forEach(([f,to,a,b,dir])=>{for(let k=0;;k++){const ts=a+k*.125;if(ts>=b)break;const p=(t-ts)/.5;if(p<0||p>1||n>=pool.length)continue;
-    const sg=f==='A'?1:-1,x0=LAY[f].x+sg*off0,x1=LAY[to].x-sg*off0;
-    const x=x0+(x1-x0)*p,y=LAY.pathY-(dir?0:LAY.arc*Math.sin(Math.PI*p));
-    const e=pool[n++];e.style.display='block';e.style.transform=`translate(${x-40}px,${y-16}px) scale(${.85+.3*Math.sin(Math.PI*p)})`;
-    e.style.opacity=Math.min(1,p*8,(1-p)*8).toFixed(3);e.textContent=scramble('xxxxxxx',Math.floor(t*18)+k*5,null,t);
-    e.style.borderColor=dir?'#ffd23f':'#f6a21a';e.style.color=dir?'#ffd23f':'#f6a21a';}});
+  // radio waves travelling between the phones
+  let n=0;const off0=235*LAY.A.s*.8,WH=V?130:180,WW=V?40:56;
+  SEG.forEach(([f,to,a,b,dir])=>{for(let k=0;;k++){const ts=a+k*.14;if(ts>=b)break;const p=(t-ts)/.8;if(p<0||p>1||n>=pool.length)continue;
+    const sg=f==='A'?1:-1,x0=LAY[f].x+sg*off0,x1=LAY[to].x-sg*off0*1.05;
+    const x=x0+(x1-x0)*p,y=LAY.pathY;
+    const e=pool[n++],c=dir?'#ffd23f':'#f6a21a';e.style.display='block';
+    e.style.transform=`translate(${x-WW/2}px,${y-WH/2}px) scaleX(${sg}) scale(${.6+.75*p})`;
+    e.style.opacity=(Math.min(1,p*7)*Math.pow(1-p,.7)).toFixed(3);e.style.borderColor=c;e.style.boxShadow=`0 0 18px ${c}99`;}});
   for(;n<pool.length;n++)pool[n].style.display='none';
   // server chip (S5)
   const sv=clamp((t-12.9)/.35)*clamp((15.5-t)/.3);
