@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><title>BlazeWay Studio launch v11</title>
+<style>
+@font-face{font-family:H;src:url(hanken-400.ttf);font-weight:400}
+@font-face{font-family:H;src:url(hanken-800.ttf);font-weight:800}
+@font-face{font-family:M;src:url(plexmono-400.ttf)}
+*{box-sizing:border-box;margin:0}
+:root{--paper:#F6F3EE;--ink:#1E2321;--muted:#5A615D;--sig:#F7701F;--sigtxt:#B5450F;--inkt:#101C34;--onmut:#A8B4CC}
+body{font-family:H,system-ui,sans-serif;position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--inkt)}
+body.p{width:1080px;height:1350px;font-size:16px}
+body.l{width:1200px;height:627px;font-size:10px}
+.top{flex:none!important;height:700px;position:relative;z-index:2;border-radius:0 0 44px 44px;box-shadow:0 2px 6px rgba(5,10,24,.35),0 22px 44px -6px rgba(5,10,24,.55),0 50px 80px -20px rgba(5,10,24,.45);background:var(--paper);color:var(--ink);flex:1;display:flex;flex-direction:column}
+.p .top{padding:80px 80px 0}.l .top{padding:34px 70px 0}
+.head{display:flex;justify-content:space-between;align-items:flex-start}
+.lock{display:flex;align-items:center;gap:1.2em}
+.lock svg{height:7.4em;width:auto;display:block}
+.lock b{display:block;font-weight:800;font-size:3.4em;line-height:1;letter-spacing:-.02em}
+.lock span{display:block;font-weight:400;font-size:3.4em;line-height:1.05;color:var(--muted)}
+.date{font-family:M;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-size:1.35em;text-align:right;line-height:1.5}
+h1{display:flex;flex-direction:column;align-items:center;text-align:center;font-weight:800;letter-spacing:-.045em;line-height:.92;margin-top:auto;margin-bottom:.9em}
+.p h1{font-size:8.6em;line-height:.95}.l h1{font-size:6.2em;margin-bottom:.6em}
+.ln{letter-spacing:-.04em;display:block;white-space:nowrap;width:max-content}.ln.o{color:var(--sig)}h1{font-kerning:normal;text-rendering:optimizeLegibility;font-feature-settings:"kern" 1,"liga" 1}
+.bottom{display:flex;flex-direction:column;justify-content:space-between;position:relative;z-index:1;background:var(--inkt);color:var(--paper);margin-top:-44px}
+.p .bottom{padding:94px 80px 62px}.l .bottom{padding:24px 70px 26px}
+.mono{font-family:H;font-weight:400;color:var(--onmut)}
+.p .mono.s{display:flex;justify-content:space-between;font-size:1.95em;color:var(--paper);opacity:.85;margin-top:30px}.l .mono.s{font-size:1.15em}
+.path svg{width:100%;display:block;overflow:visible}
+.dot{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--paper);transform:translate(-50%,-50%)}.labels,.mono.s{position:relative}.labels{display:flex;justify-content:space-between;margin-bottom:30px}.labels span,.mono.s{line-height:1.25}
+.labels span{font-family:H;font-weight:400;color:var(--paper);opacity:.85}
+.p .labels span{font-size:1.95em}.l .labels span{font-size:1.1em}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:2em;border-top:1px solid rgba(246,243,238,.16)}
+.p .cta{margin-top:1.8em;padding-top:1.7em;flex-direction:column;align-items:flex-start;gap:1.1em}.l .cta{margin-top:1.4em;padding-top:1.3em}
+.cta p{line-height:1.3}.cta p.q{white-space:nowrap;width:max-content}.p .cta p{font-size:2.25em;font-weight:400;color:var(--paper)}.row{display:flex;justify-content:center;align-items:center;gap:1.3em;margin-top:2.2em;width:100%}.bub{position:relative;background:var(--sig);color:var(--inkt);font-weight:800;letter-spacing:-.035em;line-height:1;border-radius:.42em;padding:.3em .62em .34em;white-space:nowrap}.bub:after{content:'';position:absolute;left:.7em;bottom:-.26em;width:.5em;height:.5em;background:var(--sig);transform:skewX(-28deg) rotate(0deg);clip-path:polygon(0 0,100% 0,0 100%)}.p .bub{font-size:3.9em}.sm{font-weight:800;color:var(--paper);display:flex;align-items:center;gap:.35em;white-space:nowrap;letter-spacing:-.01em}.p .sm{font-size:1.75em}.act{font-weight:800;color:var(--sig);letter-spacing:-.03em;line-height:1;display:flex;align-items:center;gap:.35em;white-space:nowrap}.p .row{display:flex;justify-content:center;align-items:center;gap:1.3em;margin-top:2.2em;width:100%}.bub{position:relative;background:var(--sig);color:var(--inkt);font-weight:800;letter-spacing:-.035em;line-height:1;border-radius:.42em;padding:.3em .62em .34em;white-space:nowrap}.bub:after{content:'';position:absolute;left:.7em;bottom:-.26em;width:.5em;height:.5em;background:var(--sig);transform:skewX(-28deg) rotate(0deg);clip-path:polygon(0 0,100% 0,0 100%)}.p .bub{font-size:3.9em}.sm{font-weight:800;color:var(--paper);display:flex;align-items:center;gap:.35em;white-space:nowrap;letter-spacing:-.01em}.p .sm{font-size:1.75em}.act{font-size:5.6em}.l .cta p{font-size:1.8em}
+.cta p i{font-style:normal;color:var(--onmut)}
+.btn{background:var(--sig);color:var(--inkt);font-weight:800;border-radius:.4em;white-space:nowrap}
+.p .btn{font-size:2em;padding:.65em 1em}.l .btn{font-size:1.7em;padding:.6em .9em}
+</style></head><body class="p">
+<div class="top">
+ <div class="head">
+  <div class="lock"><svg viewBox="268 200 725 1000" fill="#F7701F"><path d="M559.2 209C551.7 213.1 553.1 223.5 563.2 238.4C576.2 257.6 589.4 294.1 595.2 327.1L597.5 340.1L597.5 395.1L595.7 405.1C592.9 421 589.5 433.9 583.4 451.3L577.8 467.6L570.2 481.8C553.5 512.8 539 532.7 517.1 554.6C504.9 566.8 475.1 591.9 464.2 599.2L459.9 602L456.6 599.9L457.3 553.1L455.1 537.6C449.6 497.9 435.3 455.6 416.6 423.6C400.4 396 397 391.4 391.5 389.6L388.2 388.5L385.5 389.8C384 390.5 381.8 392.4 380.7 393.9L378.6 396.7L379.3 454.1L377.6 468.1C370.6 529.2 360.7 562.3 331.1 623.6C295.6 697.2 285.2 725.8 277.1 772.4C268.5 822.3 271 862.2 286.1 912.2C305.1 975.5 352.2 1021.9 408.6 1033C444.5 1040 472.5 1037.9 509.6 1025.4C528.9 1018.9 550.1 1006.5 561.4 995.3L567 989.7L568.2 985.7C571.2 975.6 564.2 968.1 542.9 959C521.3 949.7 511.7 943.7 498.3 931.1C480.5 914.3 469.8 891.7 468.4 868.1L467.9 858.1L469.5 849.2C472.7 832.4 481.2 815.6 492.5 804.2C518.6 777.6 556.6 765.8 627.1 762.6C683.8 760.1 717.3 755.6 744.9 747C770.5 739.1 779.1 733 779.1 723.1C779.1 710.5 763.4 701.4 723.1 690.6C680.5 679.1 666.2 669.4 662 648.9L660.7 642.7L661.9 636.2C664.4 623 672.2 611.3 689.9 594.6C714.1 571.6 730 548.5 735 529.1C742.2 501.2 742.8 475.5 737 444.8C724.8 379.4 692.1 316.9 644.1 267.2C628.5 251 614.7 239.5 593.5 224.6C568.8 207.4 565.2 205.7 559.2 209Z"/><path d="M855.1 481.4C853.1 482.4 850.9 484.6 849.9 486.6L848.1 490.1L849.3 531.1L847.7 540.3C840 584.2 812.8 602.9 748.6 608.2C744.2 608.5 738.7 609.6 736.3 610.7L732 612.5L730.5 616.2C728.7 620.5 729.2 623.6 732.6 628.8L735 632.5L741.8 635.7C766.2 647.2 777.5 652.9 784.1 657.1C814 676.2 831 697.3 837.1 722.8L839.1 731.1L839.1 751.3L837.1 757.1C834.4 765 830.7 771.1 824.7 777.5C810.4 792.7 795.5 797.2 746.6 801.1C726.7 802.6 721.5 803.2 700.6 806.2C660.2 811.9 620.2 828.3 609.6 843.6L606.8 847.6L606.3 852.6C605.2 864.8 608.4 869.1 630.2 885.1L646.6 897.1L658.1 908.6C681.8 932.2 694 953.4 700.7 982.1L703.4 994.1L703.5 1023.1L701.2 1034.5C688.3 1100.4 643.7 1141.2 557.1 1166.3C546.7 1169.3 542.3 1171.9 540.5 1176.2L539.1 1179.4L540.2 1182.5C542 1187.6 547.1 1189.5 567.5 1192.6C574.6 1193.7 589.3 1195.1 600.2 1195.7L619.9 1196.9L640.5 1195.7C660.7 1194.6 681.1 1192.5 690.1 1190.7C692.6 1190.2 698 1189.2 702.1 1188.6C715.1 1186.6 737 1180.9 753.9 1175.1C809.2 1156.3 849 1132.1 886.2 1094.6C910.2 1070.4 918.5 1059.8 936.1 1031.1C968 979.1 987.1 907.9 988.8 835.1C991.6 713.2 945 575 872.9 491.2C863.1 479.8 860.8 478.5 855.1 481.4Z"/></svg><div><b>BlazeWay</b><span>Studio</span></div></div>
+  
+ </div>
+ <h1><span class="ln">Van eerste idee</span><span class="ln">tot productie.</span><span class="ln o">Samen op pad.</span></h1>
+</div>
+<div class="bottom">
+ 
+ <div class="wg"><div class="path"><div class="labels"><span>onderzoeken</span><span>experimenteer</span><span>engineering</span><span>begeleiden</span></div><svg id="w" style="width:100%;display:block;overflow:visible"></svg></div>
+ <div class="mono s"><span>Design</span><span>Engineering</span><span>Capaciteit</span></div></div>
+ <div class="cta"><p class="q">Gaaf project? Nieuwe inzichten nodig? Capaciteit tekort?</p><div class="row"><div class="bub">Laten we praten!</div></div></div>
+</div>
+<script>
+Promise.all([document.fonts.load('800 100px H'),document.fonts.load('400 20px H')]).then(()=>document.fonts.ready).then(()=>{
+const W=920;
+const L=[...document.querySelectorAll('.ln')];L.forEach(l=>l.style.fontSize='100px');
+const w=Math.max(...L.map(l=>l.getBoundingClientRect().width));L.forEach(l=>l.style.fontSize=(100*W*0.8/w)+'px');
+const q=document.querySelector('.q');q.style.fontSize='20px';q.style.fontSize=(20*W/q.getBoundingClientRect().width)+'px';
+const ext=e=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect()};
+const lab=document.querySelector('.labels'),sp=[...lab.querySelectorAll(':scope > span')],lb=lab.getBoundingClientRect();
+// wave: troughs at word centers
+const cx=sp.map(e=>{const r=ext(e);return (r.left+r.right)/2-lb.left});
+const yb=35,yt=172,H=170,R=14;
+const seg=(x0,y0,x1,y1)=>{const d=(x1-x0)*0.55;return `C${x0+d} ${y0} ${x1-d} ${y1} ${x1} ${y1}`};
+let p=[`M${cx[0]} ${yb}`];const pts=[[cx[0],yb]];
+for(let i=0;i<cx.length-1;i++){const m=(cx[i]+cx[i+1])/2;p.push(seg(pts.at(-1)[0],pts.at(-1)[1],m,yt));pts.push([m,yt]);p.push(seg(m,yt,cx[i+1],yb));pts.push([cx[i+1],yb])}
+// solid up to 3rd word, dotted after
+const iSplit=pts.findIndex(q=>q[0]===cx[2]&&q[1]===yb);
+const solid=[`M${cx[0]} ${yb}`],dot=[`M${cx[2]} ${yb}`];
+for(let i=1;i<pts.length;i++){const[a,b]=[pts[i-1],pts[i]];const c=seg(a[0],a[1],b[0],b[1]);(i<=iSplit?solid:dot).push(c)}
+const svg=document.getElementById('w');svg.setAttribute('viewBox','0 21 '+W+' 154.5');
+svg.innerHTML=`<g fill="none" stroke-linecap="round"><path d="${solid.join(' ')}" stroke="#F7701F" stroke-width="7"/><path d="${dot.join(' ')}" stroke="#A8B4CC" stroke-opacity=".7" stroke-width="6" stroke-dasharray="0.1 16"/>`+
+cx.map((x,i)=>i<3?`<circle cx="${x}" cy="${yb}" r="${R}" fill="#F7701F"/>`:`<circle cx="${x}" cy="${yb}" r="${R-1}" stroke="#A8B4CC" stroke-width="4" fill="#101C34"/>`).join('')+'</g>';
+// separator dots (white, centred in the gaps)
+const m=document.querySelector('.mono.s');
+[...m.querySelectorAll(':scope > span')].forEach((e,i)=>{const r=ext(e),c=(r.left+r.right)/2-lb.left,t=(cx[i]+cx[i+1])/2;e.style.display='inline-block';e.style.transform=`translateX(${t-c}px)`});
+[lab,m].forEach(row=>{const k=[...row.querySelectorAll(':scope > span')],rb=row.getBoundingClientRect();
+for(let i=0;i<k.length-1;i++){const a=ext(k[i]),b=ext(k[i+1]);const d=document.createElement('i');d.className='dot';
+d.style.left=((a.right+b.left)/2-rb.left)+'px';d.style.top=(a.top+a.height*0.56-rb.top)+'px';row.appendChild(d)}});
+document.body.dataset.ready=1});
+</script>
+</body></html>
