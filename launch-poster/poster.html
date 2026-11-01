@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><title>BlazeWay Studio launch</title>
+<style>
+@font-face{font-family:N;src:url(nunito.woff2);font-weight:700}
+@font-face{font-family:M;src:url(mono.woff2)}
+*{box-sizing:border-box;margin:0}
+:root{--o:#F26A1B;--d:#1B1F24;--bg:#FAF6F1}
+body{width:1080px;height:1350px;background:var(--bg);font-family:N,system-ui,sans-serif;color:var(--d);position:relative;overflow:hidden}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(27,31,36,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(27,31,36,.06) 1px,transparent 1px);background-size:60px 60px}
+.brand{position:absolute;left:72px;top:64px;display:flex;align-items:center;gap:16px;font-family:M;font-size:26px;letter-spacing:.18em;text-transform:uppercase}
+.brand i{width:28px;height:28px;background:var(--o);display:block;transform:rotate(45deg)}
+.tag{position:absolute;right:72px;top:64px;font-family:M;font-size:22px;letter-spacing:.14em;color:#6b7075}
+h1{position:absolute;left:72px;top:170px;font-size:190px;line-height:.92;letter-spacing:-.03em;font-weight:700}
+h1 span{color:var(--o)}
+.sub{position:absolute;left:72px;top:560px;width:430px;font-size:36px;line-height:1.25}
+.list{position:absolute;left:72px;top:780px;width:400px;font-family:M;font-size:30px}
+.list div{display:flex;gap:22px;padding:18px 0;border-top:2px solid var(--d)}
+.list div:last-child{border-bottom:2px solid var(--d)}
+.list b{color:var(--o);font-weight:400}
+.photo{position:absolute;left:540px;top:520px;width:468px;height:640px}
+.photo:before{content:"";position:absolute;inset:26px -26px -26px 26px;background:var(--o)}
+.photo img{position:relative;width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:block;border:6px solid var(--d)}
+.cta{position:absolute;left:0;right:0;bottom:0;height:190px;background:var(--d);color:#fff;padding:0 72px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+.cta p{font-size:40px;line-height:1.15}
+.cta em{font-style:normal;color:var(--o)}
+.cta small{font-family:M;font-size:24px;letter-spacing:.1em;color:#b9bdc2}
+</style></head><body>
+<div class="grid"></div>
+<div class="brand"><i></i>BlazeWay Studio</div>
+<div class="tag">OFFICIEEL GESTART</div>
+<h1>Ik ben<br><span>gestart.</span></h1>
+<p class="sub">Technische hulp voor bedrijven en zzp'ers.</p>
+<div class="list"><div><b>01</b>Design</div><div><b>02</b>Engineering</div><div><b>03</b>Extra capaciteit</div></div>
+<div class="photo"><img src="photo.webp" alt=""></div>
+<div class="cta"><p>Gaaf project? Nieuwe inzichten nodig?<br>Capaciteit tekort? <em>Stuur me een bericht.</em></p></div>
+</body></html>
